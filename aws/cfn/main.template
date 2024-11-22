@@ -1,0 +1,140 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: Creates AWS IoT Smart Wastebin app (uksb-1st924ocu).
+
+Metadata:
+  Version: 0.2.0
+
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Project configuration
+        Parameters:
+          - ProjectName
+          - Environment
+      - Label:
+          default: IoT configuration
+        Parameters:
+          - ArtefactsBucketName
+          - IoTCoreRoleAlias
+    ParameterLabels:
+      ProjectName:
+        default: Project Name
+      Environment:
+        default: Environment Type
+      ArtefactsBucketName:
+        default: Artefacts Bucket Name
+      IoTCoreRoleAlias:
+        default: IoT Core Role Alias
+
+Parameters:
+  ProjectName:
+    Description: The name of the project. The name must only contain alphanumeric characters.
+    Type: String
+    Default: smart-bin-demo-app
+    AllowedPattern: ^[a-zA-Z0-9_-]*$
+    ConstraintDescription: Must contain only alphanumeric characters.
+
+  ArtefactsBucketName:
+    Description: S3 bucket name for hosting greengrass custom component app. Artefacts bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).
+    Type: String
+    AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-.]*[0-9a-zA-Z])*$
+    ConstraintDescription: Artefacts bucket name can include numbers, lowercase letters, uppercase letters, periods (.), and hyphens (-). It cannot start or end with a hyphen (-).
+
+  IoTCoreRoleAlias:
+    Description: Create an AWS IoT Core role alias. The alias must contain 1-128 characters and must include only alphanumeric characters and the =, @, and - symbols.
+    Type: String
+    Default: GreengrassTokenExchangeAlias
+    MinLength: 1
+    MaxLength: 128
+    AllowedPattern: ^[\w=,@-]+$
+    ConstraintDescription: Must contain 1-128 characters and must include only alphanumeric characters and the =, @, and - symbols. Uppercase and lowercase alphabetic characters are allowed.
+
+  Environment:
+    Description: The type of environment with which to tag your infrastructure. Valid values are DEV (development), TEST (test), or PROD (production).
+    Type: String
+    AllowedValues:
+      - DEV
+      - TEST
+      - PROD
+    Default: DEV
+
+Resources:
+  IoTCertificateStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: certificate.template
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+
+  IoTFleetProvisioningStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: fleet-provisioning.template
+      Parameters:
+        ArtefactsBucketName: !Ref ArtefactsBucketName
+        TrashBinS3BucketName: !GetAtt IoTAnalyticsStack.Outputs.TrashBinS3BucketName
+        IoTCertificateSecret: !GetAtt IoTCertificateStack.Outputs.IoTCertificateSecret
+        IoTCoreRoleAlias: !Ref IoTCoreRoleAlias
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+
+  IoTAnalyticsStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: iot-analytics.template
+      Parameters:
+        ProjectName: !Ref ProjectName
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+
+  IoTCustomComponentsStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: custom-component.template
+      Parameters:
+        ArtefactsBucketName: !Ref ArtefactsBucketName
+        TrashBinS3BucketName: !GetAtt IoTAnalyticsStack.Outputs.TrashBinS3BucketName
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+
+  IoTCoreStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: iot-core.template
+      Parameters:
+        IoTAnalyticsChannel: !GetAtt IoTAnalyticsStack.Outputs.IoTAnalyticsChannel
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+
+Outputs:
+  CertificateSecret:
+    Description: Secret holding the generated fleet provisioning certificate and keys
+    Value: !GetAtt IoTCertificateStack.Outputs.IoTCertificateSecret
+
+  FleetProvisioningTemplate:
+    Description: Name of the template to use for fleet provisioning
+    Value: !GetAtt IoTFleetProvisioningStack.Outputs.FleetProvisioningTemplate
+
+  TrashBinS3BucketName:
+    Description: Trash bin bucket name
+    Value: !GetAtt IoTAnalyticsStack.Outputs.TrashBinS3BucketName
+
+  IoTCoreRoleAlias:
+    Description: AWS IoT Core role alias
+    Value: !GetAtt IoTFleetProvisioningStack.Outputs.IoTCoreRoleAlias
