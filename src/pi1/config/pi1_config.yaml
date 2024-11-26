@@ -1,25 +1,45 @@
+# Configuración específica para Raspberry Pi 1
+
 network:
   ethernet:
-    ip: "192.168.1.101"
-    gateway: "192.168.1.1"
+    ip: "192.168.1.145"           # Dirección IP estática para Ethernet
+    gateway: "192.168.1.1"        # Puerta de enlace para Ethernet
   wifi:
-    ssid: "your_wifi_ssid"
-    password: "your_wifi_password"
-    ip: "192.168.1.102"
-    gateway: "192.168.1.1"
+    ssid: "Capstone"              # Nombre de la red Wi-Fi
+    password: "Elefante"          # Contraseña de la red Wi-Fi
+    ip: "192.168.2.10"            # Dirección IP estática para Wi-Fi
+    gateway: "192.168.2.1"        # Puerta de enlace para Wi-Fi
+
+mux:
+  i2c_address: 0x70               # Dirección I2C del MUX de SparkFun
+  channels:                       # Canales asignados a los sensores AS7265x
+    - channel: 0
+      sensor_name: "AS7265x_1"
+    - channel: 1
+      sensor_name: "AS7265x_2"
+    - channel: 2
+      sensor_name: "AS7265x_3"
 
 sensors:
-  sensor1: "SparkFun AS7263 NIR"
-  sensor2: "SparkFun Triad AS7265x - Unit 1"
-  sensor3: "SparkFun Triad AS7265x - Unit 2"
+  as7265x:
+    integration_time: 100         # Tiempo de integración en ms para cada lectura
+    gain: 64                      # Configuración de ganancia para los sensores
+    i2c_bus: 1                    # Bus I2C donde está conectado el MUX y los sensores
+
+greengrass:
+  group_name: "GreengrassGroup"   # Nombre del grupo de Greengrass
+  functions:
+    - name: "DetectPlasticType"   # Nombre de la función Lambda local
+      arn: "arn:aws:lambda:region:account-id:function:DetectPlasticType"
 
 aws:
-  iot_core_endpoint: "your_aws_iot_core_endpoint"
-  greengrass_group: "your_greengrass_group"
-  iot_topic: "iot/pi1/data"
-  cert_path: "/certs/certificate.pem.crt"
-  key_path: "/certs/private.pem.key"
-  ca_path: "/certs/AmazonRootCA1.pem"
+  iot_core_endpoint: "your_aws_iot_core_endpoint" # Endpoint de AWS IoT Core
+  iot_topics:
+    sensor_data: "pi1/sensor_data"                # Tópico para enviar datos de los sensores
+    settings_update: "pi1/settings_update"        # Tópico para recibir actualizaciones de configuración
+  cert_path: "/certs/certificate.pem.crt"         # Certificado del cliente
+  key_path: "/certs/private.pem.key"              # Llave privada
+  ca_path: "/certs/AmazonRootCA1.pem"             # Certificado raíz de Amazon
 
 logging:
-  log_file: "logs/pi1_logs.log"
+  log_file: "/logs/pi1_logs.log"  # Archivo de logs para registrar las operaciones
