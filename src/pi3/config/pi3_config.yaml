@@ -1,0 +1,63 @@
+# Configuración específica para Raspberry Pi 3
+
+network:
+  ethernet:
+    ip: "192.168.1.147"           # Dirección IP estática para Ethernet
+    gateway: "192.168.1.1"       # Puerta de enlace para Ethernet
+  wifi:
+    ssid: "your_wifi_ssid"       # Nombre de la red Wi-Fi
+    password: "your_wifi_password" # Contraseña de la red Wi-Fi
+    ip: "192.168.2.12"           # Dirección IP estática para Wi-Fi
+    gateway: "192.168.2.1"       # Puerta de enlace para Wi-Fi
+
+weight_sensor:
+  i2c_address: 0x40              # Dirección I2C del sensor de peso
+  calibration_factor: 2280       # Factor de calibración para el sensor de peso
+
+camera:
+  resolution:
+    width: 1920                  # Resolución horizontal de la cámara
+    height: 1080                 # Resolución vertical de la cámara
+  frame_rate: 30                 # Tasa de cuadros por segundo
+
+touch_screen:
+  dimensions:
+    width: 800                   # Ancho de la pantalla táctil en píxeles
+    height: 480                  # Alto de la pantalla táctil en píxeles
+  menu:
+    options:                      # Opciones del menú de la pantalla táctil
+      - name: "Adjust Valve Settings"
+        action: "adjust_valves"
+      - name: "Calibrate Sensors"
+        action: "calibrate_sensors"
+      - name: "Start Camera Analysis"
+        action: "start_camera"
+      - name: "Stop Camera Analysis"
+        action: "stop_camera"
+      - name: "System Status"
+        action: "view_status"
+
+greengrass:
+  group_name: "GreengrassGroup"  # Nombre del grupo de Greengrass
+  functions:
+    - name: "WeightDataProcessing"
+      arn: "arn:aws:lambda:region:account-id:function:WeightDataProcessing"
+    - name: "CameraDataProcessing"
+      arn: "arn:aws:lambda:region:account-id:function:CameraDataProcessing"
+
+aws:
+  iot_core_endpoint: "your_aws_iot_core_endpoint"
+  iot_topics:
+    data_publish: "pi3/data"                 # Tópico para publicar datos de sensores y cámara
+    settings_update_pi1: "pi1/settings_update"  # Tópico para enviar actualizaciones a Raspberry Pi #1
+    settings_update_pi2: "pi2/settings_update"  # Tópico para enviar actualizaciones a Raspberry Pi #2
+  cert_path: "/certs/certificate.pem.crt"   # Certificado del cliente
+  key_path: "/certs/private.pem.key"        # Llave privada
+  ca_path: "/certs/AmazonRootCA1.pem"       # Certificado raíz de Amazon
+  region: "us-east-1"          # Región de AWS
+  access_key: "your_access_key"     # No recomendado en el archivo de configuración
+  secret_key: "your_secret_key"     # No recomendado en el archivo de configuración
+
+
+logging:
+  log_file: "/logs/pi3_logs.log"  # Archivo de logs para registrar las operaciones
