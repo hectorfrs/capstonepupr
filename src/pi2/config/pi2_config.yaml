@@ -1,26 +1,49 @@
+# Configuración específica para Raspberry Pi 2
+
 network:
   ethernet:
-    ip: "192.168.1.103"
-    gateway: "192.168.1.1"
+    ip: "192.168.1.137"           # Dirección IP estática para Ethernet
+    gateway: "192.168.1.1"        # Puerta de enlace para Ethernet
   wifi:
-    ssid: "your_wifi_ssid"
-    password: "your_wifi_password"
-    ip: "192.168.1.104"
-    gateway: "192.168.1.1"
+    ssid: "Capstone"              # Nombre de la red Wi-Fi
+    password: "Elefante"          # Contraseña de la red Wi-Fi
+    ip: "192.168.2.11"            # Dirección IP estática para Wi-Fi
+    gateway: "192.168.2.1"        # Puerta de enlace para Wi-Fi
 
-sensors:
-  pressure_sensor: "SparkFun Qwiic Micropresión"
+pressure_sensors:
+  sensors:
+    - i2c_address: 0x28          # Dirección I2C del sensor de entrada de la válvula 1
+      name: "valve_1_inlet"
+    - i2c_address: 0x29          # Dirección I2C del sensor de salida de la válvula 1
+      name: "valve_1_outlet"
+    - i2c_address: 0x2A          # Dirección I2C del sensor de entrada de la válvula 2
+      name: "valve_2_inlet"
+    - i2c_address: 0x2B          # Dirección I2C del sensor de salida de la válvula 2
+      name: "valve_2_outlet"
+  min_pressure: 0.0              # Presión mínima en PSI
+  max_pressure: 25.0             # Presión máxima en PSI
 
 valves:
-  valve_1: "US Solid 1/4'' Stainless Steel Solenoid Valve"
+  relay_module:
+    addresses:
+      valve_1: 0x18              # Dirección I2C del módulo de relé para la válvula 1
+      valve_2: 0x19              # Dirección I2C del módulo de relé para la válvula 2
+  trigger_level: "high"          # Nivel de disparo del relé (alto o bajo)
+
+greengrass:
+  group_name: "GreengrassGroup"  # Nombre del grupo de Greengrass
+  functions:
+    - name: "ValveControl"
+      arn: "arn:aws:lambda:region:account-id:function:ValveControl"
 
 aws:
   iot_core_endpoint: "your_aws_iot_core_endpoint"
-  greengrass_group: "your_greengrass_group"
-  iot_topic: "iot/pi2/data"
-  cert_path: "/certs/certificate.pem.crt"
-  key_path: "/certs/private.pem.key"
-  ca_path: "/certs/AmazonRootCA1.pem"
+  iot_topics:
+    valve_control: "pi2/valve_control"      # Tópico MQTT para control de válvulas
+    settings_update: "pi2/settings_update" # Tópico para actualizaciones de configuración
+  cert_path: "/certs/certificate.pem.crt"  # Certificado del cliente
+  key_path: "/certs/private.pem.key"       # Llave privada
+  ca_path: "/certs/AmazonRootCA1.pem"      # Certificado raíz de Amazon
 
 logging:
-  log_file: "logs/pi2_logs.log"
+  log_file: "/logs/pi2_logs.log"  # Archivo de logs para registrar las operaciones
