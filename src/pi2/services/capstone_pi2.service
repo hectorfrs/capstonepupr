@@ -1,14 +1,15 @@
 [Unit]
-Description=Capstone Project Raspberry Pi 2 Service
+Description=Capstone Project - Raspberry Pi 2 Service
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/python3 /home/pi/pi2/scripts/main_pi2.py
-WorkingDirectory=/home/pi/pi2/
-StandardOutput=inherit
-StandardError=inherit
-Restart=always
-User=pi
+ExecStart=/usr/bin/python3 /scripts/main_pi2.py
+WorkingDirectory=/scripts
+StandardOutput=append:/logs/pi2_logs.log
+StandardError=append:/logs/pi2_logs.log
+Restart=on-failure
+User=raspberry-2
+Group=raspberry-2
 
 [Install]
 WantedBy=multi-user.target
