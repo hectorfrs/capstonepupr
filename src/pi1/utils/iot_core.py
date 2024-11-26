@@ -1,24 +1,85 @@
 import json
-import paho.mqtt.client as mqtt  # Librería MQTT
+import paho.mqtt.client as mqtt
+import ssl
 
-def send_data_to_aws(endpoint, topic, data, cert_path, key_path, ca_path):
-    print(f"Connecting to AWS IoT Core at {endpoint} using MQTT with TLS...")
+class IoTCoreClient:
+    def __init__(self, endpoint, cert_path, key_path, ca_path):
+        """
+        Inicializa el cliente MQTT para conectarse a AWS IoT Core.
 
-    # Configurar el cliente MQTT
-    client = mqtt.Client()
+        :param endpoint: Endpoint de AWS IoT Core.
+        :param cert_path: Ruta al certificado del cliente.
+        :param key_path: Ruta a la llave privada del cliente.
+        :param ca_path: Ruta al certificado CA raíz de AWS IoT.
+        """
+        self.endpoint = endpoint
+        self.cert_path = cert_path
+        self.key_path = key_path
+        self.ca_path = ca_path
+        self.client = mqtt.Client()
 
-    # Agregar los certificados para la autenticación
-    client.tls_set(ca_certs=ca_path,   # Certificado de AWS IoT Root CA
-                   certfile=cert_path, # Certificado del cliente
-                   keyfile=key_path,   # Llave privada del cliente
-                   tls_version=2)      # Versión de TLS (segura)
+        # Configuración TLS para una conexión segura
+        self.client.tls_set(
+            ca_certs=self.ca_path,
+            certfile=self.cert_path,
+            keyfile=self.key_path,
+            tls_version=ssl.PROTOCOL_TLSv1_2
+        )
 
-    # Conectar al endpoint MQTT de AWS IoT Core
-    client.connect(endpoint, port=8883)  # Puerto seguro para MQTT con TLS
-    
-    # Publicar los datos en el tópico de AWS IoT
-    payload = json.dumps(data)
-    print(f"Publishing to {topic}: {payload}")
-    client.publish(topic, payload)
-    client.disconnect()
-    print("Data sent and connection closed.")
+    def connect(self):
+        """
+        Conecta el cliente MQTT al endpoint de AWS IoT Core.
+        """
+        try:
+            print(f"Connecting to AWS IoT Core at {self.endpoint}...")
+            self.client.connect(self.endpoint, port=8883)
+            print("Connected to AWS IoT Core.")
+        except Exception as e:
+            print(f"Failed to connect to AWS IoT Core: {e}")
+            raise e
+
+    def publish(self, topic, payload):
+        """
+        Publica un mensaje en el tópico MQTT especificado.
+
+        :param topic: Tópico MQTT al cual publicar los datos.
+        :param payload: Datos a publicar (deben ser serializables en JSON).
+        """
+        try:
+            message = json.dumps(payload)
+            print(f"Publishing to topic {topic}: {message}")
+            self.client.publish(topic, message)
+            print("Message published successfully.")
+        except Exception as e:
+            print(f"Failed to publish message: {e}")
+            raise e
+
+    def subscribe(self, topic, callback):
+        """
+        Se suscribe a un tópico MQTT y asigna un callback para manejar los mensajes recibidos.
+
+        :param topic: Tópico MQTT al cual suscribirse.
+        :param callback: Función callback para manejar los mensajes recibidos.
+        """
+        try:
+            print(f"Subscribing to topic {topic}...")
+            self.client.on_message = callback
+            self.client.subscribe(topic)
+            print(f"Subscribed to topic {topic}.")
+        except Exception as e:
+            print(f"Failed to subscribe to topic {topic}: {e}")
+            raise e
+
+    def loop_start(self):
+        """
+        Inicia el bucle de eventos del cliente MQTT.
+        """
+        print("Starting MQTT loop...")
+        self.client.loop_start()
+
+    def loop_stop(self):
+        """
+        Detiene el bucle de eventos del cliente MQTT.
+        """
+        print("Stopping MQTT loop...")
+        self.client.loop_stop()
