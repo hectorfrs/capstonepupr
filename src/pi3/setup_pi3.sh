@@ -82,4 +82,9 @@ echo "Validando directorios /logs y /data..."
 mkdir -p "$REPO_DIR/src/pi3/logs" "$REPO_DIR/src/pi3/data"
 chmod 755 "$REPO_DIR/src/pi3/logs" "$REPO_DIR/src/pi3/data"
 
+echo "Asignando permisos a los directorios..."
+chmod 644 /etc/systemd/system/capstone_pi3.service
+chmod +x /home/raspberry-3/capstonepupr/src/pi3/scripts/main_pi3.py
+
+
 echo "Configuración de Raspberry Pi 3 completada."
