@@ -1,73 +1,42 @@
-import RPi.GPIO as GPIO
-import time
+import smbus
 
-# Definir los pines GPIO para controlar los Relays de ambas válvulas con redundancia
-RELAY_PIN_1_PRIMARY = 17  # Relay principal para la válvula 1
-RELAY_PIN_1_BACKUP = 18   # Relay de respaldo para la válvula 1
-RELAY_PIN_2_PRIMARY = 27  # Relay principal para la válvula 2
-RELAY_PIN_2_BACKUP = 22   # Relay de respaldo para la válvula 2
 
-def setup_valves():
+class ValveController:
     """
-    Configura los pines GPIO para controlar los 4 Relays (2 por válvula con redundancia).
+    Clase para controlar válvulas utilizando un módulo de relé.
     """
-    GPIO.setmode(GPIO.BCM)  # Utiliza el modo BCM para numeración de pines
-    
-    # Configurar los pines para los relés de la válvula 1
-    GPIO.setup(RELAY_PIN_1_PRIMARY, GPIO.OUT)
-    GPIO.setup(RELAY_PIN_1_BACKUP, GPIO.OUT)
-    GPIO.output(RELAY_PIN_1_PRIMARY, GPIO.LOW)  # Inicialmente apagado
-    GPIO.output(RELAY_PIN_1_BACKUP, GPIO.LOW)   # Inicialmente apagado
+    def __init__(self, relay_addresses, i2c_bus=1, trigger_level="high"):
+        """
+        Inicializa el controlador de válvulas.
 
-    # Configurar los pines para los relés de la válvula 2
-    GPIO.setup(RELAY_PIN_2_PRIMARY, GPIO.OUT)
-    GPIO.setup(RELAY_PIN_2_BACKUP, GPIO.OUT)
-    GPIO.output(RELAY_PIN_2_PRIMARY, GPIO.LOW)  # Inicialmente apagado
-    GPIO.output(RELAY_PIN_2_BACKUP, GPIO.LOW)   # Inicialmente apagado
+        :param relay_addresses: Diccionario con direcciones I2C de los relés.
+        :param i2c_bus: Número del bus I2C.
+        :param trigger_level: Nivel de disparo del relé ("high" o "low").
+        """
+        self.bus = smbus.SMBus(i2c_bus)
+        self.relay_addresses = relay_addresses
+        self.trigger_level = 1 if trigger_level.lower() == "high" else 0
 
-def activate_relay(pin):
-    """
-    Intenta activar un relé y devuelve True si tiene éxito, False si falla.
-    """
-    try:
-        GPIO.output(pin, GPIO.HIGH)  # Activar el relé
-        print(f"Relay {pin} activated.")
-        return True
-    except Exception as e:
-        print(f"Failed to activate Relay {pin}: {e}")
-        return False
+    def activate_valve(self, valve_name):
+        """
+        Activa la válvula especificada.
 
-def adjust_valves(valve, pressure_data):
-    """
-    Controla los relés de ambas válvulas con redundancia basado en los datos del sensor de presión.
-    
-    :param valve: Nombre de las válvulas que están controladas por los relés.
-    :param pressure_data: Datos de presión que dictan si los relés se activan o no.
-    """
-    setup_valves()  # Configura los GPIO para controlar los 4 relés
-    
-    # Controlar la válvula 1
-    if pressure_data['value'] < 10:
-        print("Opening valve 1.")
-        if not activate_relay(RELAY_PIN_1_PRIMARY):  # Intentar activar el relé principal
-            print("Primary Relay 1 failed. Activating backup.")
-            activate_relay(RELAY_PIN_1_BACKUP)  # Activar el relé de respaldo
-    else:
-        print("Closing valve 1.")
-        GPIO.output(RELAY_PIN_1_PRIMARY, GPIO.LOW)  # Cerrar el relé principal
-        GPIO.output(RELAY_PIN_1_BACKUP, GPIO.LOW)   # Cerrar el relé de respaldo
-    
-    # Controlar la válvula 2
-    if pressure_data['value'] < 10:
-        print("Opening valve 2.")
-        if not activate_relay(RELAY_PIN_2_PRIMARY):  # Intentar activar el relé principal
-            print("Primary Relay 2 failed. Activating backup.")
-            activate_relay(RELAY_PIN_2_BACKUP)  # Activar el relé de respaldo
-    else:
-        print("Closing valve 2.")
-        GPIO.output(RELAY_PIN_2_PRIMARY, GPIO.LOW)  # Cerrar el relé principal
-        GPIO.output(RELAY_PIN_2_BACKUP, GPIO.LOW)   # Cerrar el relé de respaldo
+        :param valve_name: Nombre de la válvula (clave en relay_addresses).
+        """
+        if valve_name not in self.relay_addresses:
+            raise ValueError(f"Válvula {valve_name} no configurada.")
+        print(f"Activando válvula {valve_name}...")
+        self.bus.write_byte(self.relay_addresses[valve_name], self.trigger_level)
+        print(f"Válvula {valve_name} activada.")
 
-    # Registrar el estado de los relés
-    time.sleep(1)  # Simulación de operación de las válvulas por 1 segundo
-    GPIO.cleanup()  # Limpiar los pines GPIO después de usarlos
+    def deactivate_valve(self, valve_name):
+        """
+        Desactiva la válvula especificada.
+
+        :param valve_name: Nombre de la válvula (clave en relay_addresses).
+        """
+        if valve_name not in self.relay_addresses:
+            raise ValueError(f"Válvula {valve_name} no configurada.")
+        print(f"Desactivando válvula {valve_name}...")
+        self.bus.write_byte(self.relay_addresses[valve_name], 1 - self.trigger_level)
+        print(f"Válvula {valve_name} desactivada.")
