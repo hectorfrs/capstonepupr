@@ -3,7 +3,7 @@ Description=Capstone Project - Raspberry Pi 2 Service
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/python3 /scripts/main_pi2.py
+ExecStart=/usr/bin/python3 main_pi2.py
 WorkingDirectory=/home/raspberry-2/capstonepupr/src/pi2/scripts
 StandardOutput=append:/home/raspberry-2/capstonepupr/src/pi2/logs/pi2_logs.log
 StandardError=append:/home/raspberry-2/capstonepupr/src/pi2/logs/pi2_logs.log
