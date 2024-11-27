@@ -1,134 +1,93 @@
 import yaml
-from lib.as7265x import AS7265x
-from lib.mux_controller import MUXController
-from utils.greengrass import process_with_greengrass
-from utils import iot_core
 import logging
-import paho.mqtt.client as mqtt
-import json
 import os
+import time
 from datetime import datetime
+from lib.mux_controller import MUXController
+from lib.as7265x import AS7265x
+from utils.mqtt_publisher import MQTTPublisher
+from utils.greengrass import process_with_greengrass
+
 
 def load_config():
     """
-    Carga la configuración específica de Raspberry Pi 1 desde un archivo YAML.
+    Carga la configuración desde el archivo YAML.
     """
-    print("Loading configuration for Raspberry Pi 1...")
+    print("Cargando configuración para Raspberry Pi 1...")
     config_path = 'config/pi1_config.yaml'
     if not os.path.exists(config_path):
-        raise FileNotFoundError(f"Configuration file not found at {config_path}")
+        raise FileNotFoundError(f"No se encontró el archivo de configuración en {config_path}")
     with open(config_path, 'r') as file:
         config = yaml.safe_load(file)
-    print("Configuration loaded.")
+    print("Configuración cargada.")
     return config
 
-def save_data_to_csv(data, csv_path="/data/pi1_data.csv"):
-    """
-    Guarda los datos recolectados en un archivo CSV.
-
-    :param data: Diccionario con los datos a guardar (timestamp y espectros).
-    :param csv_path: Ruta del archivo CSV.
-    """
-    file_exists = os.path.isfile(csv_path)
-    with open(csv_path, mode='a', newline='') as file:
-        writer = csv.DictWriter(file, fieldnames=["timestamp", "sensor", "violet", "blue", "green", "yellow", "orange", "red"])
-        if not file_exists:
-            writer.writeheader()  # Escribir encabezado si el archivo no existe
-        writer.writerow(data)
-    print(f"Data saved to {csv_path}: {data}")
-
-def on_settings_update(client, userdata, message):
-    """
-    Callback para manejar actualizaciones de configuración a través de MQTT.
-
-    :param client: Cliente MQTT.
-    :param userdata: Información adicional del cliente MQTT.
-    :param message: Mensaje recibido con los nuevos ajustes.
-    """
-    print(f"Received settings update: {message.payload}")
-    try:
-        data = json.loads(message.payload)
-        integration_time = data.get("integration_time")
-        gain = data.get("gain")
-        if integration_time or gain:
-            print(f"Updating sensor settings: integration_time={integration_time}, gain={gain}")
-            sensor.update_settings(integration_time=integration_time, gain=gain)
-    except Exception as e:
-        print(f"Failed to apply settings update: {e}")
 
 def main():
     """
-    Script principal para leer datos de los sensores AS7265x y publicar actualizaciones en AWS IoT Core.
+    Función principal para manejar el flujo de datos del sensor AS7265x.
     """
-    # Cargar la configuración
+    # Cargar configuración
     config = load_config()
 
     # Configurar logging
     logging.basicConfig(filename=config['logging']['log_file'], level=logging.INFO)
-    print("Logging configured.")
+    print("Logging configurado.")
 
-    # Inicializar el MUX y los sensores
+    # Inicializar MUX y sensores
     mux = MUXController(i2c_bus=1, i2c_address=config['mux']['i2c_address'])
     sensors_config = config['mux']['channels']
-    global sensor
     sensor = AS7265x(
         i2c_bus=config['sensors']['as7265x']['i2c_bus'],
         integration_time=config['sensors']['as7265x']['integration_time'],
         gain=config['sensors']['as7265x']['gain']
     )
 
-    # Configurar MQTT
-    mqtt_client = mqtt.Client()
-    mqtt_client.on_message = on_settings_update
-    mqtt_client.connect(config['aws']['iot_core_endpoint'], 8883)
-    mqtt_client.subscribe(config['aws']['iot_topics']['settings_update'])
-    mqtt_client.loop_start()
-    print("MQTT client configured and subscribed to settings update.")
+    # Configurar clientes MQTT
+    local_publisher = MQTTPublisher(endpoints=config['mqtt']['broker_addresses'], local=True)
+    local_publisher.connect(port=config['mqtt']['port'])
 
-    # Iterar a través de los sensores conectados al MUX
-    for sensor_config in sensors_config:
+    aws_publisher = MQTTPublisher(
+        endpoints=config['aws']['iot_core_endpoint'],
+        cert_path=config['aws']['cert_path'],
+        key_path=config['aws']['key_path'],
+        ca_path=config['aws']['ca_path']
+    )
+    aws_publisher.connect()
+
+    # Loop principal para lectura de sensores y publicación de datos
+    while True:
         try:
-            print(f"Switching to sensor: {sensor_config['sensor_name']} on channel {sensor_config['channel']}")
-            mux.select_channel(sensor_config['channel'])  # Seleccionar el canal del sensor en el MUX
+            for sensor_config in sensors_config:
+                print(f"Conmutando al sensor: {sensor_config['sensor_name']} en el canal {sensor_config['channel']}...")
+                mux.select_channel(sensor_config['channel'])  # Seleccionar el canal del sensor en el MUX
 
-            # Configurar y leer datos del sensor
-            sensor.configure_sensor()
-            spectral_data = sensor.read_spectrum()
-            print(f"Spectral data from {sensor_config['sensor_name']}: {spectral_data}")
+                # Leer datos del sensor
+                spectral_data = sensor.read_spectrum()
+                payload = {
+                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "sensor": sensor_config['sensor_name'],
+                    **spectral_data
+                }
 
-            # Crear el payload
-            payload = {
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "sensor": sensor_config['sensor_name'],
-                **spectral_data
-            }
+                # Publicar datos en MQTT local y AWS IoT Core
+                local_publisher.publish(config['mqtt']['topics']['sensor_data'], payload)
+                aws_publisher.publish(config['aws']['iot_topics']['sensor_data'], payload)
 
-            # Procesar datos con Greengrass
-            process_with_greengrass(config['greengrass']['group_name'], payload)
+                # Procesar datos localmente con Greengrass
+                response = process_with_greengrass(config['greengrass']['functions'][0]['arn'], payload)
+                print(f"Respuesta de Greengrass: {response}")
 
-            # Publicar datos en AWS IoT Core
-            iot_core.send_data_to_aws(
-                config['aws']['iot_core_endpoint'],
-                config['aws']['iot_topics']['sensor_data'],
-                payload,
-                config['aws']['cert_path'],
-                config['aws']['key_path'],
-                config['aws']['ca_path']
-            )
-            print(f"Data published for {sensor_config['sensor_name']}.")
+            # Deshabilitar todos los canales del MUX después de cada ciclo
+            mux.disable_all_channels()
 
-            # Guardar los datos en CSV
-            save_data_to_csv(payload)
+            # Intervalo entre lecturas
+            time.sleep(1)
 
         except Exception as e:
-            print(f"Failed to process {sensor_config['sensor_name']}: {e}")
-            logging.error(f"Failed to process {sensor_config['sensor_name']}: {e}")
+            logging.error(f"Error en el loop principal: {e}")
+            print(f"Error en el loop principal: {e}")
 
-            logging.error(f"Failed to apply settings update: {e}")
-            print(f"Failed to apply settings update: {e}")
-
-        finally:
-            mux.disable_all_channels()  # Deshabilitar todos los canales después de cada operación
 
 if __name__ == '__main__':
     main()
