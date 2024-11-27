@@ -76,4 +76,8 @@ echo "Validando directorios /logs y /data..."
 mkdir -p "$REPO_DIR/src/pi1/logs" "$REPO_DIR/src/pi1/data"
 chmod 755 "$REPO_DIR/src/pi1/logs" "$REPO_DIR/src/pi1/data"
 
+echo "Asignando permisos a los directorios..."
+chmod 644 /etc/systemd/system/capstone_pi1.service
+chmod +x /home/raspberry-1/capstonepupr/src/pi1/scripts/main_pi1.py
+
 echo "Configuración de Raspberry Pi 1 completada."
