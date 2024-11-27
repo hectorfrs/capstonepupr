@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Variables
-REPO_URL="https://github.com/hectorfrs/capstonepupr.git"
+REPO_URL="git@github.com:hectorfrs/capstonepupr.git"
 REPO_DIR="/home/raspberry-2/capstonepupr"
 SCRIPT_DIR="$REPO_DIR/src/pi2"
 SERVICE_FILE="capstone_pi2.service"
@@ -75,5 +75,10 @@ sudo /greengrass/v2/bin/greengrass-cli component list
 echo "Validando directorios /logs y /data..."
 mkdir -p "$REPO_DIR/src/pi2/logs" "$REPO_DIR/src/pi2/data"
 chmod 755 "$REPO_DIR/src/pi2/logs" "$REPO_DIR/src/pi2/data"
+
+echo "Asignando permisos a los directorios..."
+chmod 644 /etc/systemd/system/capstone_pi2.service
+chmod +x /home/raspberry-2/capstonepupr/src/pi2/scripts/main_pi2.py
+
 
 echo "Configuración de Raspberry Pi 2 completada."
