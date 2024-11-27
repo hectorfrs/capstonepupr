@@ -1,164 +1,128 @@
-import threading
-import time
 import yaml
-import os
 import logging
-
-# Importar módulos personalizados
-from lib.touch_screen_interface import TouchScreenInterface
+import os
+from utils.mqtt_publisher import MQTTPublisher
 from utils.greengrass import process_with_greengrass
 from lib.weight_sensor import WeightSensor
-from lib.camera_module import CameraModule
-from utils.iot_core import IoTCoreClient
+from lib.camera import Camera
+import tkinter as tk
+
 
 def load_config():
     """
     Carga la configuración desde el archivo YAML.
     """
+    print("Cargando configuración para Raspberry Pi 3...")
     config_path = 'config/pi3_config.yaml'
     if not os.path.exists(config_path):
-        raise FileNotFoundError(f"Archivo de configuración no encontrado en {config_path}")
+        raise FileNotFoundError(f"No se encontró el archivo de configuración en {config_path}")
     with open(config_path, 'r') as file:
         config = yaml.safe_load(file)
     print("Configuración cargada.")
     return config
 
+
+def on_sensor_data(client, userdata, message):
+    """
+    Callback para manejar datos recibidos de Raspberry Pi #1 y #2.
+    """
+    print(f"Mensaje recibido en tópico {message.topic}: {message.payload}")
+    data = json.loads(message.payload)
+    # Procesar datos según el tópico
+    if message.topic == config['mqtt']['topics']['sensor_data_pi1']:
+        print(f"Procesando datos de Pi1: {data}")
+    elif message.topic == config['mqtt']['topics']['sensor_data_pi2']:
+        print(f"Procesando datos de Pi2: {data}")
+
+
+def send_settings_to_pi(pi_number, settings):
+    """
+    Envía configuraciones específicas a Raspberry Pi #1 o #2.
+
+    :param pi_number: Número de Raspberry Pi (1 o 2).
+    :param settings: Configuraciones en formato JSON.
+    """
+    topic = config['mqtt']['topics'][f'settings_update_pi{pi_number}']
+    mqtt_publisher.publish(topic, settings)
+    print(f"Configuraciones enviadas a Raspberry Pi #{pi_number} en el tópico {topic}: {settings}")
+
+
+def create_touch_screen_menu():
+    """
+    Crea un menú interactivo en la pantalla táctil.
+    """
+    def adjust_valves():
+        print("Ajustando configuraciones de válvulas...")
+        send_settings_to_pi(1, {"action": "adjust_valves"})
+        send_settings_to_pi(2, {"action": "adjust_valves"})
+
+    def calibrate_sensors():
+        print("Calibrando sensores...")
+        send_settings_to_pi(1, {"action": "calibrate_sensors"})
+        send_settings_to_pi(2, {"action": "calibrate_sensors"})
+
+    def start_camera_analysis():
+        print("Iniciando análisis de cámara...")
+        process_with_greengrass(config['greengrass']['functions'][1]['arn'], {"action": "start"})
+
+    def stop_camera_analysis():
+        print("Deteniendo análisis de cámara...")
+        process_with_greengrass(config['greengrass']['functions'][1]['arn'], {"action": "stop"})
+
+    def view_system_status():
+        print("Mostrando estado del sistema...")
+        # Aquí puedes implementar detalles específicos del estado del sistema.
+
+    root = tk.Tk()
+    root.title("Control de Raspberry Pi")
+
+    tk.Button(root, text="Ajustar Configuración de Válvulas", command=adjust_valves).pack(pady=10)
+    tk.Button(root, text="Calibrar Sensores", command=calibrate_sensors).pack(pady=10)
+    tk.Button(root, text="Iniciar Análisis de Cámara", command=start_camera_analysis).pack(pady=10)
+    tk.Button(root, text="Detener Análisis de Cámara", command=stop_camera_analysis).pack(pady=10)
+    tk.Button(root, text="Estado del Sistema", command=view_system_status).pack(pady=10)
+    tk.Button(root, text="Salir", command=root.quit).pack(pady=10)
+
+    root.mainloop()
+
+
 def main():
     """
-    Función principal para coordinar las operaciones de Raspberry Pi 3.
+    Función principal para manejar datos de peso, cámara y comunicación.
     """
-    # Cargar la configuración
+    global config
     config = load_config()
 
     # Configurar logging
     logging.basicConfig(filename=config['logging']['log_file'], level=logging.INFO)
     print("Logging configurado.")
 
-    # Inicializar cliente MQTT para AWS IoT Core
-    iot_client = IoTCoreClient(
-        endpoint=config['aws']['iot_core_endpoint'],
+    # Inicializar sensor de peso y cámara
+    weight_sensor = WeightSensor(
+        i2c_address=config['weight_sensor']['i2c_address'],
+        calibration_factor=config['weight_sensor']['calibration_factor']
+    )
+    camera = Camera(
+        resolution=config['camera']['resolution'],
+        frame_rate=config['camera']['frame_rate']
+    )
+
+    # Configurar cliente MQTT para publicación en AWS IoT Core
+    aws_publisher = MQTTPublisher(
+        endpoints=config['aws']['iot_core_endpoint'],
         cert_path=config['aws']['cert_path'],
         key_path=config['aws']['key_path'],
         ca_path=config['aws']['ca_path']
     )
-    iot_client.connect()
-    iot_client.loop_start()
+    aws_publisher.connect()
 
-    # Inicializar sensor de peso
-    weight_sensor_config = config['weight_sensor']
-    weight_sensor = WeightSensor(
-        i2c_bus=1,
-        i2c_address=int(weight_sensor_config['i2c_address'], 16),
-        calibration_factor=weight_sensor_config['calibration_factor']
-    )
-    # Realizar tara al iniciar
-    weight_sensor.tare()
+    # Crear cliente MQTT para comunicación local
+    local_publisher = MQTTPublisher(endpoints=["localhost"], local=True)
+    local_publisher.connect(port=config['mqtt']['broker']['port'])
 
-    # Inicializar módulo de cámara
-    camera_module = CameraModule(config_path='config/pi3_config.yaml')
+    # Ejecutar el menú táctil
+    create_touch_screen_menu()
 
-    # Inicializar interfaz táctil y pasar referencias de los sensores
-    touch_screen_interface = TouchScreenInterface(
-        weight_sensor=weight_sensor,
-        camera_module=camera_module,
-        iot_client=iot_client,
-        config=config
-    )
-
-    # Iniciar hilos para lectura del sensor de peso y captura de cámara
-    weight_thread = threading.Thread(target=read_weight_sensor, args=(weight_sensor, iot_client, config))
-    weight_thread.daemon = True
-    weight_thread.start()
-
-    camera_thread = threading.Thread(target=stream_camera, args=(camera_module, iot_client, config))
-    camera_thread.daemon = True
-    camera_thread.start()
-
-    # Ejecutar la interfaz táctil
-    touch_screen_interface.run()
-
-    # Al cerrar la interfaz, detener hilos y limpiar recursos
-    camera_module.stop_video_stream()
-    camera_module.release_camera()
-    iot_client.loop_stop()
-    print("Programa finalizado.")
-
-def read_weight_sensor(weight_sensor, iot_client, config):
-    """
-    Lee continuamente el sensor de peso y publica datos en AWS IoT Core.
-    """
-    try:
-        while True:
-            weight = weight_sensor.get_weight()
-            if weight is not None:
-                # Procesar datos con Greengrass
-                process_with_greengrass(config['greengrass']['group_name'], {'weight': weight})
-                # Publicar datos en AWS IoT Core
-                payload = {
-                    'device': 'Raspberry Pi 3',
-                    'weight': weight
-                }
-                iot_client.publish(config['aws']['iot_topics']['data_publish'], payload)
-                print(f"Datos de peso publicados: {payload}")
-            time.sleep(1)  # Ajustar el intervalo de lectura según sea necesario
-    except Exception as e:
-        logging.error(f"Error al leer el sensor de peso: {e}")
-
-def stream_camera(camera_module, iot_client, config):
-    """
-    Captura imágenes de la cámara y publica resultados de análisis en AWS IoT Core.
-    """
-    try:
-        while True:
-            if camera_module.streaming:
-                frame = camera_module.capture_image()
-                if frame is not None:
-                    analysis_result = camera_module.analyze_image(frame)
-                    # Procesar el resultado del análisis según sea necesario
-                    payload = {
-                        'device': 'Raspberry Pi 3',
-                        'camera_analysis': analysis_result
-                    }
-                    iot_client.publish(config['aws']['iot_topics']['data_publish'], payload)
-                    print(f"Datos de análisis de cámara publicados: {payload}")
-                time.sleep(1 / camera_module.frame_rate)
-            else:
-                time.sleep(1)
-    except Exception as e:
-        logging.error(f"Error en la transmisión de la cámara: {e}")
-
-def handle_action(self, action):
-    """
-    Maneja las acciones seleccionadas en el menú táctil.
-    """
-    if action == 'adjust_valves':
-        self.adjust_valves()
-    elif action == 'calibrate_sensors':
-        self.calibrate_sensors()
-    elif action == 'start_camera':
-        self.start_camera_analysis()
-    elif action == 'stop_camera':
-        self.stop_camera_analysis()
-    elif action == 'view_status':
-        self.view_status()
-    else:
-        messagebox.showerror("Error", f"Acción desconocida: {action}")
-
-def start_camera_analysis(self):
-    """
-    Inicia el análisis de la cámara.
-    """
-    if self.camera_module:
-        self.camera_module.streaming = True
-        messagebox.showinfo("Cámara", "Análisis de cámara iniciado.")
-
-def stop_camera_analysis(self):
-    """
-    Detiene el análisis de la cámara.
-    """
-    if self.camera_module:
-        self.camera_module.streaming = False
-        messagebox.showinfo("Cámara", "Análisis de cámara detenido.")
 
 if __name__ == '__main__':
     main()

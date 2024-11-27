@@ -3,16 +3,16 @@
 network:
   ethernet:
     ip: "192.168.1.147"           # Dirección IP estática para Ethernet
-    gateway: "192.168.1.1"       # Puerta de enlace para Ethernet
+    gateway: "192.168.1.1"        # Puerta de enlace para Ethernet
   wifi:
-    ssid: "your_wifi_ssid"       # Nombre de la red Wi-Fi
-    password: "your_wifi_password" # Contraseña de la red Wi-Fi
-    ip: "192.168.2.12"           # Dirección IP estática para Wi-Fi
-    gateway: "192.168.2.1"       # Puerta de enlace para Wi-Fi
+    ssid: "Capstone"              # Nombre de la red Wi-Fi
+    password: "Elefante"          # Contraseña de la red Wi-Fi
+    ip: "192.168.2.147"            # Dirección IP estática para Wi-Fi
+    gateway: "192.168.2.1"        # Puerta de enlace para Wi-Fi
 
 weight_sensor:
-  i2c_address: 0x40              # Dirección I2C del sensor de peso
-  calibration_factor: 2280       # Factor de calibración para el sensor de peso
+  i2c_address: 0x40               # Dirección I2C del sensor de peso
+  calibration_factor: 2280        # Factor de calibración para el sensor de peso
 
 camera:
   resolution:
@@ -38,7 +38,7 @@ touch_screen:
         action: "view_status"
 
 greengrass:
-  group_name: "GreengrassGroup"  # Nombre del grupo de Greengrass
+  group_name: "Casptone-Group"  # Nombre del grupo de Greengrass
   functions:
     - name: "WeightDataProcessing"
       arn: "arn:aws:lambda:region:account-id:function:WeightDataProcessing"
@@ -48,16 +48,26 @@ greengrass:
 aws:
   iot_core_endpoint: "your_aws_iot_core_endpoint"
   iot_topics:
-    data_publish: "pi3/data"                 # Tópico para publicar datos de sensores y cámara
+    data_publish: "pi3/data"                    # Tópico para publicar datos de sensores y cámara
     settings_update_pi1: "pi1/settings_update"  # Tópico para enviar actualizaciones a Raspberry Pi #1
     settings_update_pi2: "pi2/settings_update"  # Tópico para enviar actualizaciones a Raspberry Pi #2
-  cert_path: "/certs/certificate.pem.crt"   # Certificado del cliente
-  key_path: "/certs/private.pem.key"        # Llave privada
-  ca_path: "/certs/AmazonRootCA1.pem"       # Certificado raíz de Amazon
-  region: "us-east-1"          # Región de AWS
-  access_key: "your_access_key"     # No recomendado en el archivo de configuración
-  secret_key: "your_secret_key"     # No recomendado en el archivo de configuración
+  cert_path: "/certs/certificate.pem.crt"       # Certificado del cliente
+  key_path: "/certs/private.pem.key"            # Llave privada
+  ca_path: "/certs/AmazonRootCA1.pem"           # Certificado raíz de Amazon
+  region: "us-east-1"                           # Región de AWS
+  access_key: "your_access_key"                 # No recomendado en el archivo de configuración
+  secret_key: "your_secret_key"                 # No recomendado en el archivo de configuración
 
+mqtt:
+  broker:
+    enabled: true                               # Indica que este Raspberry Pi actúa como broker MQTT
+    port: 1883                                  # Puerto para el broker MQTT local
+  topics:
+    settings_update_pi1: "pi1/settings_update"  # Tópico para enviar ajustes a Raspberry Pi #1
+    settings_update_pi2: "pi2/settings_update"  # Tópico para enviar ajustes a Raspberry Pi #2
+    sensor_data_pi1: "pi1/sensor_data"          # Tópico para recibir datos de Raspberry Pi #1
+    sensor_data_pi2: "pi2/sensor_data"          # Tópico para recibir datos de Raspberry Pi #2
+    data_publish: "pi3/data"
 
 logging:
   log_file: "/logs/pi3_logs.log"  # Archivo de logs para registrar las operaciones
