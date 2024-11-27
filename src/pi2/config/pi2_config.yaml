@@ -31,7 +31,7 @@ valves:
   trigger_level: "high"          # Nivel de disparo del relé (alto o bajo)
 
 greengrass:
-  group_name: "GreengrassGroup"  # Nombre del grupo de Greengrass
+  group_name: "Capstone-Group"  # Nombre del grupo de Greengrass
   functions:
     - name: "ValveControl"
       arn: "arn:aws:lambda:region:account-id:function:ValveControl"
@@ -44,6 +44,17 @@ aws:
   cert_path: "/certs/certificate.pem.crt"  # Certificado del cliente
   key_path: "/certs/private.pem.key"       # Llave privada
   ca_path: "/certs/AmazonRootCA1.pem"      # Certificado raíz de Amazon
+
+mqtt:
+  broker_addresses:
+    - "192.168.1.137"  # Dirección IP del broker MQTT (Ethernet, Raspberry Pi #3)
+    - "192.168.2.137"  # Dirección IP del broker MQTT (Wi-Fi, Raspberry Pi #3)
+  port: 1883
+  username: "pi"
+  password: "Elefante"
+  topics:
+    valve_control: "pi2/valve_control"  # Tópico para recibir comandos de control de válvulas
+    pressure_data: "pi2/pressure_data"  # Tópico para publicar datos de presión
 
 logging:
   log_file: "/logs/pi2_logs.log"  # Archivo de logs para registrar las operaciones
