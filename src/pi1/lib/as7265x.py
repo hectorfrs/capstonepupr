@@ -1,101 +1,72 @@
 import smbus
 import time
 
+
 class AS7265x:
-    def __init__(self, i2c_bus=1, integration_time=100, gain=64):
+    """
+    Clase para interactuar con el sensor AS7265x para lecturas espectroscópicas.
+    """
+    def __init__(self, i2c_bus, i2c_address=0x49, integration_time=100, gain=64):
         """
         Inicializa el sensor AS7265x.
 
-        :param i2c_bus: Número del bus I2C donde está conectado el sensor.
-        :param integration_time: Tiempo de integración en ms para cada lectura.
-        :param gain: Ganancia configurada para el sensor.
+        :param i2c_bus: Número del bus I2C.
+        :param i2c_address: Dirección I2C del sensor AS7265x.
+        :param integration_time: Tiempo de integración en ms.
+        :param gain: Ganancia para las lecturas del sensor.
         """
-        self.bus = smbus.SMBus(i2c_bus)
+        self.i2c_address = i2c_address
         self.integration_time = integration_time
         self.gain = gain
-        self.device_address = None  # Dirección I2C del sensor asignada dinámicamente
+        self.bus = smbus.SMBus(i2c_bus)
 
-    def set_device_address(self, address):
-        """
-        Establece la dirección I2C del sensor.
-        
-        :param address: Dirección I2C del sensor.
-        """
-        self.device_address = address
-
-    def write_register(self, address, value):
-        """
-        Escribe un valor en un registro específico del sensor.
-
-        :param address: Dirección del registro.
-        :param value: Valor a escribir.
-        """
-        if self.device_address is None:
-            raise ValueError("Device address not set.")
-        try:
-            self.bus.write_byte_data(self.device_address, address, value)
-        except Exception as e:
-            print(f"Failed to write to register {address}: {e}")
-
-    def read_register(self, address):
-        """
-        Lee el valor de un registro específico del sensor.
-
-        :param address: Dirección del registro.
-        :return: Valor leído.
-        """
-        if self.device_address is None:
-            raise ValueError("Device address not set.")
-        try:
-            return self.bus.read_byte_data(self.device_address, address)
-        except Exception as e:
-            print(f"Failed to read from register {address}: {e}")
-            return None
+        # Configurar el sensor
+        self.configure_sensor()
 
     def configure_sensor(self):
         """
-        Configura el sensor con tiempo de integración y ganancia.
+        Configura el sensor AS7265x con el tiempo de integración y ganancia especificados.
         """
-        print(f"Configuring AS7265x with integration time {self.integration_time}ms and gain {self.gain}...")
-        self.write_register(0x01, self.integration_time)  # Registro de tiempo de integración
-        self.write_register(0x02, self.gain)              # Registro de ganancia
-        time.sleep(1)
+        print(f"Configurando el sensor AS7265x en la dirección {hex(self.i2c_address)}...")
+        self.write_register(0x04, self.integration_time // 2.8)     # Tiempo de integración
+        self.write_register(0x05, self.gain)                        # Ganancia
+        print("Configuración del sensor completada.")
 
-    def update_settings(self, integration_time=None, gain=None):
+    def write_register(self, register, value):
         """
-        Actualiza las configuraciones del sensor de forma dinámica.
+        Escribe un valor en un registro del sensor.
 
-        :param integration_time: Nuevo tiempo de integración en ms.
-        :param gain: Nueva ganancia.
+        :param register: Registro a escribir.
+        :param value: Valor a escribir.
         """
-        if integration_time is not None:
-            print(f"Updating integration time to {integration_time}ms...")
-            self.integration_time = integration_time
-            self.write_register(0x01, integration_time)
-        if gain is not None:
-            print(f"Updating gain to {gain}...")
-            self.gain = gain
-            self.write_register(0x02, gain)
-        print("Sensor settings updated.")
+        print(f"Escribiendo valor {value} en el registro {hex(register)}...")
+        self.bus.write_byte_data(self.i2c_address, register, value)
 
     def read_spectrum(self):
         """
-        Lee los valores espectrales del sensor.
+        Lee los datos espectroscópicos del sensor.
 
-        :return: Diccionario con los valores espectrales.
+        :return: Diccionario con las lecturas de los espectros (violeta, azul, verde, amarillo, naranja, rojo).
         """
-        print("Reading spectral data from AS7265x...")
-        try:
-            spectral_data = {
-                "violet": self.read_register(0x08),  # Ejemplo: valores del espectro violeta
-                "blue": self.read_register(0x0A),   # Ejemplo: valores del espectro azul
-                "green": self.read_register(0x0C),  # Ejemplo: valores del espectro verde
-                "yellow": self.read_register(0x0E), # Ejemplo: valores del espectro amarillo
-                "orange": self.read_register(0x10), # Ejemplo: valores del espectro naranja
-                "red": self.read_register(0x12)    # Ejemplo: valores del espectro rojo
-            }
-            print(f"Spectral data: {spectral_data}")
-            return spectral_data
-        except Exception as e:
-            print(f"Failed to read spectral data: {e}")
-            return None
+        print("Leyendo datos espectroscópicos del sensor AS7265x...")
+        spectrum = {
+            "violet": self.read_register(0x08),
+            "blue": self.read_register(0x0A),
+            "green": self.read_register(0x0C),
+            "yellow": self.read_register(0x0E),
+            "orange": self.read_register(0x10),
+            "red": self.read_register(0x12),
+        }
+        print(f"Espectro leído: {spectrum}")
+        return spectrum
+
+    def read_register(self, register):
+        """
+        Lee un valor de un registro del sensor.
+
+        :param register: Registro a leer.
+        :return: Valor leído.
+        """
+        value = self.bus.read_byte_data(self.i2c_address, register)
+        print(f"Valor leído del registro {hex(register)}: {value}")
+        return value
