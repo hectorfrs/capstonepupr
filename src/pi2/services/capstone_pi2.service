@@ -4,9 +4,9 @@ After=network.target
 
 [Service]
 ExecStart=/usr/bin/python3 /scripts/main_pi2.py
-WorkingDirectory=/scripts
-StandardOutput=append:/logs/pi2_logs.log
-StandardError=append:/logs/pi2_logs.log
+WorkingDirectory=/home/raspberry-2/capstonepupr/src/pi2/scripts
+StandardOutput=append:/home/raspberry-2/capstonepupr/src/pi2/logs/pi2_logs.log
+StandardError=append:/home/raspberry-2/capstonepupr/src/pi2/logs/pi2_logs.log
 Restart=on-failure
 User=raspberry-2
 Group=raspberry-2
