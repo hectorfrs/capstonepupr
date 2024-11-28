@@ -7,6 +7,7 @@ from utils.mqtt_publisher import MQTTPublisher
 from utils.greengrass import process_with_greengrass
 from utils.sensors import PressureSensor
 from utils.valve_control import ValveController
+from utils.networking import setup_network
 
 
 def load_config():
