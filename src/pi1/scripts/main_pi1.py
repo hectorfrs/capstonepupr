@@ -25,19 +25,16 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 
 
 def configure_logging(config):
-    log_file = config['logging']['log_file']
-    #log_dir = os.path.dirname(log_file)
-    log_dir = os.path.expanduser(os.path.dirname(config['logging']['log_file']))
+    log_file = os.path.expanduser(config['logging']['log_file'])  # Expande '~' al directorio del usuario
+    log_dir = os.path.dirname(log_file)
 
-
-    # Crea el directorio si no existe
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
 
     logging.basicConfig(
         filename=log_file,
         level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        format='%(asctime)s - %(levelname)s - %(message)s'
     )
     print(f"Logging configurado en {log_file}.")
 
