@@ -18,8 +18,6 @@ import yaml
 
 import sys
 import os
-sys.path.append("/home/raspberry-1/capstonepupr/src/pi1")
-
 # Agregar la ruta del proyecto al PYTHONPATH
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
