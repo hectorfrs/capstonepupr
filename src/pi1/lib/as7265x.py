@@ -28,7 +28,10 @@ class CustomAS7265x(Spectrometer):
         self.bus = SMBus(self.i2c_bus)
 
         # Inicializar la biblioteca SparkFun
-        super().__init__(self.bus)
+        #super().__init__(self.bus)
+        # Llama al constructor de la clase base con el número de bus I2C
+        super().__init__(i2c_bus=self.config['sensors']['as7265x']['i2c_bus'])
+
 
         # Configurar el sensor
         self.configure_sensor()

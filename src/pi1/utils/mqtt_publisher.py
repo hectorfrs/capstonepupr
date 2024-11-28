@@ -64,14 +64,21 @@ class MQTTPublisher:
             print(f"Cliente MQTT configurado para AWS IoT Core: {self.broker}")
 
     def connect(self):
-        """
-        Conecta al broker MQTT.
-        """
         try:
+            print(f"Intentando conectar al broker MQTT {self.broker} en el puerto {self.port}...")
             self.client.connect(self.broker, self.port, keepalive=60)
-            print(f"Conectado al broker MQTT en {self.broker}:{self.port}")
+            print("Conexión al broker MQTT exitosa.")
         except Exception as e:
-            raise ConnectionError(f"Error al conectar con el broker MQTT: {e}")
+            print(f"Error al conectar con el broker MQTT: {e}")
+            for i in range(3):  # Intenta reconectar hasta 3 veces
+                time.sleep(5)
+                try:
+                    self.client.connect(self.broker, self.port, keepalive=60)
+                    print("Conexión al broker MQTT exitosa en reintento.")
+                    return
+                except Exception as retry_error:
+                    print(f"Reintento {i+1} fallido: {retry_error}")
+            raise ConnectionError(f"No se pudo conectar con el broker MQTT después de 3 intentos: {e}")
 
     def publish_parallel(self, topic, message):
         """
