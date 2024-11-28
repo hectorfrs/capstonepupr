@@ -1,88 +1,65 @@
 import json
 import os
+from datetime import datetime
 
 
-class JSONManager:
+def generate_json(sensor_id, channel, spectral_data, detected_material, confidence):
     """
-    Clase para manejar operaciones de lectura, escritura y validación de archivos JSON.
+    Genera un objeto JSON para representar los datos de medición.
+
+    :param sensor_id: ID del sensor que tomó la medición.
+    :param channel: Canal del MUX correspondiente.
+    :param spectral_data: Diccionario con valores espectrales.
+    :param detected_material: Material identificado.
+    :param confidence: Nivel de confianza en la clasificación.
+    :return: Diccionario JSON.
     """
+    return {
+        "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+        "sensor_id": sensor_id,
+        "channel": channel,
+        "spectral_data": spectral_data,
+        "detected_material": detected_material,
+        "confidence": confidence
+    }
 
-    @staticmethod
-    def load_json(file_path):
-        """
-        Carga el contenido de un archivo JSON.
 
-        :param file_path: Ruta del archivo JSON.
-        :return: Datos del archivo JSON como un diccionario.
-        :raises FileNotFoundError: Si el archivo no existe.
-        :raises json.JSONDecodeError: Si el archivo no contiene un JSON válido.
-        """
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f"El archivo JSON no existe: {file_path}")
+def save_json(data, file_path):
+    """
+    Guarda un objeto JSON en un archivo.
 
-        try:
-            with open(file_path, "r") as file:
-                data = json.load(file)
-                print(f"JSON cargado exitosamente desde {file_path}")
-                return data
-        except json.JSONDecodeError as e:
-            raise ValueError(f"Error al decodificar el archivo JSON: {e}")
+    :param data: Objeto JSON a guardar.
+    :param file_path: Ruta del archivo donde guardar los datos.
+    """
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)  # Crear el directorio si no existe
+    with open(file_path, "a") as file:  # Modo 'a' para agregar al archivo existente
+        file.write(json.dumps(data) + "\n")
+    print(f"Datos guardados en {file_path}")
 
-    @staticmethod
-    def save_json(file_path, data):
-        """
-        Guarda datos en un archivo JSON.
 
-        :param file_path: Ruta donde se guardará el archivo JSON.
-        :param data: Datos a guardar (debe ser serializable en JSON).
-        :raises TypeError: Si los datos no son serializables en JSON.
-        """
-        try:
-            with open(file_path, "w") as file:
-                json.dump(data, file, indent=4)
-                print(f"Datos guardados exitosamente en {file_path}")
-        except TypeError as e:
-            raise ValueError(f"Error al guardar datos en JSON: {e}")
+def load_json(file_path):
+    """
+    Carga datos JSON desde un archivo.
 
-    @staticmethod
-    def update_json(file_path, updates):
-        """
-        Actualiza un archivo JSON con nuevos datos.
+    :param file_path: Ruta del archivo a cargar.
+    :return: Lista de objetos JSON.
+    """
+    if not os.path.exists(file_path):
+        print(f"El archivo {file_path} no existe.")
+        return []
+    with open(file_path, "r") as file:
+        return [json.loads(line) for line in file.readlines()]
 
-        :param file_path: Ruta del archivo JSON existente.
-        :param updates: Diccionario con los datos a actualizar.
-        :return: Diccionario actualizado.
-        :raises FileNotFoundError: Si el archivo no existe.
-        """
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f"El archivo JSON no existe: {file_path}")
 
-        try:
-            # Cargar datos existentes
-            data = JSONManager.load_json(file_path)
+def clean_json(file_path):
+    """
+    Limpia el contenido de un archivo JSON.
 
-            # Actualizar datos
-            data.update(updates)
-
-            # Guardar los datos actualizados
-            JSONManager.save_json(file_path, data)
-
-            print(f"Archivo JSON actualizado exitosamente: {file_path}")
-            return data
-        except Exception as e:
-            raise ValueError(f"Error al actualizar el archivo JSON: {e}")
-
-    @staticmethod
-    def validate_json(data, required_keys):
-        """
-        Valida que un diccionario JSON contenga todas las claves requeridas.
-
-        :param data: Diccionario de datos JSON.
-        :param required_keys: Lista de claves requeridas.
-        :return: True si todas las claves están presentes, False de lo contrario.
-        """
-        missing_keys = [key for key in required_keys if key not in data]
-        if missing_keys:
-            raise ValueError(f"Faltan las siguientes claves requeridas en el JSON: {missing_keys}")
-        print("El JSON contiene todas las claves requeridas.")
-        return True
+    :param file_path: Ruta del archivo JSON a limpiar.
+    """
+    if os.path.exists(file_path):
+        with open(file_path, "w") as file:
+            file.truncate(0)
+        print(f"El archivo {file_path} ha sido limpiado.")
+    else:
+        print(f"El archivo {file_path} no existe.")
