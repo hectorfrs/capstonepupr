@@ -18,6 +18,7 @@ import yaml
 
 import sys
 import os
+sys.path.append("/home/raspberry-1/capstonepupr/src/pi1")
 
 # Agregar la ruta del proyecto al PYTHONPATH
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
@@ -25,7 +26,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 
 def configure_logging(config):
     log_file = config['logging']['log_file']
-    log_dir = os.path.dirname(log_file)
+    #log_dir = os.path.dirname(log_file)
+    log_dir = os.path.expanduser(os.path.dirname(config['logging']['log_file']))
+
 
     # Crea el directorio si no existe
     if not os.path.exists(log_dir):

@@ -106,4 +106,4 @@ plastic_thresholds:
 
 
 logging:
-  log_file: "/logs/pi1_logs.log"  # Archivo de logs para registrar las operaciones
+  log_file: "~/logs/pi1_logs.log"  # Archivo de logs para registrar las operaciones
