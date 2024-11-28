@@ -24,7 +24,7 @@ fi
 # Actualizar sistema e instalar dependencias
 echo "Actualizando el sistema e instalando dependencias..."
 sudo apt update && sudo apt upgrade -y
-sudo apt install -y python3 python3-pip python3-smbus i2c-tools git nodejs unzip mosquitto-clients gcc build-essential
+sudo apt install -y python3 python3-pip python3-smbus i2c-tools git nodejs unzip mosquitto-clients gcc build-essential python3-awscli python3-smbus2
 
 # Verificar si I2C está habilitado
 echo "Verificando estado de I2C..."
@@ -43,7 +43,7 @@ echo "Instalando paquetes de Python..."
 if [ -f "$SCRIPT_DIR/requirements.txt" ]; then
     pip3 install --break-system-packages -r "$SCRIPT_DIR/requirements.txt"
 else
-    pip3 install pyyaml paho-mqtt AWSIoTPythonSDK sparkfun-qwiic-mux --break-system-packages
+    pip3 install pyyaml paho-mqtt AWSIoTPythonSDK smbus2 --break-system-packages
 fi
 
 # Clonar o actualizar el repositorio
@@ -68,16 +68,17 @@ sudo systemctl status "$SERVICE_FILE" --no-pager
 echo "Descargando e instalando AWS IoT Greengrass V2..."
 wget -q https://d1onfpft10uf5o.cloudfront.net/greengrass-core/downloads/latest/greengrass-v2.zip
 sudo unzip -o greengrass-v2.zip -d $GREENGRASS_DIR
-sudo $GREENGRASS_DIR/greengrass-cli install --aws-region <your-region> --thing-name pi1-thing --thing-group-name Capstone-Group
+sudo $GREENGRASS_DIR/greengrass-cli install --aws-region us-east-1 --thing-name pi1-thing --thing-group-name Capstone-Group
 sudo /greengrass/v2/bin/greengrass-cli component list
 
 # Crear directorios de logs y datos
 echo "Validando directorios /logs y /data..."
-mkdir -p "$REPO_DIR/src/pi1/logs" "$REPO_DIR/src/pi1/data"
-chmod 755 "$REPO_DIR/src/pi1/logs" "$REPO_DIR/src/pi1/data"
+mkdir -p "$SCRIPT_DIR/logs" "$SCRIPT_DIR/data"
+chmod 755 "$SCRIPT_DIR/logs" "$SCRIPT_DIR/data"
 
-echo "Asignando permisos a los directorios..."
-chmod 644 /etc/systemd/system/capstone_pi1.service
-chmod +x /home/raspberry-1/capstonepupr/src/pi1/scripts/main_pi1.py
+# Asignar permisos a los directorios y scripts
+echo "Asignando permisos a los directorios y scripts..."
+chmod 644 $SERVICE_PATH
+chmod +x "$SCRIPT_DIR/scripts/main_pi1.py"
 
 echo "Configuración de Raspberry Pi 1 completada."

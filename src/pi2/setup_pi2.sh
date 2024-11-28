@@ -24,7 +24,7 @@ fi
 # Actualizar sistema e instalar dependencias
 echo "Actualizando el sistema e instalando dependencias..."
 sudo apt update && sudo apt upgrade -y
-sudo apt install -y python3 python3-pip python3-smbus i2c-tools git nodejs unzip mosquitto-clients gcc build-essential python3-yaml python3-paho-mqtt python3-awscli python3-smbus2 python3-AWSIoTPythonSDK
+sudo apt install -y python3 python3-pip python3-smbus i2c-tools git nodejs unzip mosquitto-clients gcc build-essential python3-awscli python3-smbus2 
 
 # Verificar si I2C está habilitado
 echo "Verificando estado de I2C..."
@@ -41,9 +41,9 @@ i2cdetect -y 1
 # Instalar dependencias de Python
 echo "Instalando paquetes de Python..."
 if [ -f "$SCRIPT_DIR/requirements.txt" ]; then
-    pip3 install -r "$SCRIPT_DIR/requirements.txt"
+    pip3 install --break-system-packages -r "$SCRIPT_DIR/requirements.txt"
 else
-    pip3 install pyyaml paho-mqtt AWSIoTPythonSDK smbus2 
+    pip3 install pyyaml paho-mqtt AWSIoTPythonSDK smbus2 --break-system-packages
 fi
 
 # Clonar o actualizar el repositorio
@@ -68,7 +68,7 @@ sudo systemctl status "$SERVICE_FILE" --no-pager
 echo "Descargando e instalando AWS IoT Greengrass V2..."
 wget -q https://d1onfpft10uf5o.cloudfront.net/greengrass-core/downloads/latest/greengrass-v2.zip
 sudo unzip -o greengrass-v2.zip -d $GREENGRASS_DIR
-sudo $GREENGRASS_DIR/greengrass-cli install --aws-region eastus --thing-name pi2-thing --thing-group-name Capstone-Group
+sudo $GREENGRASS_DIR/greengrass-cli install --aws-region us-east-1 --thing-name pi2-thing --thing-group-name Capstone-Group
 sudo /greengrass/v2/bin/greengrass-cli component list
 
 # Crear directorios de logs y datos
