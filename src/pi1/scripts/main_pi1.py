@@ -38,7 +38,7 @@ def configure_logging(config):
     )
     print(f"Logging configurado en {log_file}.")
 
-def load_config(config_path="config/pi1_config.yaml"):
+def load_config(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml"):
     """
     Carga la configuración desde un archivo YAML.
     
@@ -133,7 +133,7 @@ def main():
     #print("Logging configurado.")
 
     # Configurar red
-    network_manager = NetworkManager(config_path="config/pi1_config.yaml")
+    network_manager = NetworkManager(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml")
     if not network_manager.check_connection():
         logging.error("No hay conexión a Internet. Verifique la configuración de red.")
         raise ConnectionError("Conexión de red no disponible.")
@@ -147,15 +147,15 @@ def main():
     thresholds = config['plastic_thresholds']
 
     sensors = [
-        CustomAS7265x(config_path="config/pi1_config.yaml") for _ in sensors_config
+        CustomAS7265x(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml") for _ in sensors_config
     ]
 
     # Inicializar cliente MQTT
-    mqtt_client = MQTTPublisher(config_path="config/pi1_config.yaml", local=True)
+    mqtt_client = MQTTPublisher(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml", local=True)
     mqtt_client.connect()
 
     # Inicializar Greengrass Manager
-    greengrass_manager = GreengrassManager(config_path="config/pi1_config.yaml")
+    greengrass_manager = GreengrassManager(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml")
 
     # Inicializar buffer de datos
     data_queue = Queue()
