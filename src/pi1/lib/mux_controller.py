@@ -1,5 +1,8 @@
-import qwiic_mux
+import QwiicTCA9548A
 import yaml
+
+
+from sparkfun_qwiic_tca9548a import QwiicTCA9548A
 
 
 class MUXController:
@@ -7,36 +10,21 @@ class MUXController:
     Clase para controlar el MUX Qwiic TCA9548A.
     """
 
-    def __init__(self, i2c_bus, i2c_address, config_path="config/pi1_config.yaml"):
+    def __init__(self, i2c_bus, i2c_address):
         """
         Inicializa el controlador del MUX.
 
         :param i2c_bus: Bus I2C donde está conectado el MUX.
         :param i2c_address: Dirección I2C del MUX.
-        :param config_path: Ruta al archivo YAML con la configuración.
         """
         self.i2c_bus = i2c_bus
         self.i2c_address = i2c_address
 
-        # Cargar configuración desde YAML
-        self.config = self.load_config(config_path)
-
         # Inicializar el MUX
-        self.mux = qwiic_mux.QwiicMux(address=self.i2c_address)
-        if not self.mux.is_connected():
+        self.mux = QwiicTCA9548A(address=self.i2c_address)
+        if not self.mux.connected:
             raise ConnectionError(f"El MUX con dirección {hex(self.i2c_address)} no está conectado.")
         print(f"MUX conectado en la dirección {hex(self.i2c_address)}.")
-
-    @staticmethod
-    def load_config(config_path):
-        """
-        Carga la configuración desde un archivo YAML.
-
-        :param config_path: Ruta al archivo YAML.
-        :return: Diccionario con la configuración cargada.
-        """
-        with open(config_path, "r") as file:
-            return yaml.safe_load(file)
 
     def select_channel(self, channel):
         """
@@ -69,14 +57,12 @@ class MUXController:
         """
         Valida si el MUX está conectado y funcionando correctamente.
         """
-        if not self.mux.is_connected():
+        if not self.mux.connected:
             raise ConnectionError(f"El MUX con dirección {hex(self.i2c_address)} ha perdido la conexión.")
         print("Conexión al MUX validada.")
 
 
 # # Ejemplo de Uso:
-
-# # Activar o Desactivar Canales:
 
 # from lib.mux_controller import MUXController
 
@@ -95,6 +81,7 @@ class MUXController:
 
 # if __name__ == "__main__":
 #     main()
+
 
 # #Integración con Sensores
 
