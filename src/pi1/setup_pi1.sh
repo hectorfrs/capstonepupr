@@ -43,7 +43,7 @@ echo "Instalando paquetes de Python..."
 if [ -f "$SCRIPT_DIR/requirements.txt" ]; then
     pip3 install --break-system-packages -r "$SCRIPT_DIR/requirements.txt"
 else
-    pip3 install pyyaml paho-mqtt AWSIoTPythonSDK smbus2 --break-system-packages
+    pip3 install pyyaml paho-mqtt AWSIoTPythonSDK smbus2 boto3 --break-system-packages
 fi
 
 # Clonar o actualizar el repositorio

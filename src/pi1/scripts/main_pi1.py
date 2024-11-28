@@ -77,20 +77,26 @@ def process_sensor(mux, sensor, channel, sensor_name, thresholds, data_queue):
     """
     try:
         mux.select_channel(channel)
-        spectral_data = sensor.read_calibrated_spectrum()
-        detected_material = identify_plastic(spectral_data, thresholds)
+        logging.info(f"Canal {channel} activado para el sensor {sensor_name}.")
+        
+        spectral_data = sensor.read_spectrum()
+        logging.info(f"Datos leídos del sensor {sensor_name}: {spectral_data}")
 
-        if detected_material:
-            payload = generate_json(
-                sensor_id=sensor_name,
-                channel=channel,
-                spectral_data=spectral_data,
-                detected_material=detected_material,
-                confidence=0.95
-            )
-            data_queue.put(payload)
+        detected_material = identify_material(spectral_data, thresholds)
+        logging.info(f"Material detectado por {sensor_name}: {detected_material}")
+
+        payload = {
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "sensor": sensor_name,
+            "material": detected_material,
+            **spectral_data
+        }
+
+        data_queue.put(payload)
+        logging.info(f"Datos encolados para publicación: {payload}")
+
     except Exception as e:
-        logging.error(f"Error procesando el sensor {sensor_name} en canal {channel}: {e}")
+        logging.error(f"Error procesando datos del sensor {sensor_name} en el canal {channel}: {e}")
 
 
 def publish_data(mqtt_client, greengrass_manager, topic, data_queue):
@@ -103,15 +109,16 @@ def publish_data(mqtt_client, greengrass_manager, topic, data_queue):
     :param data_queue: Buffer para obtener datos procesados.
     """
     while True:
-        if not data_queue.empty():
+        try:
             payload = data_queue.get()
-            try:
-                mqtt_client.publish(topic, str(payload))
-                greengrass_manager.invoke_function("DetectPlasticType", payload)
-            except Exception as e:
-                logging.error(f"Error publicando datos: {e}")
-            finally:
-                data_queue.task_done()
+            mqtt_client.publish(topic, payload)
+            logging.info(f"Datos publicados en MQTT: {payload}")
+            
+            response = greengrass_manager.invoke_function(payload)
+            logging.info(f"Datos procesados por Greengrass: {response}")
+
+        except Exception as e:
+            logging.error(f"Error publicando datos: {e}")
 
 
 def main():
@@ -133,26 +140,40 @@ def main():
     #print("Logging configurado.")
 
     # Configurar red
-    network_manager = NetworkManager(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml")
+    logging.info("Verificando conexión a Internet...")
     if not network_manager.check_connection():
         logging.error("No hay conexión a Internet. Verifique la configuración de red.")
         raise ConnectionError("Conexión de red no disponible.")
+    logging.info("Conexión a Internet verificada.")
 
-    # Inicializar MUX y sensores
+    # Inicializar MUX
+    logging.info("Inicializando MUX...")
     mux = MUXController(
         i2c_bus=config['sensors']['as7265x']['i2c_bus'],
         i2c_address=config['mux']['i2c_address']
     )
+    logging.info(f"MUX conectado en la dirección 0x{config['mux']['i2c_address']:02X}.")
+    
+    # Inicializar sensores
+    logging.info("Inicializando sensores AS7265x...")
     sensors_config = config['mux']['channels']
     thresholds = config['plastic_thresholds']
 
     sensors = [
         CustomAS7265x(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml") for _ in sensors_config
     ]
+    logging.info(f"{len(sensors)} sensores configurados con éxito.")
 
     # Inicializar cliente MQTT
+    logging.info("Inicializando cliente MQTT...")
     mqtt_client = MQTTPublisher(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml", local=True)
-    mqtt_client.connect()
+    try:
+        mqtt_client.connect()
+        logging.info("Conexión al broker MQTT exitosa.")
+    except Exception as e:
+        logging.error(f"Error al conectar con el broker MQTT: {e}")
+        raise ConnectionError("Conexión MQTT no disponible.")
+
 
     # Inicializar Greengrass Manager
     greengrass_manager = GreengrassManager(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml")
@@ -171,6 +192,7 @@ def main():
     while True:
         try:
             for sensor_idx, sensor_config in enumerate(sensors_config):
+                logging.info(f"Procesando datos del sensor {sensor_config['sensor_name']} en el canal {sensor_config['channel']}...")
                 process_sensor(
                     mux=mux,
                     sensor=sensors[sensor_idx],
