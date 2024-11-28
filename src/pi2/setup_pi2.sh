@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Variables
-REPO_URL="https://github.com/hectorfrs/capstonepupr.git"
+REPO_URL="git@github.com:hectorfrs/capstonepupr.git"
 REPO_DIR="/home/raspberry-2/capstonepupr"
 SCRIPT_DIR="$REPO_DIR/src/pi2"
 SERVICE_FILE="capstone_pi2.service"
@@ -24,7 +24,11 @@ fi
 # Actualizar sistema e instalar dependencias
 echo "Actualizando el sistema e instalando dependencias..."
 sudo apt update && sudo apt upgrade -y
+<<<<<<< HEAD
+sudo apt install -y python3 python3-pip python3-smbus i2c-tools git nodejs unzip mosquitto-clients gcc build-essential
+=======
 sudo apt install -y python3 python3-pip python3-smbus i2c-tools git nodejs unzip mosquitto-clients gcc build-essential python3-awscli python3-smbus2 
+>>>>>>> bd0dbd839a6d757dbc9f591a034ec1d40b708bf5
 
 # Verificar si I2C está habilitado
 echo "Verificando estado de I2C..."
@@ -43,7 +47,11 @@ echo "Instalando paquetes de Python..."
 if [ -f "$SCRIPT_DIR/requirements.txt" ]; then
     pip3 install --break-system-packages -r "$SCRIPT_DIR/requirements.txt"
 else
+<<<<<<< HEAD
+    pip3 install pyyaml paho-mqtt AWSIoTPythonSDK smbus2
+=======
     pip3 install pyyaml paho-mqtt AWSIoTPythonSDK smbus2 --break-system-packages
+>>>>>>> bd0dbd839a6d757dbc9f591a034ec1d40b708bf5
 fi
 
 # Clonar o actualizar el repositorio
@@ -68,14 +76,17 @@ sudo systemctl status "$SERVICE_FILE" --no-pager
 echo "Descargando e instalando AWS IoT Greengrass V2..."
 wget -q https://d1onfpft10uf5o.cloudfront.net/greengrass-core/downloads/latest/greengrass-v2.zip
 sudo unzip -o greengrass-v2.zip -d $GREENGRASS_DIR
+<<<<<<< HEAD
+sudo $GREENGRASS_DIR/greengrass-cli install --aws-region <your-region> --thing-name pi2-thing --thing-group-name Capstone-Group
+=======
 sudo $GREENGRASS_DIR/greengrass-cli install --aws-region us-east-1 --thing-name pi2-thing --thing-group-name Capstone-Group
+>>>>>>> bd0dbd839a6d757dbc9f591a034ec1d40b708bf5
 sudo /greengrass/v2/bin/greengrass-cli component list
 
 # Crear directorios de logs y datos
 echo "Validando directorios /logs y /data..."
 mkdir -p "$REPO_DIR/src/pi2/logs" "$REPO_DIR/src/pi2/data"
 chmod 755 "$REPO_DIR/src/pi2/logs" "$REPO_DIR/src/pi2/data"
-
 
 echo "Asignando permisos a los directorios..."
 chmod 644 /etc/systemd/system/capstone_pi2.service
