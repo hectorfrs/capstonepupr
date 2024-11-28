@@ -1,94 +1,162 @@
-import yaml
-import logging
-import os
 import time
+import logging
+from threading import Thread
+from queue import Queue
 from datetime import datetime
+
 from lib.mux_controller import MUXController
-from lib.as7265x import AS7265x
+from lib.as7265x import CustomAS7265x
 from utils.mqtt_publisher import MQTTPublisher
-from utils.greengrass import process_with_greengrass
+from utils.greengrass import GreengrassManager
 from utils.networking import NetworkManager
+from utils.json_manager import generate_json, save_json
+import yaml
 
 
-def load_config():
+def load_config(config_path="config/pi1_config.yaml"):
     """
-    Carga la configuración desde el archivo YAML.
+    Carga la configuración desde un archivo YAML.
+    
+    :param config_path: Ruta al archivo YAML.
+    :return: Diccionario con la configuración cargada.
     """
-    print("Cargando configuración para Raspberry Pi 1...")
-    config_path = 'config/pi1_config.yaml'
-    if not os.path.exists(config_path):
-        raise FileNotFoundError(f"No se encontró el archivo de configuración en {config_path}")
-    with open(config_path, 'r') as file:
-        config = yaml.safe_load(file)
-    print("Configuración cargada.")
-    return config
+    with open(config_path, "r") as file:
+        return yaml.safe_load(file)
+
+
+def identify_plastic(spectral_data, thresholds):
+    """
+    Identifica el tipo de plástico según el espectro y los umbrales configurados.
+
+    :param spectral_data: Datos espectroscópicos calibrados.
+    :param thresholds: Umbrales para cada tipo de plástico.
+    :return: Tipo de plástico detectado (str) o None si no coincide.
+    """
+    for plastic_type, ranges in thresholds.items():
+        match = all(ranges[i][0] <= spectral_data[i] <= ranges[i][1] for i in range(len(ranges)))
+        if match:
+            return plastic_type
+    return None
+
+
+def process_sensor(mux, sensor, channel, sensor_name, thresholds, data_queue):
+    """
+    Lee datos de un sensor específico y los encola para procesamiento.
+
+    :param mux: Instancia del controlador MUX.
+    :param sensor: Instancia del sensor AS7265x.
+    :param channel: Canal del MUX.
+    :param sensor_name: Nombre del sensor.
+    :param thresholds: Umbrales para identificación de plásticos.
+    :param data_queue: Buffer para almacenar datos procesados.
+    """
+    try:
+        mux.select_channel(channel)
+        spectral_data = sensor.read_calibrated_spectrum()
+        detected_material = identify_plastic(spectral_data, thresholds)
+
+        if detected_material:
+            payload = generate_json(
+                sensor_id=sensor_name,
+                channel=channel,
+                spectral_data=spectral_data,
+                detected_material=detected_material,
+                confidence=0.95
+            )
+            data_queue.put(payload)
+    except Exception as e:
+        logging.error(f"Error procesando el sensor {sensor_name} en canal {channel}: {e}")
+
+
+def publish_data(mqtt_client, greengrass_manager, topic, data_queue):
+    """
+    Publica datos del buffer a MQTT y AWS IoT Core.
+
+    :param mqtt_client: Instancia del cliente MQTT.
+    :param greengrass_manager: Instancia del gestor de Greengrass.
+    :param topic: Tópico MQTT para publicar.
+    :param data_queue: Buffer para obtener datos procesados.
+    """
+    while True:
+        if not data_queue.empty():
+            payload = data_queue.get()
+            try:
+                mqtt_client.publish(topic, str(payload))
+                greengrass_manager.invoke_function("DetectPlasticType", payload)
+            except Exception as e:
+                logging.error(f"Error publicando datos: {e}")
+            finally:
+                data_queue.task_done()
 
 
 def main():
     """
-    Función principal para manejar el flujo de datos del sensor AS7265x.
+    Función principal para manejar la lógica del Raspberry Pi 1.
     """
     # Cargar configuración
     config = load_config()
 
     # Configurar logging
-    logging.basicConfig(filename=config['logging']['log_file'], level=logging.INFO)
+    logging.basicConfig(
+        filename=config['logging']['log_file'],
+        level=logging.INFO,
+        format='%(asctime)s %(levelname)s: %(message)s'
+    )
+    logging.info("Sistema iniciado en Raspberry Pi #1.")
     print("Logging configurado.")
 
+    # Configurar red
+    network_manager = NetworkManager(config_path="config/pi1_config.yaml")
+    if not network_manager.check_connection():
+        logging.error("No hay conexión a Internet. Verifique la configuración de red.")
+        raise ConnectionError("Conexión de red no disponible.")
+
     # Inicializar MUX y sensores
-    mux = MUXController(i2c_bus=1, i2c_address=config['mux']['i2c_address'])
-    sensors_config = config['mux']['channels']
-    sensor = AS7265x(
+    mux = MUXController(
         i2c_bus=config['sensors']['as7265x']['i2c_bus'],
-        integration_time=config['sensors']['as7265x']['integration_time'],
-        gain=config['sensors']['as7265x']['gain']
+        i2c_address=config['mux']['i2c_address']
     )
+    sensors_config = config['mux']['channels']
+    thresholds = config['plastic_thresholds']
 
-    # Configurar clientes MQTT
-    local_publisher = MQTTPublisher(endpoints=config['mqtt']['broker_addresses'], local=True)
-    local_publisher.connect(port=config['mqtt']['port'])
+    sensors = [
+        CustomAS7265x(config_path="config/pi1_config.yaml") for _ in sensors_config
+    ]
 
-    aws_publisher = MQTTPublisher(
-        endpoints=config['aws']['iot_core_endpoint'],
-        cert_path=config['aws']['cert_path'],
-        key_path=config['aws']['key_path'],
-        ca_path=config['aws']['ca_path']
+    # Inicializar cliente MQTT
+    mqtt_client = MQTTPublisher(config_path="config/pi1_config.yaml", local=True)
+    mqtt_client.connect()
+
+    # Inicializar Greengrass Manager
+    greengrass_manager = GreengrassManager(config_path="config/pi1_config.yaml")
+
+    # Inicializar buffer de datos
+    data_queue = Queue()
+
+    # Iniciar hilo para publicar datos
+    publish_thread = Thread(
+        target=publish_data,
+        args=(mqtt_client, greengrass_manager, config['mqtt']['topics']['sensor_data'], data_queue),
+        daemon=True
     )
-    aws_publisher.connect()
+    publish_thread.start()
 
-    # Loop principal para lectura de sensores y publicación de datos
     while True:
         try:
-            for sensor_config in sensors_config:
-                print(f"Conmutando al sensor: {sensor_config['sensor_name']} en el canal {sensor_config['channel']}...")
-                mux.select_channel(sensor_config['channel'])  # Seleccionar el canal del sensor en el MUX
-
-                # Leer datos del sensor
-                spectral_data = sensor.read_spectrum()
-                payload = {
-                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    "sensor": sensor_config['sensor_name'],
-                    **spectral_data
-                }
-
-                # Publicar datos en MQTT local y AWS IoT Core
-                local_publisher.publish(config['mqtt']['topics']['sensor_data'], payload)
-                aws_publisher.publish(config['aws']['iot_topics']['sensor_data'], payload)
-
-                # Procesar datos localmente con Greengrass
-                response = process_with_greengrass(config['greengrass']['functions'][0]['arn'], payload)
-                print(f"Respuesta de Greengrass: {response}")
-
-            # Deshabilitar todos los canales del MUX después de cada ciclo
-            mux.disable_all_channels()
-
-            # Intervalo entre lecturas
-            time.sleep(1)
+            for sensor_idx, sensor_config in enumerate(sensors_config):
+                process_sensor(
+                    mux=mux,
+                    sensor=sensors[sensor_idx],
+                    channel=sensor_config['channel'],
+                    sensor_name=sensor_config['sensor_name'],
+                    thresholds=thresholds,
+                    data_queue=data_queue
+                )
+            time.sleep(config['sensors']['read_interval'])
 
         except Exception as e:
             logging.error(f"Error en el loop principal: {e}")
-            print(f"Error en el loop principal: {e}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

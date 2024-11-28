@@ -1,80 +1,159 @@
-import json
 import paho.mqtt.client as mqtt
-import ssl
+import yaml
+from threading import Thread
 
 
 class MQTTPublisher:
     """
-    Clase para manejar conexiones y publicaciones MQTT, soportando redundancia de endpoints.
+    Clase para manejar la conexión y publicación en un broker MQTT.
+    Soporta un broker local y AWS IoT Core.
     """
-    def __init__(self, endpoints, cert_path=None, key_path=None, ca_path=None, local=False):
-        """
-        Inicializa el cliente MQTT.
 
-        :param endpoints: Lista de endpoints del broker MQTT (local o AWS IoT Core).
-        :param cert_path: Ruta al certificado del cliente (para AWS IoT Core).
-        :param key_path: Ruta a la llave privada del cliente (para AWS IoT Core).
-        :param ca_path: Ruta al certificado CA raíz de AWS IoT (para AWS IoT Core).
-        :param local: Indica si es una conexión local (sin TLS).
+    def __init__(self, config_path="config/pi1_config.yaml", local=True):
         """
-        self.endpoints = endpoints if isinstance(endpoints, list) else [endpoints]
-        self.cert_path = cert_path
-        self.key_path = key_path
-        self.ca_path = ca_path
-        self.local = local
+        Inicializa el cliente MQTT usando la configuración YAML.
+
+        :param config_path: Ruta al archivo de configuración YAML.
+        :param local: Booleano que indica si se usará el broker local (True) o AWS IoT Core (False).
+        """
+        self.config = self.load_config(config_path)
+
+        # Configuración del broker MQTT
+        if local:
+            self.broker = self.config['mqtt']['broker_address'][0]  # Tomar el primer broker como predeterminado
+            self.port = self.config['mqtt']['port']
+            self.username = self.config['mqtt']['username']
+            self.password = self.config['mqtt']['password']
+        else:
+            self.broker = self.config['aws']['iot_core_endpoint']
+            self.port = 8883
+            self.cert_path = self.config['aws']['cert_path']
+            self.key_path = self.config['aws']['key_path']
+            self.ca_path = self.config['aws']['ca_path']
+
+        # Inicializar cliente MQTT
         self.client = mqtt.Client()
+        self.configure_client(local)
 
-        if not local:
-            # Configuración TLS para AWS IoT Core
+    @staticmethod
+    def load_config(config_path):
+        """
+        Carga la configuración desde un archivo YAML.
+
+        :param config_path: Ruta al archivo YAML.
+        :return: Diccionario con la configuración cargada.
+        """
+        with open(config_path, "r") as file:
+            return yaml.safe_load(file)
+
+    def configure_client(self, local):
+        """
+        Configura el cliente MQTT según el tipo de broker.
+
+        :param local: Booleano que indica si es un broker local o AWS IoT Core.
+        """
+        if local:
+            self.client.username_pw_set(self.username, self.password)
+            print(f"Cliente MQTT configurado para broker local: {self.broker}")
+        else:
             self.client.tls_set(
                 ca_certs=self.ca_path,
                 certfile=self.cert_path,
-                keyfile=self.key_path,
-                tls_version=ssl.PROTOCOL_TLSv1_2
+                keyfile=self.key_path
             )
-    
-    def connect(self, port=8883):
-        """
-        Conecta el cliente MQTT al primer endpoint disponible.
+            print(f"Cliente MQTT configurado para AWS IoT Core: {self.broker}")
 
-        :param port: Puerto del broker MQTT (por defecto 8883 para AWS IoT Core).
+    def connect(self):
         """
-        for endpoint in self.endpoints:
-            try:
-                print(f"Intentando conectar a {'broker local' if self.local else 'AWS IoT Core'} en {endpoint}:{port}...")
-                self.client.connect(endpoint, port=port)
-                print(f"Conexión exitosa a {endpoint}:{port}")
-                return  # Salir si la conexión es exitosa
-            except Exception as e:
-                print(f"Fallo al conectar con {endpoint}:{port} - {e}")
-
-        # Si no se pudo conectar a ningún endpoint
-        raise ConnectionError("No se pudo conectar a ninguno de los endpoints proporcionados.")
-    
-    def publish(self, topic, payload):
-        """
-        Publica un mensaje en el tópico MQTT especificado.
-
-        :param topic: Tópico MQTT al cual publicar los datos.
-        :param payload: Datos a publicar (deben ser serializables en JSON).
+        Conecta al broker MQTT.
         """
         try:
-            message = json.dumps(payload)
-            print(f"Publicando en el tópico {topic}: {message}")
+            self.client.connect(self.broker, self.port, keepalive=60)
+            print(f"Conectado al broker MQTT en {self.broker}:{self.port}")
+        except Exception as e:
+            raise ConnectionError(f"Error al conectar con el broker MQTT: {e}")
+
+    def publish_parallel(self, topic, message):
+        """
+        Publica un mensaje en un tópico MQTT usando un hilo.
+
+        :param topic: Tópico donde publicar el mensaje.
+        :param message: Mensaje a publicar.
+        """
+        thread = Thread(target=self.publish, args=(topic, message))
+        thread.start()
+
+    def publish(self, topic, message):
+        """
+        Publica un mensaje en un tópico MQTT.
+
+        :param topic: Tópico donde publicar el mensaje.
+        :param message: Mensaje a publicar.
+        """
+        try:
             self.client.publish(topic, message)
-            print("Mensaje publicado exitosamente.")
+            print(f"Mensaje publicado en {topic}: {message}")
         except Exception as e:
-            print(f"Fallo al publicar el mensaje: {e}")
-            raise e
-    
-    def disconnect(self):
+            print(f"Error al publicar mensaje en {topic}: {e}")
+            raise
+
+    def subscribe(self, topic, callback):
         """
-        Desconecta el cliente MQTT del broker.
+        Se suscribe a un tópico MQTT y establece un callback.
+
+        :param topic: Tópico al que suscribirse.
+        :param callback: Función callback para manejar mensajes recibidos.
+        """
+        def on_message(client, userdata, msg):
+            print(f"Mensaje recibido en {msg.topic}: {msg.payload.decode()}")
+            callback(msg)
+
+        self.client.on_message = on_message
+        self.client.subscribe(topic)
+        print(f"Suscrito al tópico: {topic}")
+
+    def loop_forever(self):
+        """
+        Inicia el bucle de mensajes del cliente MQTT.
         """
         try:
-            print(f"Desconectando de {'broker local' if self.local else 'AWS IoT Core'}...")
+            self.client.loop_forever()
+        except KeyboardInterrupt:
+            print("Desconectando del cliente MQTT...")
             self.client.disconnect()
-            print("Desconexión exitosa.")
-        except Exception as e:
-            print(f"Fallo al desconectar del broker: {e}")
-            raise e
+
+# # Ejemplo de uso:
+
+# # Publicar datos paralelamante en un tópico MQTT
+# from utils.mqtt_publisher import MQTTPublisher
+
+# def main():
+#     # Inicializar cliente MQTT para el broker local
+#     mqtt_client = MQTTPublisher(config_path="config/pi1_config.yaml", local=True)
+
+#     # Conectar al broker
+#     mqtt_client.connect()
+
+#     # Publicar múltiples mensajes en paralelo
+#     for i in range(5):
+#         topic = "pi1/sensor_data"
+#         message = f'{{"id": {i}, "detected_material": "PET"}}'
+#         mqtt_client.publish_parallel(topic, message)
+
+# if __name__ == "__main__":
+#     main()
+
+# # Suscribirse a un tópico MQTT
+# from utils.mqtt_publisher import MQTTPublisher
+
+# def message_callback(msg):
+#     print(f"Mensaje procesado: {msg.payload.decode()}")
+
+# def main():
+#     mqtt_client = MQTTPublisher(config_path="config/pi1_config.yaml", local=True)
+#     mqtt_client.connect()
+#     mqtt_client.subscribe("pi1/settings_update", message_callback)
+#     mqtt_client.loop_forever()
+
+# if __name__ == "__main__":
+#     main()

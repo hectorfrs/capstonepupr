@@ -1,40 +1,97 @@
-import json
-import subprocess
+import boto3
+import yaml
 
 
-def process_with_greengrass(function_name, payload):
+class GreengrassManager:
     """
-    Procesa los datos localmente utilizando AWS IoT Greengrass.
-
-    :param function_name: El ARN de la función Lambda que se ejecutará localmente.
-    :param payload: Diccionario con los datos a enviar a la función Lambda.
-    :return: Respuesta del procesamiento local, si está disponible.
+    Clase para manejar la interacción con AWS IoT Greengrass.
+    Permite invocar funciones Lambda locales para procesamiento de datos.
     """
-    print(f"Invocando función de Greengrass: {function_name}")
-    try:
-        # Serializar el payload en formato JSON
-        payload_json = json.dumps(payload)
-        
-        # Ejecutar el comando CLI de Greengrass para invocar la función Lambda
-        response = subprocess.run(
-            [
-                "sudo", "/greengrass/v2/bin/greengrass-cli",
-                "lambda", "invoke",
-                "--arn", function_name
-            ],
-            input=payload_json.encode('utf-8'),     # Pasar el payload al proceso
-            capture_output=True,                    # Capturar salida del comando
-            text=True                               # Usar texto en lugar de bytes
-        )
 
-        # Verificar si el comando fue exitoso
-        if response.returncode != 0:
-            raise RuntimeError(f"Error en Greengrass CLI: {response.stderr}")
+    def __init__(self, config_path="config/pi1_config.yaml"):
+        """
+        Inicializa el GreengrassManager usando la configuración YAML.
 
-        # Retornar la respuesta de la función Lambda
-        print(f"Respuesta de Greengrass: {response.stdout}")
-        return json.loads(response.stdout)
+        :param config_path: Ruta al archivo YAML con la configuración.
+        """
+        self.config = self.load_config(config_path)
+        self.group_name = self.config['greengrass']['group_name']
+        self.functions = self.config['greengrass']['functions']
 
-    except Exception as e:
-        print(f"Fallo al procesar datos con Greengrass: {e}")
-        return None
+        # Inicializar cliente de Lambda para Greengrass
+        self.lambda_client = boto3.client('lambda')
+
+    @staticmethod
+    def load_config(config_path):
+        """
+        Carga la configuración desde un archivo YAML.
+
+        :param config_path: Ruta al archivo YAML.
+        :return: Diccionario con la configuración cargada.
+        """
+        with open(config_path, "r") as file:
+            return yaml.safe_load(file)
+
+    def invoke_function(self, function_name, payload):
+        """
+        Invoca una función Lambda localmente en Greengrass.
+
+        :param function_name: Nombre de la función Lambda definida en el YAML.
+        :param payload: Datos en formato JSON para enviar a la función Lambda.
+        :return: Respuesta de la función Lambda.
+        """
+        # Buscar la ARN de la función por su nombre
+        function_arn = None
+        for function in self.functions:
+            if function['name'] == function_name:
+                function_arn = function['arn']
+                break
+
+        if not function_arn:
+            raise ValueError(f"No se encontró una función Lambda llamada '{function_name}' en el archivo de configuración.")
+
+        # Invocar la función Lambda en Greengrass
+        try:
+            response = self.lambda_client.invoke(
+                FunctionName=function_arn,
+                InvocationType='RequestResponse',
+                Payload=str(payload)
+            )
+            result = response['Payload'].read()
+            print(f"Respuesta de la función Lambda '{function_name}': {result}")
+            return result
+        except Exception as e:
+            print(f"Error al invocar la función Lambda '{function_name}': {e}")
+            raise
+
+# # Ejemplo de uso:
+
+# # Invocar Funcion Lambda Localmente
+
+# from utils.greengrass import GreengrassManager
+
+# def main():
+#     # Inicializar el administrador de Greengrass
+#     greengrass_manager = GreengrassManager(config_path="config/pi1_config.yaml")
+
+#     # Datos para enviar a la función Lambda
+#     payload = {
+#         "sensor_id": "AS7265x_1",
+#         "spectral_data": {
+#             "violet": 150,
+#             "blue": 210,
+#             "green": 180,
+#             "yellow": 130,
+#             "orange": 110,
+#             "red": 90
+#         },
+#         "detected_material": "PET"
+#     }
+
+#     # Invocar la función Lambda "DetectPlasticType"
+#     response = greengrass_manager.invoke_function("DetectPlasticType", payload)
+#     print("Respuesta de Lambda:", response)
+
+
+# if __name__ == "__main__":
+#     main()

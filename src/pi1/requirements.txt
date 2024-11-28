@@ -1,5 +1,6 @@
-pyyaml 
-paho-mqtt 
-AWSIoTPythonSDK 
-sparkfun-qwiic-mux
 smbus2
+paho-mqtt
+sparkfun-qwiic-mux
+pyyaml
+boto3
+AWSIoTPythonSDK 

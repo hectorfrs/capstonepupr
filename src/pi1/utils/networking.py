@@ -1,93 +1,127 @@
 import os
 import subprocess
-import logging
+import yaml
+
 
 class NetworkManager:
-    def __init__(self, ethernet_config, wifi_config):
-        """
-        Inicializa la configuración de red para Ethernet y Wi-Fi.
+    """
+    Clase para manejar la conectividad de red en Raspberry Pi.
+    Incluye configuración para Ethernet y Wi-Fi según los parámetros del archivo YAML.
+    """
 
-        :param ethernet_config: Diccionario con configuración de Ethernet (IP y Gateway).
-        :param wifi_config: Diccionario con configuración de Wi-Fi (SSID, contraseña, IP y Gateway).
+    def __init__(self, config_path="config/pi1_config.yaml"):
         """
-        self.ethernet_config = ethernet_config
-        self.wifi_config = wifi_config
+        Inicializa el NetworkManager cargando la configuración de red.
+
+        :param config_path: Ruta al archivo YAML con la configuración de red.
+        """
+        self.config = self.load_config(config_path)
+
+        # Configuración de Ethernet y Wi-Fi
+        self.ethernet_config = self.config['network']['ethernet']
+        self.wifi_config = self.config['network']['wifi']
+
+    @staticmethod
+    def load_config(config_path):
+        """
+        Carga la configuración desde un archivo YAML.
+
+        :param config_path: Ruta al archivo YAML.
+        :return: Diccionario con la configuración cargada.
+        """
+        with open(config_path, "r") as file:
+            return yaml.safe_load(file)
 
     def configure_ethernet(self):
         """
-        Configura la conexión Ethernet con IP y Gateway estáticos.
+        Configura la conexión Ethernet usando los parámetros del archivo YAML.
         """
-        print("Configuring Ethernet connection...")
-        try:
-            # Configurar la IP y Gateway para Ethernet
-            subprocess.run([
-                "sudo", "ifconfig", "eth0", self.ethernet_config['ip'], "netmask", "255.255.255.0"
-            ], check=True)
-            subprocess.run([
-                "sudo", "route", "add", "default", "gw", self.ethernet_config['gateway'], "eth0"
-            ], check=True)
-            print(f"Ethernet configured with IP: {self.ethernet_config['ip']}")
-            logging.info(f"Ethernet configured with IP: {self.ethernet_config['ip']}")
-        except subprocess.CalledProcessError as e:
-            print(f"Failed to configure Ethernet: {e}")
-            logging.error(f"Failed to configure Ethernet: {e}")
+        print("Configurando conexión Ethernet...")
+        eth_config = f"""
+auto eth0
+iface eth0 inet static
+    address {self.ethernet_config['ip']}
+    netmask 255.255.255.0
+    gateway {self.ethernet_config['gateway']}
+        """
+        self._write_network_config(eth_config)
+        self.restart_network()
+        print("Conexión Ethernet configurada.")
 
     def configure_wifi(self):
         """
-        Configura la conexión Wi-Fi con SSID y contraseña.
+        Configura la conexión Wi-Fi usando los parámetros del archivo YAML.
         """
-        print("Configuring Wi-Fi connection...")
-        try:
-            # Crear el archivo wpa_supplicant.conf para la configuración de Wi-Fi
-            wpa_supplicant_config = f"""
-            country=US
-            ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
-            update_config=1
-
-            network={{
-                ssid="{self.wifi_config['ssid']}"
-                psk="{self.wifi_config['password']}"
-            }}
-            """
-            with open("/etc/wpa_supplicant/wpa_supplicant.conf", "w") as file:
-                file.write(wpa_supplicant_config)
-
-            # Reiniciar el servicio de Wi-Fi
-            subprocess.run(["sudo", "wpa_cli", "-i", "wlan0", "reconfigure"], check=True)
-            subprocess.run(["sudo", "ifconfig", "wlan0", self.wifi_config['ip'], "netmask", "255.255.255.0"], check=True)
-            subprocess.run(["sudo", "route", "add", "default", "gw", self.wifi_config['gateway'], "wlan0"], check=True)
-            print(f"Wi-Fi configured with SSID: {self.wifi_config['ssid']} and IP: {self.wifi_config['ip']}")
-            logging.info(f"Wi-Fi configured with SSID: {self.wifi_config['ssid']} and IP: {self.wifi_config['ip']}")
-        except subprocess.CalledProcessError as e:
-            print(f"Failed to configure Wi-Fi: {e}")
-            logging.error(f"Failed to configure Wi-Fi: {e}")
+        print("Configurando conexión Wi-Fi...")
+        wifi_config = f"""
+country=US
+ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+update_config=1
+network={{
+    ssid="{self.wifi_config['ssid']}"
+    psk="{self.wifi_config['password']}"
+    key_mgmt=WPA-PSK
+}}
+        """
+        with open("/etc/wpa_supplicant/wpa_supplicant.conf", "w") as file:
+            file.write(wifi_config)
+        subprocess.run(["wpa_cli", "-i", "wlan0", "reconfigure"], check=True)
+        print("Conexión Wi-Fi configurada.")
 
     def check_connection(self):
         """
-        Verifica la conexión a Internet utilizando `ping`.
+        Verifica la conexión a Internet intentando conectarse a un servidor externo.
+
+        :return: True si la conexión es exitosa, False de lo contrario.
         """
-        print("Checking internet connection...")
         try:
-            subprocess.run(["ping", "-c", "3", "8.8.8.8"], check=True)
-            print("Internet connection is active.")
-            logging.info("Internet connection is active.")
+            subprocess.run(["ping", "-c", "1", "8.8.8.8"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            print("Conexión a Internet verificada.")
             return True
         except subprocess.CalledProcessError:
-            print("Internet connection is inactive.")
-            logging.warning("Internet connection is inactive.")
+            print("No hay conexión a Internet.")
             return False
 
-    def ensure_redundancy(self):
+    @staticmethod
+    def restart_network():
         """
-        Asegura redundancia en la conexión de red, priorizando Ethernet.
+        Reinicia los servicios de red para aplicar los cambios.
         """
-        print("Ensuring network redundancy...")
-        if self.check_connection():
-            print("No changes needed; connection is active.")
-            return
-        else:
-            print("No active internet connection detected. Switching to backup.")
-            self.configure_ethernet()
-            if not self.check_connection():
-                print("Ethernet failed; attempting Wi-Fi connection.")
-                self.configure_wifi()
+        print("Reiniciando servicios de red...")
+        subprocess.run(["sudo", "systemctl", "restart", "networking"], check=True)
+
+    @staticmethod
+    def _write_network_config(config):
+        """
+        Escribe la configuración de Ethernet en el archivo de interfaces.
+
+        :param config: Configuración de red en formato string.
+        """
+        with open("/etc/network/interfaces", "w") as file:
+            file.write(config)
+
+
+# # Ejemplo de uso:
+
+# #Configurar la conexión Ethernet y Wi-Fi
+
+# from utils.networking import NetworkManager
+
+# def main():
+#     # Inicializar el administrador de red
+#     network_manager = NetworkManager(config_path="config/pi1_config.yaml")
+
+#     # Configurar Ethernet
+#     network_manager.configure_ethernet()
+
+#     # Configurar Wi-Fi
+#     network_manager.configure_wifi()
+
+#     # Verificar conexión a Internet
+#     if network_manager.check_connection():
+#         print("El dispositivo está conectado a Internet.")
+#     else:
+#         print("No hay conexión a Internet.")
+
+# if __name__ == "__main__":
+#     main()
