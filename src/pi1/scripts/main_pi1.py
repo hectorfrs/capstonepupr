@@ -3,9 +3,13 @@ import logging
 from threading import Thread
 from queue import Queue
 from datetime import datetime
+from asyncio import Handle
+
 
 from lib.mux_controller import MUXController
+#from lib.spectrometer import AS7265x as SparkFunAS7265x
 from lib.as7265x import CustomAS7265x
+#from lib.spectrometer import spectrometer as spec
 from utils.mqtt_publisher import MQTTPublisher
 from utils.greengrass import GreengrassManager
 from utils.networking import NetworkManager
