@@ -20,6 +20,8 @@ import sys
 import os
 # Agregar la ruta del proyecto al PYTHONPATH
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+# Agregar el directorio 'lib' al path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
 
 def configure_logging(config):
