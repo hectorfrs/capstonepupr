@@ -1,9 +1,9 @@
 from smbus2 import SMBus
-from spectrometer import AS7265x as SparkFunAS7265x
+from lib.spectrometer import Spectrometer
 import yaml
 
 
-class CustomAS7265x(SparkFunAS7265x):
+class CustomAS7265x(Spectrometer):
     """
     Clase extendida para interactuar con el sensor AS7265x.
     Combina configuraciones avanzadas y funciones simplificadas para lecturas espectroscópicas.

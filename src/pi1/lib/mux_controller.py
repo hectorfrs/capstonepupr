@@ -1,8 +1,7 @@
-import QwiicTCA9548A
 import yaml
 
 
-from sparkfun_qwiic_tca9548a import QwiicTCA9548A
+from qwiic_tca9548a import QwiicTCA9548A
 
 
 class MUXController:
