@@ -23,6 +23,21 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 
+def configure_logging(config):
+    log_file = config['logging']['log_file']
+    log_dir = os.path.dirname(log_file)
+
+    # Crea el directorio si no existe
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+
+    logging.basicConfig(
+        filename=log_file,
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+    print(f"Logging configurado en {log_file}.")
+
 def load_config(config_path="config/pi1_config.yaml"):
     """
     Carga la configuración desde un archivo YAML.
@@ -106,14 +121,16 @@ def main():
     # Cargar configuración
     config = load_config()
 
+    
     # Configurar logging
-    logging.basicConfig(
-        filename=config['logging']['log_file'],
-        level=logging.INFO,
-        format='%(asctime)s %(levelname)s: %(message)s'
-    )
-    logging.info("Sistema iniciado en Raspberry Pi #1.")
-    print("Logging configurado.")
+    configure_logging(config)
+    # logging.basicConfig(
+    #     filename=config['logging']['log_file'],
+    #     level=logging.INFO,
+    #     format='%(asctime)s %(levelname)s: %(message)s'
+    # )
+    #logging.info("Sistema iniciado en Raspberry Pi #1.")
+    #print("Logging configurado.")
 
     # Configurar red
     network_manager = NetworkManager(config_path="config/pi1_config.yaml")
