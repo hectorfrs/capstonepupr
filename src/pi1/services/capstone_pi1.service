@@ -3,13 +3,15 @@ Description=Capstone Project - Raspberry Pi 1 Service
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/python3 main_pi1.py
-WorkingDirectory=/home/raspberry-1/capstonepupr/src/pi1/scripts
-StandardOutput=append:/home/raspberry-1/capstonepupr/src/pi1/logs/pi1_logs.log
-StandardError=append:/home/raspberry-1/capstonepupr/src/pi1/logs/pi1_logs.log
-Restart=on-failure
+Type=simple
 User=raspberry-1
 Group=raspberry-1
+WorkingDirectory=/home/raspberry-1/capstonepupr/src/pi1/scripts
+ExecStart=/usr/bin/python3 main_pi1.py
+Environment=PYTHONPATH=/home/raspberry-1/capstonepupr/src/pi1
+Restart=on-failure
+StandardOutput=append:/home/raspberry-1/logs/capstone_pi1.log
+StandardError=append:/home/raspberry-1/logs/capstone_pi1_error.log
 
 [Install]
 WantedBy=multi-user.target
