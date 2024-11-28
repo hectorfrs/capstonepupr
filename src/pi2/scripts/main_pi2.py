@@ -1,26 +1,35 @@
 import yaml
 import logging
+import sys
 import os
+# Añadir el directorio principal de src/pi2 al PYTHONPATH
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 import time
 from datetime import datetime
 from utils.mqtt_publisher import MQTTPublisher
 from utils.greengrass import process_with_greengrass
 from utils.sensors import PressureSensor
 from utils.valve_control import ValveController
-from utils.networking import setup_network
-
 
 def load_config():
     """
     Carga la configuración desde el archivo YAML.
     """
     print("Cargando configuración para Raspberry Pi 2...")
-    config_path = 'config/pi2_config.yaml'
+    config_path = '../config/pi2_config.yaml'
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"No se encontró el archivo de configuración en {config_path}")
     with open(config_path, 'r') as file:
         config = yaml.safe_load(file)
+
+    # Asegurar que el directorio de logs existe
+    log_dir = os.path.dirname(config['logging']['log_file'])
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+        print(f"Directorio de logs creado: {log_dir}")
+
     print("Configuración cargada.")
+    print(f"Ruta de log cargada: {config['logging']['log_file']}")
     return config
 
 
@@ -32,8 +41,13 @@ def main():
     config = load_config()
 
     # Configurar logging
-    logging.basicConfig(filename=config['logging']['log_file'], level=logging.INFO)
-    print("Logging configurado.")
+    # logging.basicConfig(filename=config['logging']['log_file'], level=logging.INFO)
+    logging.basicConfig(filename='/home/raspberry-2/capstonepupr/src/pi2/logs/pi2_logs.log', level=logging.INFO)
+    print(f"Logging configurado en {config['logging']['log_file']}.")
+
+    # Configurar logging
+    #logging.basicConfig(filename=config['logging']['log_file'], level=logging.INFO)
+    #print("Logging configurado.")
 
     # Inicializar sensores de presión
     sensors = [
