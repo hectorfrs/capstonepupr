@@ -14,13 +14,20 @@ class GreengrassManager:
 
         :param config_path: Ruta al archivo YAML con la configuración.
         """
+        # Cargar configuración desde el archivo YAML
+        with open(config_path, "r") as file:
+            self.config = yaml.safe_load(file)
+        # Obtener la región desde la configuración
+        self.region = self.config['aws']['region']
+        # Inicializar cliente de Lambda para Greengrass
+        self.lambda_client = boto3.client('lambda', region_name=self.region)
+
         self.config = self.load_config(config_path)
         self.group_name = self.config['greengrass']['group_name']
         self.functions = self.config['greengrass']['functions']
-        self.region = config['aws']['region']
+        
 
-        # Inicializar cliente de Lambda para Greengrass
-        self.lambda_client = boto3.client('lambda', region_name=self.region)
+        
 
     @staticmethod
     def load_config(config_path):
