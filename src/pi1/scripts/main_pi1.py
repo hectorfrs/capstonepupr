@@ -141,9 +141,14 @@ def main():
 
     # Configurar red
     logging.info("Verificando conexión a Internet...")
-    if not network_manager.check_connection():
-        logging.error("No hay conexión a Internet. Verifique la configuración de red.")
-        raise ConnectionError("Conexión de red no disponible.")
+    try:
+        network_manager = NetworkManager(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml")
+        if not network_manager.check_connection():
+            logging.error("No hay conexión a Internet. Verifique la configuración de red.")
+            raise ConnectionError("Conexión de red no disponible.")
+    except Exception as e:
+        logging.error(f"Error configurando la red: {e}")
+        raise
     logging.info("Conexión a Internet verificada.")
 
     # Inicializar MUX
