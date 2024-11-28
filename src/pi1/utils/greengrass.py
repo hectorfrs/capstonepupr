@@ -17,9 +17,10 @@ class GreengrassManager:
         self.config = self.load_config(config_path)
         self.group_name = self.config['greengrass']['group_name']
         self.functions = self.config['greengrass']['functions']
+        self.region = config['aws']['region']
 
         # Inicializar cliente de Lambda para Greengrass
-        self.lambda_client = boto3.client('lambda')
+        self.lambda_client = boto3.client('lambda', region_name=self.region)
 
     @staticmethod
     def load_config(config_path):

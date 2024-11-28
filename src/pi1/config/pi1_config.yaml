@@ -34,6 +34,7 @@ greengrass:
       arn: "arn:aws:lambda:region:account-id:function:DetectPlasticType"
 
 aws:
+  region: "us-east-1"                             # Cambia según tu región
   iot_core_endpoint: "your_aws_iot_core_endpoint" # Endpoint de AWS IoT Core
   iot_topics:
     sensor_data: "pi1/sensor_data"                # Tópico para enviar datos de los sensores
