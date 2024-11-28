@@ -12,6 +12,12 @@ from utils.networking import NetworkManager
 from utils.json_manager import generate_json, save_json
 import yaml
 
+import sys
+import os
+
+# Agregar la ruta del proyecto al PYTHONPATH
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+
 
 def load_config(config_path="config/pi1_config.yaml"):
     """
