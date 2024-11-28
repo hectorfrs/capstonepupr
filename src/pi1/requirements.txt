@@ -1,7 +1,7 @@
 AWSIoTPythonSDK 
-smbus2==0.4.0
-paho-mqtt==1.6.1
-sparkfun-qwiic-mux==0.9.0
-pyyaml==6.0
-boto3==1.28.0
+smbus2
+paho-mqtt
+sparkfun-qwiic-tca9548a
+pyyaml
+boto3
 
