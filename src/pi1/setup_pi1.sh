@@ -41,9 +41,9 @@ i2cdetect -y 1
 # Instalar dependencias de Python
 echo "Instalando paquetes de Python..."
 if [ -f "$SCRIPT_DIR/requirements.txt" ]; then
-    pip3 install -r "$SCRIPT_DIR/requirements.txt"
+    pip3 install --break-system-packages -r "$SCRIPT_DIR/requirements.txt"
 else
-    pip3 install pyyaml paho-mqtt AWSIoTPythonSDK
+    pip3 install pyyaml paho-mqtt AWSIoTPythonSDK sparkfun-qwiic-mux --break-system-packages
 fi
 
 # Clonar o actualizar el repositorio

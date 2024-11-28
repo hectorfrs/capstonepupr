@@ -1,0 +1,5 @@
+pyyaml 
+paho-mqtt 
+AWSIoTPythonSDK 
+sparkfun-qwiic-mux
+smbus2

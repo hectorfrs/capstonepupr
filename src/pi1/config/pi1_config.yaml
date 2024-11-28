@@ -23,8 +23,9 @@ mux:
 sensors:
   as7265x:
     integration_time: 100         # Tiempo de integración en ms para cada lectura
-    gain: 64                      # Configuración de ganancia para los sensores
+    gain: 3                       # Configuración de ganancia para los sensores
     i2c_bus: 1                    # Bus I2C donde está conectado el MUX y los sensores
+  read_interval: 5  # Intervalo entre lecturas en segundos
 
 greengrass:
   group_name: "Capstone-Group"   # Nombre del grupo de Greengrass
@@ -52,6 +53,55 @@ mqtt:
     sensor_data: "pi1/sensor_data"                # Tópico para publicar datos de sensores
     settings_update: "pi1/settings_update"        # Tópico para recibir actualizaciones de configuración
 
+plastic_thresholds:
+  # PET (Polietileno Tereftalato): Común en botellas plásticas transparentes. 
+  # Características: Fuertes picos en UV y azul, absorbe menos en el infrarrojo.
+  PET:
+    - [100, 200]  # Rango espectral aproximado para el canal 1
+    - [150, 250]  # Rango espectral aproximado para el canal 2
+    - [50, 100]   # Rango espectral aproximado para el canal 3
+
+  # HDPE (Polietileno de Alta Densidad): Usado en envases opacos como botellas de leche.
+  # Características: Alta reflexión en el infrarrojo cercano.
+  HDPE:
+    - [200, 300]  # Canal 1 (picos en infrarrojo cercano)
+    - [250, 350]  # Canal 2
+    - [100, 150]  # Canal 3
+
+  # LDPE (Polietileno de Baja Densidad): Bolsas plásticas y películas.
+  # Características: Absorción moderada en UV, con menor intensidad que HDPE.
+  LDPE:
+    - [50, 150]   # Canal 1
+    - [100, 200]  # Canal 2
+    - [150, 250]  # Canal 3
+
+  # PP (Polipropileno): Tapas de botellas y envases de alimentos.
+  # Características: Moderada absorción en UV y azul, menos notable en verde.
+  PP:
+    - [80, 180]   # Canal 1
+    - [120, 220]  # Canal 2
+    - [60, 120]   # Canal 3
+
+  # PS (Poliestireno): Vasos desechables y materiales de embalaje.
+  # Características: Picos notables en azul y verde, absorbe menos en amarillo.
+  PS:
+    - [90, 190]   # Canal 1
+    - [110, 210]  # Canal 2
+    - [70, 130]   # Canal 3
+
+  # PVC (Policloruro de Vinilo): Tubos, ventanas, y empaques.
+  # Características: Fuertes picos en azul y amarillo.
+  PVC:
+    - [130, 230]  # Canal 1
+    - [180, 280]  # Canal 2
+    - [100, 200]  # Canal 3
+
+  # Otros: Compuestos de plástico mezclado o no identificados.
+  # Características: Firmas espectrales variadas, valores genéricos.
+  Otros:
+    - [70, 170]   # Canal 1
+    - [90, 190]   # Canal 2
+    - [50, 150]   # Canal 3
 
 
 logging:

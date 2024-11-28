@@ -7,6 +7,7 @@ from lib.mux_controller import MUXController
 from lib.as7265x import AS7265x
 from utils.mqtt_publisher import MQTTPublisher
 from utils.greengrass import process_with_greengrass
+from utils.networking import NetworkManager
 
 
 def load_config():
