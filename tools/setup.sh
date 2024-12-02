@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script de configuración para Raspberry Pi #1, #2 y #3
-# Uso: ./setup.sh [pi1|pi2|pi3]
+# Uso: ./setup.sh [raspberry-1|raspberry-2|raspberry-3]
 
 # Validar entrada
 if [ -z "$1" ]; then

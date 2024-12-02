@@ -48,7 +48,7 @@ mqtt:
   - "192.168.1.147"                               # Dirección IP del broker MQTT local (Ethernet Raspberry Pi #3)
   - "192.168.2.147"                               # Dirección IP del broker MQTT local (Wi-Fi Raspberry Pi #3)
   port: 1883                                      # Puerto del broker MQTT
-  username: "pi"                                  # Usuario para el broker local
+  username: "raspberry-1"                                  # Usuario para el broker local
   password: "Elefante"                       # Contraseña para el broker local
   topics:
     sensor_data: "pi1/sensor_data"                # Tópico para publicar datos de sensores

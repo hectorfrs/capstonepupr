@@ -50,7 +50,7 @@ mqtt:
     - "192.168.1.147"  # Dirección IP del broker MQTT (Ethernet, Raspberry Pi #3)
     - "192.168.2.147"  # Dirección IP del broker MQTT (Wi-Fi, Raspberry Pi #3)
   port: 1883
-  username: "pi"
+  username: "raspberry-2"
   password: "Elefante"
   topics:
     valve_control: "pi2/valve_control"  # Tópico para recibir comandos de control de válvulas
