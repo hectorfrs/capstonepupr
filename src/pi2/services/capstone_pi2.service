@@ -3,13 +3,15 @@ Description=Capstone Project - Raspberry Pi 2 Service
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/python3 main_pi2.py
-WorkingDirectory=/home/raspberry-2/capstonepupr/src/pi2/scripts
-StandardOutput=append:/home/raspberry-2/capstonepupr/src/pi2/logs/pi2_logs.log
-StandardError=append:/home/raspberry-2/capstonepupr/src/pi2/logs/pi2_logs.log
-Restart=on-failure
+Type=simple
 User=raspberry-2
 Group=raspberry-2
+WorkingDirectory=/home/raspberry-2/capstonepupr/src/pi2/scripts
+ExecStart=/usr/bin/python3 main_pi2.py
+Environment=PYTHONPATH=/home/raspberry-2/capstonepupr/src/pi2
+Restart=on-failure
+StandardOutput=append:/home/raspberry-2/logs/capstone_pi2.log
+StandardError=append:/home/raspberry-2/logs/capstone_pi2_error.log
 
 [Install]
 WantedBy=multi-user.target

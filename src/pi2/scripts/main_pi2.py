@@ -5,118 +5,68 @@ import os
 # Añadir el directorio principal de src/pi2 al PYTHONPATH
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 import time
-from datetime import datetime
+from utils.json_manager import ConfigManager
+from lib.valve_control import ValveControl
+from lib.pressure_sensor import PressureSensorManager
 from utils.mqtt_publisher import MQTTPublisher
-from utils.greengrass import process_with_greengrass
-from utils.sensors import PressureSensor
-from utils.valve_control import ValveController
+import time
 
-def load_config():
+def handle_valve_control(msg):
     """
-    Carga la configuración desde el archivo YAML.
+    Callback para manejar comandos de control de válvulas recibidos a través de MQTT.
     """
-    print("Cargando configuración para Raspberry Pi 2...")
-    config_path = '../config/pi2_config.yaml'
-    if not os.path.exists(config_path):
-        raise FileNotFoundError(f"No se encontró el archivo de configuración en {config_path}")
-    with open(config_path, 'r') as file:
-        config = yaml.safe_load(file)
+    try:
+        command = json.loads(msg.payload.decode("utf-8"))
+        action = command.get("action")
+        valve_id = command.get("valve_id")
+        duration = command.get("duration", config['valves']['default_timeout'])
 
-    # Asegurar que el directorio de logs existe
-    log_dir = os.path.dirname(config['logging']['log_file'])
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir)
-        print(f"Directorio de logs creado: {log_dir}")
-
-    print("Configuración cargada.")
-    print(f"Ruta de log cargada: {config['logging']['log_file']}")
-    return config
-
+        if action == "activate":
+            print(f"Activating valve {valve_id} for {duration} seconds.")
+            valve_control.activate_valve(valve_id, duration)
+        else:
+            print(f"Unknown action: {action}")
+    except Exception as e:
+        print(f"Error processing valve control command: {e}")
 
 def main():
     """
-    Función principal para manejar sensores de presión, válvulas y publicación de datos.
+    Script principal para el manejo de sensores, válvulas y comunicación MQTT.
     """
+    global config, valve_control, sensor_manager
+
     # Cargar configuración
-    config = load_config()
+    config_manager = ConfigManager("config/pi2_config.yaml")
+    config = config_manager.config
 
-    # Configurar logging
-    # logging.basicConfig(filename=config['logging']['log_file'], level=logging.INFO)
-    logging.basicConfig(filename='/home/raspberry-2/capstonepupr/src/pi2/logs/pi2_logs.log', level=logging.INFO)
-    print(f"Logging configurado en {config['logging']['log_file']}.")
+    # Inicializar módulos
+    valve_control = ValveControl(config['valves']['relay_module']['addresses'])
+    sensor_manager = PressureSensorManager(config['pressure_sensors']['sensors'])
+    mqtt = MQTTPublisher(config_path="config/pi2_config.yaml")
 
-    # Configurar logging
-    #logging.basicConfig(filename=config['logging']['log_file'], level=logging.INFO)
-    #print("Logging configurado.")
+    # Conectar a MQTT
+    mqtt.connect()
 
-    # Inicializar sensores de presión
-    sensors = [
-        PressureSensor(
-            i2c_address=sensor['i2c_address'],
-            min_pressure=config['pressure_sensors']['min_pressure'],
-            max_pressure=config['pressure_sensors']['max_pressure']
-        )
-        for sensor in config['pressure_sensors']['sensors']
-    ]
+    # Suscribirse al tópico de control de válvulas
+    mqtt.subscribe(config['mqtt']['topics']['valve_control'], handle_valve_control)
 
-    # Inicializar controlador de válvulas
-    valve_controller = ValveController(
-        relay_addresses=config['valves']['relay_module']['addresses'],
-        trigger_level=config['valves']['trigger_level']
-    )
+    try:
+        # Bucle principal
+        while True:
+            # Leer sensores y publicar datos
+            sensor_readings = sensor_manager.read_all_sensors()
+            for reading in sensor_readings:
+                mqtt.publish(
+                    config['mqtt']['topics']['pressure_data'],
+                    {"sensor": reading['name'], "pressure": reading['pressure']}
+                )
 
-    # Configurar clientes MQTT
-    local_publisher = MQTTPublisher(endpoints=config['mqtt']['broker_addresses'], local=True)
-    local_publisher.connect(port=config['mqtt']['port'])
+            # Intervalo de tiempo entre lecturas
+            time.sleep(config['pressure_sensors'].get('read_interval', 5))
+    except KeyboardInterrupt:
+        print("Apagando el sistema...")
+        valve_control.cleanup()
+        mqtt.client.disconnect()
 
-    aws_publisher = MQTTPublisher(
-        endpoints=config['aws']['iot_core_endpoint'],
-        cert_path=config['aws']['cert_path'],
-        key_path=config['aws']['key_path'],
-        ca_path=config['aws']['ca_path']
-    )
-    aws_publisher.connect()
-
-    # Bucle principal para manejar sensores y válvulas
-    while True:
-        try:
-            for sensor in sensors:
-                # Leer datos de presión
-                pressure = sensor.read_pressure()
-                payload = {
-                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    "sensor": sensor.i2c_address,
-                    "pressure": pressure
-                }
-
-                # Publicar datos de presión en MQTT local y AWS IoT Core
-                local_publisher.publish(config['mqtt']['topics']['pressure_data'], payload)
-                aws_publisher.publish(config['aws']['iot_topics']['pressure_data'], payload)
-
-                # Procesar datos localmente con Greengrass
-                response = process_with_greengrass(config['greengrass']['functions'][0]['arn'], payload)
-                print(f"Respuesta de Greengrass: {response}")
-
-                # Control de válvulas basado en presión
-                if sensor.i2c_address == config['pressure_sensors']['sensors'][0]['i2c_address']:  # Entrada válvula 1
-                    if pressure > config['pressure_sensors']['max_pressure']:
-                        valve_controller.deactivate_valve('valve_1')
-                    else:
-                        valve_controller.activate_valve('valve_1')
-
-                elif sensor.i2c_address == config['pressure_sensors']['sensors'][2]['i2c_address']:  # Entrada válvula 2
-                    if pressure > config['pressure_sensors']['max_pressure']:
-                        valve_controller.deactivate_valve('valve_2')
-                    else:
-                        valve_controller.activate_valve('valve_2')
-
-            # Intervalo entre lecturas
-            time.sleep(1)
-
-        except Exception as e:
-            logging.error(f"Error en el bucle principal: {e}")
-            print(f"Error en el bucle principal: {e}")
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

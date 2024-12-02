@@ -1,93 +1,88 @@
 import os
 import subprocess
-import logging
 
-class NetworkManager:
-    def __init__(self, ethernet_config, wifi_config):
+class Networking:
+    """
+    Clase para manejar la conexión de red en un Raspberry Pi, priorizando LAN (Ethernet) y
+    utilizando Wi-Fi como respaldo. Este enfoque asegura que el dispositivo siempre intente
+    mantenerse conectado a Internet.
+    """
+    def __init__(self, lan_config, wifi_config):
         """
-        Inicializa la configuración de red para Ethernet y Wi-Fi.
+        Inicializa las configuraciones de red.
 
-        :param ethernet_config: Diccionario con configuración de Ethernet (IP y Gateway).
-        :param wifi_config: Diccionario con configuración de Wi-Fi (SSID, contraseña, IP y Gateway).
+        :param lan_config: Diccionario con configuración de LAN (IP estática y gateway).
+        :param wifi_config: Diccionario con configuración de Wi-Fi (SSID, password, IP y gateway).
         """
-        self.ethernet_config = ethernet_config
+        self.lan_config = lan_config
         self.wifi_config = wifi_config
+        print("Configuración de Networking inicializada.")
 
-    def configure_ethernet(self):
+    def check_connection(self, interface):
         """
-        Configura la conexión Ethernet con IP y Gateway estáticos.
+        Verifica si hay conexión a Internet desde una interfaz específica utilizando 'ping'.
+
+        :param interface: Nombre de la interfaz de red (ejemplo: 'eth0' para LAN, 'wlan0' para Wi-Fi).
+        :return: True si hay conexión, False de lo contrario.
         """
-        print("Configuring Ethernet connection...")
+        print(f"Comprobando conexión a Internet en la interfaz {interface}...")
         try:
-            # Configurar la IP y Gateway para Ethernet
-            subprocess.run([
-                "sudo", "ifconfig", "eth0", self.ethernet_config['ip'], "netmask", "255.255.255.0"
-            ], check=True)
-            subprocess.run([
-                "sudo", "route", "add", "default", "gw", self.ethernet_config['gateway'], "eth0"
-            ], check=True)
-            print(f"Ethernet configured with IP: {self.ethernet_config['ip']}")
-            logging.info(f"Ethernet configured with IP: {self.ethernet_config['ip']}")
-        except subprocess.CalledProcessError as e:
-            print(f"Failed to configure Ethernet: {e}")
-            logging.error(f"Failed to configure Ethernet: {e}")
+            # Comando 'ping' para verificar conectividad con un servidor externo
+            result = subprocess.run(
+                ["ping", "-c", "1", "-I", interface, "8.8.8.8"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+            if result.returncode == 0:
+                print(f"Conexión establecida a través de {interface}.")
+                return True
+            else:
+                print(f"No se pudo conectar a través de {interface}.")
+                return False
+        except Exception as e:
+            print(f"Error al verificar conexión en {interface}: {e}")
+            return False
 
     def configure_wifi(self):
         """
-        Configura la conexión Wi-Fi con SSID y contraseña.
+        Configura la conexión Wi-Fi utilizando el comando 'nmcli'.
+
+        :return: True si la conexión es exitosa, False de lo contrario.
         """
-        print("Configuring Wi-Fi connection...")
+        print("Intentando conectar a la red Wi-Fi...")
         try:
-            # Crear el archivo wpa_supplicant.conf para la configuración de Wi-Fi
-            wpa_supplicant_config = f"""
-            country=US
-            ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
-            update_config=1
-
-            network={{
-                ssid="{self.wifi_config['ssid']}"
-                psk="{self.wifi_config['password']}"
-            }}
-            """
-            with open("/etc/wpa_supplicant/wpa_supplicant.conf", "w") as file:
-                file.write(wpa_supplicant_config)
-
-            # Reiniciar el servicio de Wi-Fi
-            subprocess.run(["sudo", "wpa_cli", "-i", "wlan0", "reconfigure"], check=True)
-            subprocess.run(["sudo", "ifconfig", "wlan0", self.wifi_config['ip'], "netmask", "255.255.255.0"], check=True)
-            subprocess.run(["sudo", "route", "add", "default", "gw", self.wifi_config['gateway'], "wlan0"], check=True)
-            print(f"Wi-Fi configured with SSID: {self.wifi_config['ssid']} and IP: {self.wifi_config['ip']}")
-            logging.info(f"Wi-Fi configured with SSID: {self.wifi_config['ssid']} and IP: {self.wifi_config['ip']}")
-        except subprocess.CalledProcessError as e:
-            print(f"Failed to configure Wi-Fi: {e}")
-            logging.error(f"Failed to configure Wi-Fi: {e}")
-
-    def check_connection(self):
-        """
-        Verifica la conexión a Internet utilizando `ping`.
-        """
-        print("Checking internet connection...")
-        try:
-            subprocess.run(["ping", "-c", "3", "8.8.8.8"], check=True)
-            print("Internet connection is active.")
-            logging.info("Internet connection is active.")
-            return True
-        except subprocess.CalledProcessError:
-            print("Internet connection is inactive.")
-            logging.warning("Internet connection is inactive.")
+            # Usar nmcli para conectarse al SSID especificado
+            os.system(f'nmcli dev wifi connect "{self.wifi_config["ssid"]}" password "{self.wifi_config["password"]}"')
+            # Verificar conexión en la interfaz Wi-Fi
+            if self.check_connection("wlan0"):
+                print("Conexión Wi-Fi exitosa.")
+                return True
+            else:
+                print("No se pudo establecer conexión Wi-Fi.")
+                return False
+        except Exception as e:
+            print(f"Error al conectar a Wi-Fi: {e}")
             return False
 
-    def ensure_redundancy(self):
+    def ensure_connection(self):
         """
-        Asegura redundancia en la conexión de red, priorizando Ethernet.
+        Garantiza que el dispositivo esté conectado a Internet. Prioriza la conexión LAN (Ethernet)
+        y utiliza Wi-Fi como respaldo si LAN no está disponible.
+
+        :return: True si hay conexión, False de lo contrario.
         """
-        print("Ensuring network redundancy...")
-        if self.check_connection():
-            print("No changes needed; connection is active.")
-            return
-        else:
-            print("No active internet connection detected. Switching to backup.")
-            self.configure_ethernet()
-            if not self.check_connection():
-                print("Ethernet failed; attempting Wi-Fi connection.")
-                self.configure_wifi()
+        print("Iniciando proceso para garantizar conectividad a Internet...")
+
+        # Verificar conexión LAN
+        if self.check_connection("eth0"):
+            print("Conexión LAN activa. No es necesario usar Wi-Fi.")
+            return True
+
+        # Intentar conexión Wi-Fi si LAN falla
+        if self.configure_wifi():
+            print("Conexión Wi-Fi activa como respaldo.")
+            return True
+
+        # Si ambos fallan
+        print("Error: No se pudo establecer ninguna conexión de red.")
+        return False

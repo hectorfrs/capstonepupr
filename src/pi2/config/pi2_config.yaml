@@ -58,3 +58,4 @@ mqtt:
 
 logging:
   log_file: "/logs/pi2_logs.log"  # Archivo de logs para registrar las operaciones
+  level: "DEBUG"                        # Nivel de detalle de los logs
