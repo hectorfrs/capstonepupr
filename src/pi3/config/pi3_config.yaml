@@ -62,6 +62,8 @@ mqtt:
   broker:
     enabled: true                               # Indica que este Raspberry Pi actúa como broker MQTT
     port: 1883                                  # Puerto para el broker MQTT local
+    username: "raspberry-3"
+  password: "Elefante"                                  
   topics:
     settings_update_pi1: "pi1/settings_update"  # Tópico para enviar ajustes a Raspberry Pi #1
     settings_update_pi2: "pi2/settings_update"  # Tópico para enviar ajustes a Raspberry Pi #2

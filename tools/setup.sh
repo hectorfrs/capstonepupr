@@ -5,7 +5,7 @@
 
 # Validar entrada
 if [ -z "$1" ]; then
-  echo "Uso: $0 [pi1|pi2|pi3]"
+  echo "Uso: $0 [raspberry-1|raspberry-2|raspberry-3]"
   exit 1
 fi
 
