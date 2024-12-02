@@ -1,0 +1,4 @@
+sparkfun-qwiic
+smbus2
+paho-mqtt
+PyYAML
