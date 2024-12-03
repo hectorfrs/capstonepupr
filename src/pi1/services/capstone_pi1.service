@@ -10,8 +10,8 @@ WorkingDirectory=/home/raspberry-1/capstonepupr/src/pi1/scripts
 ExecStart=/usr/bin/python3 main_pi1.py
 Environment=PYTHONPATH=/home/raspberry-1/capstonepupr/src/pi1
 Restart=on-failure
-StandardOutput=append:/home/raspberry-1/logs/capstone_pi1.log
-StandardError=append:/home/raspberry-1/logs/capstone_pi1_error.log
+StandardOutput=null
+StandardError=null
 
 [Install]
 WantedBy=multi-user.target

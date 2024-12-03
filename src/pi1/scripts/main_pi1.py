@@ -13,6 +13,7 @@ from utils.greengrass import GreengrassManager
 from utils.networking import NetworkManager
 from utils.json_manager import generate_json, save_json
 from utils.json_logger import log_detection
+from logging.handlers import RotatingFileHandler
 
 import sys
 import os
@@ -84,6 +85,16 @@ def configure_logging(config):
     )
 
     error_log_file = config["logging"]["error_log_file"]
+    max_log_size = config.get("logging", {}).get("max_size_mb", 5) * 1024 * 1024  # Tamaño máximo en bytes
+    backup_count = config.get("logging", {}).get("backup_count", 3)  # Número de archivos de respaldo
+
+    # Configuración del RotatingFileHandler
+    handler = RotatingFileHandler(
+        filename=log_file,
+        maxBytes=max_log_size,  # Tamaño máximo del archivo en bytes
+        backupCount=backup_count,  # Número de archivos de respaldo
+    )
+    handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
 
     # Configuración del manejador para logs de errores
     error_handler = logging.FileHandler(error_log_file)
@@ -92,9 +103,29 @@ def configure_logging(config):
 
     # Agregar manejadores al logger
     logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
     logger.addHandler(error_handler)
 
     print(f"Logging configurado en {log_file}.")
+
+# Redirigir stdout y stderr al logger
+class StreamToLogger:
+    """
+    Redirige una salida (stdout o stderr) al logger.
+    """
+    def __init__(self, logger, level):
+        self.logger = logger
+        self.level = level
+
+    def write(self, message):
+        if message.strip():  # Evitar logs en blanco
+            self.logger.log(self.level, message.strip())
+
+    def flush(self):
+        pass  # Necesario para compatibilidad con sys.stdout y sys.stderr
+
+sys.stdout = StreamToLogger(logger, logging.INFO)  # Redirige stdout
+sys.stderr = StreamToLogger(logger, logging.ERROR)  # Redirige stderr
 
 def load_config(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml"):
     """
