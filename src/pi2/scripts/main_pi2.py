@@ -3,8 +3,8 @@ import os
 import yaml
 import time
 import logging
+import queue
 
-from queue import Queue
 from datetime import datetime
 from utils.json_manager import generate_json, save_json
 from utils.json_logger import configure_logging, log_detection
