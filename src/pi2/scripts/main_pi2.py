@@ -154,7 +154,7 @@ def main():
 
     # Inicializar sensores de presión
     logging.info("Inicializando sensores de presión...")
-    sensors = [PressureSensor(sensor_cfg) for sensor_cfg in config['pressure_sensors']['sensors']]
+    #sensors = [PressureSensor(sensor_cfg) for sensor_cfg in config['pressure_sensors']['sensors']]
 
     # Inicializar control de relés para las válvulas
     logging.info("Inicializando control de válvulas...")
