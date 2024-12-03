@@ -1,3 +1,4 @@
+import yaml
 import time
 import logging
 from threading import Thread
@@ -5,16 +6,13 @@ from queue import Queue
 from datetime import datetime
 from asyncio import Handle
 
-
 from lib.mux_controller import MUXController
-#from lib.spectrometer import AS7265x as SparkFunAS7265x
 from lib.as7265x import CustomAS7265x
-#from lib.spectrometer import spectrometer as spec
 from utils.mqtt_publisher import MQTTPublisher
 from utils.greengrass import GreengrassManager
 from utils.networking import NetworkManager
 from utils.json_manager import generate_json, save_json
-import yaml
+from utils.json_logger import log_detection
 
 import sys
 import os
@@ -23,6 +21,50 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 # Agregar el directorio 'lib' al path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
+def load_thresholds(config, material):
+    """
+    Carga los umbrales espectrales para un material específico.
+    """
+    return config["plastic_thresholds"].get(material, [])
+
+def detect_material(config):
+    """
+    Simula la detección de materiales plásticos utilizando datos de configuración.
+    """
+    # Datos espectrales simulados para la demostración
+    simulated_spectral_data = {
+        "channel_1": 150,
+        "channel_2": 180,
+        "channel_3": 100
+    }
+
+    # Comparar datos simulados con umbrales configurados
+    detected_material = "Otros"  # Valor predeterminado
+    confidence = 0.0
+
+    for material, thresholds in config["plastic_thresholds"].items():
+        matches = all(
+            thresholds[i][0] <= simulated_spectral_data[f"channel_{i+1}"] <= thresholds[i][1]
+            for i in range(len(thresholds))
+        )
+        if matches:
+            detected_material = material
+            confidence = 1.0  # Simula confianza máxima (puede calcularse dinámicamente)
+            break
+
+    detection_data = {
+        "material": detected_material,
+        "confidence": confidence,
+        "spectral_data": simulated_spectral_data,
+        "sensor_id": config["mux"]["channels"][0]["sensor_name"],  # Primer sensor del MUX
+        "mux_channel": config["mux"]["channels"][0]["channel"],  # Canal del MUX
+        "timestamp": datetime.now().isoformat(),
+        "processing_time_ms": 120,  # Simulado
+        "device_id": config["network"]["ethernet"]["ip"],  # Dirección IP del dispositivo
+        "location": "line_1_zone_A"  # Estático, puedes actualizar si es dinámico
+    }
+
+    return detection_data
 
 def configure_logging(config):
     log_file = os.path.expanduser(config['logging']['log_file'])  # Expande '~' al directorio del usuario
@@ -136,7 +178,7 @@ def main():
     #     level=logging.INFO,
     #     format='%(asctime)s %(levelname)s: %(message)s'
     # )
-    #logging.info("Sistema iniciado en Raspberry Pi #1.")
+    logging.info("Sistema iniciado en Raspberry Pi #1.")
     #print("Logging configurado.")
 
     # Configurar red
@@ -211,6 +253,14 @@ def main():
         except Exception as e:
             logging.error(f"Error en el loop principal: {e}")
 
+    logging.info("Iniciando detección de materiales...")
+
+    # Detectar material
+    detection_result = detect_material(config)
+    logging.info(f"Material detectado: {detection_result}")
+
+    # Registrar detección
+    log_detection(detection_result, config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml")
 
 if __name__ == "__main__":
     main()
