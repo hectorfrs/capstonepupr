@@ -129,3 +129,13 @@ class MQTTPublisher:
         except KeyboardInterrupt:
             print("Desconectando del cliente MQTT...")
             self.client.disconnect()
+
+    def disconnect(self):
+        """
+        Desconecta del broker MQTT.
+        """
+        try:
+            self.client.disconnect()
+            logging.info("Desconexión del broker MQTT exitosa.")
+        except Exception as e:
+            logging.error(f"Error al desconectar del broker MQTT: {e}")
