@@ -54,7 +54,7 @@ setup_service() {
 
 # Configuración específica por dispositivo
 case $PI in
-  pi1)
+  raspberry-1)
     echo "Configurando Raspberry Pi #1..."
     REPO_URL="https://github.com/hectorfrs/capstonepupr/tree/main/src/pi1"
     DEST_DIR="/home/pi/src/pi1"
@@ -62,7 +62,7 @@ case $PI in
     install_dependencies
     setup_service "raspberry-1"
     ;;
-  pi2)
+  raspberry-2)
     echo "Configurando Raspberry Pi #2..."
     REPO_URL="https://github.com/hectorfrs/capstonepupr/tree/main/src/pi2"
     DEST_DIR="/home/pi/src/pi2"
@@ -70,7 +70,7 @@ case $PI in
     install_dependencies
     setup_service "raspberry-2"
     ;;
-  pi3)
+  raspberry-3)
     echo "Configurando Raspberry Pi #3..."
     REPO_URL="https://github.com/hectorfrs/capstonepupr/tree/main/src/pi3"
     DEST_DIR="/home/pi/src/pi3"
