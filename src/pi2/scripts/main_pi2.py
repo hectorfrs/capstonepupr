@@ -5,6 +5,7 @@ import time
 import logging
 import queue
 
+from threading import Thread
 from datetime import datetime
 from utils.json_manager import generate_json, save_json
 from utils.json_logger import configure_logging, log_detection
