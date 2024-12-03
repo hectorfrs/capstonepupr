@@ -22,6 +22,16 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 # Agregar el directorio 'lib' al path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
+def load_config(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml"):
+    """
+    Carga la configuración desde un archivo YAML.
+    
+    :param config_path: Ruta al archivo YAML.
+    :return: Diccionario con la configuración cargada.
+    """
+    with open(config_path, "r") as file:
+        return yaml.safe_load(file)
+
 def load_thresholds(config, material):
     """
     Carga los umbrales espectrales para un material específico.
@@ -67,6 +77,21 @@ def detect_material(config):
 
     return detection_data
 
+class StreamToLogger:
+    """
+    Redirige una salida (stdout o stderr) al logger.
+    """
+    def __init__(self, logger, level):
+        self.logger = logger
+        self.level = level
+
+    def write(self, message):
+        if message.strip():  # Evitar logs en blanco
+            self.logger.log(self.level, message.strip())
+
+    def flush(self):
+        pass  # Necesario para compatibilidad con sys.stdout y sys.stderr
+
 def configure_logging(config):
     log_file = os.path.expanduser(config['logging']['log_file'])    # Expande '~' al directorio del usuario
     log_dir = os.path.dirname(log_file)
@@ -109,34 +134,8 @@ def configure_logging(config):
     print(f"Logging configurado en {log_file}.")
 
 # Redirigir stdout y stderr al logger
-class StreamToLogger:
-    """
-    Redirige una salida (stdout o stderr) al logger.
-    """
-    def __init__(self, logger, level):
-        self.logger = logger
-        self.level = level
-
-    def write(self, message):
-        if message.strip():  # Evitar logs en blanco
-            self.logger.log(self.level, message.strip())
-
-    def flush(self):
-        pass  # Necesario para compatibilidad con sys.stdout y sys.stderr
-
 sys.stdout = StreamToLogger(logger, logging.INFO)  # Redirige stdout
 sys.stderr = StreamToLogger(logger, logging.ERROR)  # Redirige stderr
-
-def load_config(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml"):
-    """
-    Carga la configuración desde un archivo YAML.
-    
-    :param config_path: Ruta al archivo YAML.
-    :return: Diccionario con la configuración cargada.
-    """
-    with open(config_path, "r") as file:
-        return yaml.safe_load(file)
-
 
 def identify_plastic(spectral_data, thresholds):
     """
