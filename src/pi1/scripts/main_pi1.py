@@ -121,7 +121,7 @@ def process_sensor(mux, sensor, channel, sensor_name, thresholds, data_queue):
         mux.select_channel(channel)
         logging.info(f"Canal {channel} activado para el sensor {sensor_name}.")
         
-        spectral_data = sensor.read_spectrum()
+        spectral_data = sensor.read_advanced_spectrum()
         logging.info(f"Datos leídos del sensor {sensor_name}: {spectral_data}")
 
         detected_material = identify_material(spectral_data, thresholds)
