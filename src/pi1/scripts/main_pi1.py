@@ -234,8 +234,8 @@ def main():
     if CustomAS7265x(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml").is_connected()
 ]
 
-if not sensors:
-    logging.info("No se detectaron sensores conectados. Terminando el programa.")
+    if not sensors:
+        logging.info("No se detectaron sensores conectados. Terminando el programa.")
     return
 
     # Configurar sensores conectados al MUX
