@@ -60,7 +60,7 @@ case $PI in
     DEST_DIR="/home/pi/src/pi1"
     clone_repository "$REPO_URL" "$DEST_DIR"
     install_dependencies
-    setup_service "pi1"
+    setup_service "raspberry-1"
     ;;
   pi2)
     echo "Configurando Raspberry Pi #2..."
@@ -68,7 +68,7 @@ case $PI in
     DEST_DIR="/home/pi/src/pi2"
     clone_repository "$REPO_URL" "$DEST_DIR"
     install_dependencies
-    setup_service "pi2"
+    setup_service "raspberry-2"
     ;;
   pi3)
     echo "Configurando Raspberry Pi #3..."
@@ -76,7 +76,7 @@ case $PI in
     DEST_DIR="/home/pi/src/pi3"
     clone_repository "$REPO_URL" "$DEST_DIR"
     install_dependencies
-    setup_service "pi3"
+    setup_service "raspberry-3"
     ;;
   *)
     echo "Dispositivo no reconocido: $PI"
