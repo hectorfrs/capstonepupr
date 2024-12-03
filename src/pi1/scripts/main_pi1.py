@@ -67,17 +67,33 @@ def detect_material(config):
     return detection_data
 
 def configure_logging(config):
-    log_file = os.path.expanduser(config['logging']['log_file'])  # Expande '~' al directorio del usuario
+    log_file = os.path.expanduser(config['logging']['log_file'])    # Expande '~' al directorio del usuario
     log_dir = os.path.dirname(log_file)
 
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
 
+    # Configuración del formato de los logs
+    LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
+
     logging.basicConfig(
-        filename=log_file,
-        level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s'
+        filename=log_file,                                          # Archivo de log especificado en config.yaml
+        level=logging.INFO,                                         # Nivel de logging (puedes usar DEBUG, INFO, WARNING, etc.)
+        format=LOG_FORMAT,
+        datefmt="%Y-%m-%d %H:%M:%S",                                # Formato de la fecha y hora
     )
+
+    error_log_file = config["logging"]["error_log_file"]
+
+    # Configuración del manejador para logs de errores
+    error_handler = logging.FileHandler(error_log_file)
+    error_handler.setLevel(logging.ERROR)
+    error_handler.setFormatter(logging.Formatter(LOG_FORMAT))
+
+    # Agregar manejadores al logger
+    logger = logging.getLogger()
+    logger.addHandler(error_handler)
+
     print(f"Logging configurado en {log_file}.")
 
 def load_config(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml"):
@@ -235,7 +251,7 @@ def main():
 ]
 
     if not sensors:
-        logging.info("No se detectaron sensores conectados. Terminando el programa.")
+        logging.error("No se detectaron sensores conectados. Terminando el programa.")
         return
 
     # Configurar sensores conectados al MUX
