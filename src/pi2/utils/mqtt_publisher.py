@@ -19,10 +19,12 @@ class MQTTPublisher:
         :param use_aws: Booleano para indicar si se debe conectar a AWS IoT Core.
         """
         self.config = self.load_config(config_path)
-        self.use_aws = use_aws
+        
+        # Si `local` está especificado, sobreescribe `use_aws`
+        self.use_aws = not local if local is not None else use_aws
 
         # Configuración del broker MQTT
-        if use_aws:
+        if self.use_aws:
             self.broker = self.config['aws']['iot_core_endpoint']
             self.port = 8883
             self.cert_path = self.config['aws']['cert_path']
