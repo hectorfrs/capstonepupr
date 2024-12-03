@@ -13,7 +13,6 @@ from utils.greengrass import GreengrassManager
 from utils.networking import NetworkManager
 from utils.json_manager import generate_json, save_json
 from utils.json_logger import log_detection
-from utils.material_identifier import identify_material
 
 import sys
 import os
