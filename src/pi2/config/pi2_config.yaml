@@ -56,6 +56,7 @@ mqtt:
   topics:
     valve_control: "raspberry-2/valve_control"  # Tópico para recibir comandos de control de válvulas
     pressure_data: "raspberry-2/pressure_data"  # Tópico para publicar datos de presión
+    sensor_data: "raspberry-2/sensor_data"      # Tópico para publicar datos de sensores
 
 data_queue:
   max_size: 10                  # Tamaño máximo de la cola de datos
