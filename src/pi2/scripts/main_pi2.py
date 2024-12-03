@@ -180,8 +180,8 @@ def main():
     # Inicializar sensores de presión
     try:
         logging.info("Inicializando sensores de presión...")
-        sensors_manager = PressureSensorManager(config['pressure_sensors']['sensors'])
-        readings = sensors_manager.read_all_sensors()
+        sensors = PressureSensorManager(config['pressure_sensors']['sensors'])
+        readings = sensors.read_all_sensors()
         for reading in readings:
             logging.info(f"Sensor: {reading['name']}, Pressure: {reading['pressure']} PSI")
     except Exception as e:
@@ -199,6 +199,14 @@ def main():
         raise ConnectionError("Conexión MQTT no disponible.")
         return
 
+     # Inicializar Greengrass Manager
+    try:
+        greengrass_manager = GreengrassManager(config_path="/home/raspberry-2/capstonepupr/src/pi2/config/pi2_config.yaml")
+        logging.info("Greengrass Manager inicializado.")
+    except Exception as e:
+        logging.error(f"Error inicializando Greengrass Manager: {e}")
+        return
+
     # Inicializar control de relés
     logging.info("Inicializando control de válvulas...")
     try:
@@ -207,21 +215,6 @@ def main():
         relay_control = RelayControl(config['valves'], mqtt_client)
     except Exception as e:
         logging.error(f"Error inicializando control de válvulas: {e}")
-        return
-
-    # Configurar cliente MQTT
-    # logging.info("Configurando cliente MQTT...")
-    # mqtt_client = MQTTClient(config['mqtt'])
-    # mqtt_client.connect()
-
-    
-
-     # Inicializar Greengrass Manager
-    try:
-        greengrass_manager = GreengrassManager(config_path="/home/raspberry-2/capstonepupr/src/pi2/config/pi2_config.yaml")
-        logging.info("Greengrass Manager inicializado.")
-    except Exception as e:
-        logging.error(f"Error inicializando Greengrass Manager: {e}")
         return
 
     # Inicializar buffer de datos
@@ -304,8 +297,9 @@ def main():
         logging.info("Interrupción por teclado. Terminando el programa.")
         logging.error(f"Error crítico en el programa: {e}", exc_info=True)
     finally:
-        mqtt_client.disconnect()
-        logging.info("Cliente MQTT desconectado.")
+        if mqtt_client:
+            mqtt_client.disconnect()
+            logging.info("Cliente MQTT desconectado.")
         logging.info("Programa terminado correctamente.")
 
 if __name__ == '__main__':
