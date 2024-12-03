@@ -2,7 +2,7 @@ import os
 import subprocess
 import yaml
 
-class Networking:
+class NetworkManager:
     """
     Clase para manejar la conexión de red en un Raspberry Pi, priorizando LAN (Ethernet) y
     utilizando Wi-Fi como respaldo. Este enfoque asegura que el dispositivo siempre intente
