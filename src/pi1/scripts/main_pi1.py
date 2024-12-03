@@ -240,7 +240,7 @@ def main():
     greengrass_manager = GreengrassManager(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml")
 
     # Inicializar buffer de datos
-    data_queue = Queue()
+    data_queue = queue.Queue(maxsize=10)
 
     # Iniciar hilo para publicar datos
     publish_thread = Thread(
