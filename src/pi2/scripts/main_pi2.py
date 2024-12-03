@@ -16,19 +16,83 @@ import os
 # Añadir el directorio principal de src/pi2 al PYTHONPATH
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
+import logging
+import os
+from logging.handlers import RotatingFileHandler
+
 def configure_logging(config):
-    log_file = os.path.expanduser(config['logging']['log_file'])  # Expande '~' al directorio del usuario
-    log_dir = os.path.dirname(log_file)
+    """
+    Configura los logs generales, de errores, de sensores y de MQTT.
+    
+    :param config: Diccionario con la configuración de logs desde config.yaml.
+    """
+    max_log_size = config.get("logging", {}).get("max_size_mb", 5) * 1024 * 1024
+    backup_count = config.get("logging", {}).get("backup_count", 3)
 
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir)
+    # Configuración del formato de los logs
+    LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 
-    logging.basicConfig(
-        filename=log_file,
-        level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s'
+    # Crear directorio de logs si no existe
+    for log_key in ['general_log_file', 'error_log_file', 'sensors_log_file', 'mqtt_log_file']:
+        log_file = os.path.expanduser(config['logging'][log_key])
+        log_dir = os.path.dirname(log_file)
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)
+
+    # Configurar manejadores para cada tipo de log
+    loggers = {}
+
+    # Logs generales
+    general_handler = RotatingFileHandler(
+        filename=config['logging']['general_log_file'],
+        maxBytes=max_log_size,
+        backupCount=backup_count,
     )
-    print(f"Logging configurado en {log_file}.")
+    general_handler.setFormatter(logging.Formatter(LOG_FORMAT))
+    general_logger = logging.getLogger("general")
+    general_logger.setLevel(logging.INFO)
+    general_logger.addHandler(general_handler)
+    loggers['general'] = general_logger
+
+    # Logs de errores
+    error_handler = RotatingFileHandler(
+        filename=config['logging']['error_log_file'],
+        maxBytes=max_log_size,
+        backupCount=backup_count,
+    )
+    error_handler.setFormatter(logging.Formatter(LOG_FORMAT))
+    error_handler.setLevel(logging.ERROR)
+    error_logger = logging.getLogger("error")
+    error_logger.setLevel(logging.ERROR)
+    error_logger.addHandler(error_handler)
+    loggers['error'] = error_logger
+
+    # Logs de sensores
+    sensors_handler = RotatingFileHandler(
+        filename=config['logging']['sensors_log_file'],
+        maxBytes=max_log_size,
+        backupCount=backup_count,
+    )
+    sensors_handler.setFormatter(logging.Formatter(LOG_FORMAT))
+    sensors_logger = logging.getLogger("sensors")
+    sensors_logger.setLevel(logging.INFO)
+    sensors_logger.addHandler(sensors_handler)
+    loggers['sensors'] = sensors_logger
+
+    # Logs de MQTT
+    mqtt_handler = RotatingFileHandler(
+        filename=config['logging']['mqtt_log_file'],
+        maxBytes=max_log_size,
+        backupCount=backup_count,
+    )
+    mqtt_handler.setFormatter(logging.Formatter(LOG_FORMAT))
+    mqtt_logger = logging.getLogger("mqtt")
+    mqtt_logger.setLevel(logging.INFO)
+    mqtt_logger.addHandler(mqtt_handler)
+    loggers['mqtt'] = mqtt_logger
+
+    return loggers
+
 
 def load_config(config_path="/home/raspberry-2/capstonepupr/src/pi2/config/pi2_config.yaml"):
     """
@@ -46,11 +110,16 @@ def main():
     Incluye monitoreo de sensores de presión, control de válvulas y publicación en MQTT.
     """
     # Cargar configuración desde config.yaml
+    print("Cargando config file.")
     config = load_config()
 
     # Configurar el sistema de logging
-    logging.info("Configurando logging.")
-    configure_logging(config)
+    print("Configurando logging.")
+    loggers = configure_logging(config)
+    general_logger = loggers['general']
+    error_logger = loggers['error']
+    sensors_logger = loggers['sensors']
+    mqtt_logger = loggers['mqtt']
 
     logging.info("Sistema iniciado en Raspberry Pi #1.")
     #print("Logging configurado.")

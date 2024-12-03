@@ -58,5 +58,10 @@ mqtt:
     pressure_data: "raspberry-2/pressure_data"  # Tópico para publicar datos de presión
 
 logging:
-  log_file: "/logs/pi2_logs.log"  # Archivo de logs para registrar las operaciones
-  level: "DEBUG"                        # Nivel de detalle de los logs
+  log_file: "/logs/pi2_logs.log"                              # Archivo de logs para registrar las operaciones
+  general_log_file: "/home/raspberry-2/logs/pi2_general.log"  # Archivo principal de logs generales
+  error_log_file: "/home/raspberry-2/logs/pi2_error.log"      # Archivo para logs de errores
+  sensors_log_file: "/home/raspberry-2/logs/pi2_sensors.log"  # Archivo para logs de sensores
+  mqtt_log_file: "/home/raspberry-2/logs/pi2_mqtt.log"        # Archivo para logs de MQTT
+  max_size_mb: 5                                              # Tamaño máximo del archivo en MB
+  backup_count: 3                                             # Cantidad de archivos de respaldo
