@@ -318,7 +318,8 @@ def main():
 
 
     # Inicializar buffer de datos
-    data_queue = queue.Queue(maxsize=config['data_queue']['maxsize'])
+    data_queue = queue.Queue(maxsize=config['data_queue']['max_size'])
+    logging.info(f"Queue de datos inicializada con tamaño máximo: {config['data_queue']['max_size']}")
 
     # Iniciar hilo para publicar datos
     publish_thread = Thread(

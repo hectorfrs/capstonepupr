@@ -140,7 +140,7 @@ def main():
     sensors_logger = loggers['sensors']
     mqtt_logger = loggers['mqtt']
 
-    logging.info("Sistema iniciado en Raspberry Pi #1.")
+    logging.info("Sistema iniciado en Raspberry Pi #2.")
     #print("Logging configurado.")
 
     # Configurar red
@@ -188,8 +188,8 @@ def main():
     greengrass_manager = GreengrassManager(config_path="/home/raspberry-2/capstonepupr/src/pi2/config/pi2_config.yaml")
 
     # Inicializar buffer de datos
-    data_queue = queue.Queue(maxsize=config['data_queue']['maxsize'])
-    logging.info(f"Queue de datos inicializada con tamaño máximo: {config['data_queue']['maxsize']}")
+    data_queue = queue.Queue(maxsize=config['data_queue']['max_size'])
+    logging.info(f"Queue de datos inicializada con tamaño máximo: {config['data_queue']['max_size']}")
 
     # Iniciar hilo para publicar datos
     publish_thread = Thread(
