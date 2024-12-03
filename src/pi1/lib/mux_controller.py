@@ -15,6 +15,10 @@ class MUXController:
         :param i2c_bus: Bus I2C donde está conectado el MUX.
         :param i2c_address: Dirección I2C del MUX.
         """
+
+        # Inicializar el bus I²C
+        self.bus = SMBus(self.i2c_bus)
+        
         self.i2c_bus = i2c_bus
         self.i2c_address = i2c_address
 
