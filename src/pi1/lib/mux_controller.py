@@ -27,11 +27,15 @@ class MUXController:
         print(f"MUX conectado en la dirección {hex(self.i2c_address)}.")
 
     def write_register(self, register, value):
+        """
+        Escribe un valor en un registro del sensor a través del bus I2C.
+        """
         try:
             self.bus.write_byte_data(self.i2c_address, register, value)
         except OSError as e:
-            print(f"Error escribiendo en el registro {hex(register)} del dispositivo {hex(self.i2c_address)}: {e}")
+            print(f"Error al escribir en el registro {hex(register)} del dispositivo {hex(self.i2c_address)}: {e}")
             raise
+
 
     def select_channel(self, channel):
         """
