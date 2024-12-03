@@ -172,7 +172,16 @@ def publish_data(mqtt_client, greengrass_manager, topic, data_queue):
         except Exception as e:
             logging.error(f"Error publicando datos: {e}")
 
-
+    def is_connected(self):
+            """
+            Verifica si el sensor está conectado al bus I2C.
+            """
+            try:
+                self.bus.read_byte(self.i2c_address)
+                return True
+            except OSError:
+                return False
+                
 def main():
     """
     Función principal para manejar la lógica del Raspberry Pi 1.

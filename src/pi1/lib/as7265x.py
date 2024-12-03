@@ -46,15 +46,7 @@ class CustomAS7265x(Spectrometer):
         """
         with open(config_path, "r") as file:
             return yaml.safe_load(file)
-    def is_connected(self):
-            """
-            Verifica si el sensor está conectado al bus I2C.
-            """
-            try:
-                self.bus.read_byte(self.i2c_address)
-                return True
-            except OSError:
-                return False
+    
 
     def configure_sensor(self):
         """
