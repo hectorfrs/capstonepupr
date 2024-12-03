@@ -63,38 +63,23 @@ class MUXController:
             raise
 
     # def disable_all_channels(self):
-    #     """
-    #     Desactiva todos los canales del MUX, escribiendo 0x00 en el registro de con control.
-    #     """
-    #     try:
-    #         #self.mux.disable_all_channels()
-    #         self.mux._i2c.writeByte(self.i2c_address, 0x00)  # Dirección, valor
-    #         print("Todos los canales desactivados en el MUX.")
-    #     except Exception as e:
-    #         print(f"Error al desactivar los canales: {e}")
-    #         raise
-
-    def disable_all_channels(self):
         """
-        Desactiva todos los canales del MUX escribiendo 0x00 en el registro de control utilizando smbus2.
+        Desactiva todos los canales del MUX.
         """
         try:
-            # Crear una instancia de SMBus para el bus I2C configurado
-            with SMBus(self.i2c_bus) as bus:
-                # Escribir 0x00 en la dirección del dispositivo MUX para desactivar todos los canales
-                bus.write_byte(self.i2c_address, 0x00)
-            print("Todos los canales desactivados en el MUX (smbus2).")
+            self.mux.enable_channels(0)
+            print("Todos los canales desactivados en el MUX.")
         except Exception as e:
-            print(f"Error al desactivar todos los canales del MUX: {e}")
+            print(f"Error al desactivar los canales: {e}")
             raise
 
-        def validate_connection(self):
-            """
-            Valida si el MUX está conectado y funcionando correctamente.
-            """
-            if not self.mux.connected:
-                raise ConnectionError(f"El MUX con dirección {hex(self.i2c_address)} ha perdido la conexión.")
-            print("Conexión al MUX validada.")
+    def validate_connection(self):
+        """
+        Valida si el MUX está conectado y funcionando correctamente.
+        """
+        if not self.mux.connected:
+            raise ConnectionError(f"El MUX con dirección {hex(self.i2c_address)} ha perdido la conexión.")
+        print("Conexión al MUX validada.")
 
     def reset_channel(self, channel):
         """
