@@ -57,16 +57,15 @@ class CustomAS7265x(Spectrometer):
             return
 
         try:
+            print(f"Configurando el sensor AS7265x en la dirección {hex(self.i2c_address)}...")
             self.set_integration_time(self.integration_time)
             print(f"Tiempo de integración configurado: {self.integration_time}")
+            self.set_gain(self.gain)
+            print("Configuración del sensor completada.")
         except Exception as e:
             print(f"Error configurando el sensor: {e}")
             raise
 
-        print(f"Configurando el sensor AS7265x en la dirección {hex(self.i2c_address)}...")
-        self.set_integration_time(self.integration_time)
-        self.set_gain(self.gain)
-        print("Configuración del sensor completada.")
 
     def read_data(self):
         """
