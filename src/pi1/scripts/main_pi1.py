@@ -236,7 +236,7 @@ def main():
 
     if not sensors:
         logging.info("No se detectaron sensores conectados. Terminando el programa.")
-    return
+        return
 
     # Configurar sensores conectados al MUX
     for channel, sensor_config in enumerate(sensors_config):
