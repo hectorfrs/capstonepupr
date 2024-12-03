@@ -212,7 +212,7 @@ def main():
     logging.info(f"{len(sensors)} sensores configurados con éxito.")
 
     # Leer espectro calibrado
-    calibrated_data = sensor.read_calibrated_spectrum()
+    calibrated_data = sensors.read_calibrated_spectrum()
     logging.info("Datos calibrados:", calibrated_data)
 
     # Inicializar cliente MQTT
