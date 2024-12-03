@@ -17,8 +17,6 @@ class MUXController:
         """
 
         # Inicializar el bus I²C
-        self.bus = SMBus(self.i2c_bus)
-        
         self.i2c_bus = i2c_bus
         self.i2c_address = i2c_address
 
