@@ -1,7 +1,9 @@
 import json
-from datetime import datetime
 import os
 import yaml
+import logging
+from datetime import datetime
+from logging.handlers import RotatingFileHandler
 
 def log_detection(data, config_path="config/config.yaml"):
     """
@@ -29,3 +31,39 @@ def log_detection(data, config_path="config/config.yaml"):
         f.write(json.dumps(data) + "\n")
     
     print(f"Datos guardados en {file_path}: {data}")
+
+
+
+def configure_logging(config):
+    """
+    Configura el logging según los parámetros definidos en config.yaml.
+
+    :param config: Diccionario con la configuración de logs desde config.yaml.
+    """
+    max_log_size = config.get("logging", {}).get("max_size_mb", 5) * 1024 * 1024
+    backup_count = config.get("logging", {}).get("backup_count", 3)
+
+    # Configuración del formato de los logs
+    LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
+
+    # Crear directorio de logs si no existe
+    log_file = os.path.expanduser(config['logging']['log_file'])
+    log_dir = os.path.dirname(log_file)
+
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+
+    # Configurar manejador principal con rotación
+    handler = RotatingFileHandler(
+        filename=log_file,
+        maxBytes=max_log_size,
+        backupCount=backup_count,
+    )
+    handler.setFormatter(logging.Formatter(LOG_FORMAT))
+
+    # Configurar logger global
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+    logger.addHandler(handler)
+
+    return logger
