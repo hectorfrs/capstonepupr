@@ -16,7 +16,7 @@ install_dependencies() {
   echo "Instalando dependencias comunes..."
   sudo apt-get update
   sudo apt-get install -y python3 python3-pip python3-venv i2c-tools git
-  pip3 install -r requirements.txt
+  pip3 install --break-system-packages -r requirements.txt
 }
 
 # Función para clonar el repositorio específico
