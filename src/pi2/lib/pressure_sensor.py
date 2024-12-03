@@ -87,8 +87,6 @@ class PressureSensorManager:
     """
     Clase para manejar múltiples sensores de presión.
     """
-if not qwiic_i2c.isDeviceConnected(sensor["i2c_address"]):
-    logging.warning(f"Sensor '{sensor['name']}' no conectado.")
 
     def __init__(self, sensors_config, log_path="data/pressure_logs.json"):
         """
