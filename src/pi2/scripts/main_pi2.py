@@ -201,6 +201,7 @@ def main():
 
     try:
         while True:
+            logging.info("Ejecutando ciclo principal...")
             logging.info("Leyendo sensores de presión...")
             readings = []
             for sensor in sensors:
@@ -250,9 +251,11 @@ def main():
 
     except KeyboardInterrupt:
         logging.info("Interrupción por teclado. Terminando el programa.")
+        logging.error(f"Error crítico en el programa: {e}", exc_info=True)
     finally:
         mqtt_client.disconnect()
         logging.info("Cliente MQTT desconectado.")
+        logging.info("Programa terminado correctamente.")
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
