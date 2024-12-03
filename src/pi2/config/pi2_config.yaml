@@ -10,22 +10,29 @@ network:
     ip: "192.168.2.11"            # Dirección IP estática para Wi-Fi
     gateway: "192.168.2.1"        # Puerta de enlace para Wi-Fi
 
-pressure_sensors:
+pressure_sensors:               # Configuración de los sensores de presión
   sensors:
-    - i2c_address: 0x28          # Dirección I2C del sensor de entrada de la válvula 1
-      name: "valve_1_inlet"
-    - i2c_address: 0x29          # Dirección I2C del sensor de salida de la válvula 1
-      name: "valve_1_outlet"
-    - i2c_address: 0x2A          # Dirección I2C del sensor de entrada de la válvula 2
-      name: "valve_2_inlet"
-    - i2c_address: 0x2B          # Dirección I2C del sensor de salida de la válvula 2
-      name: "valve_2_outlet"
-  min_pressure: 0.0              # Presión mínima en PSI
-  max_pressure: 25.0             # Presión máxima en PSI
+    - i2c_address: 0x28         # Dirección I2C del sensor de entrada de la válvula 1
+      name: "valve_1_inlet"     # Nombre del sensor de entrada de la válvula 1   
+      min_pressure: 0.0         # Presión mínima en PSI 
+      max_pressure: 25.0        # Presión máxima en PSI
+    - i2c_address: 0x29         # Dirección I2C del sensor de salida de la válvula 1
+      name: "valve_1_outlet"    # Nombre del sensor de salida de la válvula 1
+      min_pressure: 0.0         # Presión mínima en PSI
+      max_pressure: 25.0        # Presión máxima en PSI
+    - i2c_address: 0x2A         # Dirección I2C del sensor de entrada de la válvula 2
+      name: "valve_2_inlet"     # Nombre del sensor de entrada de la válvula 2   
+      min_pressure: 0.0         # Presión mínima en PSI
+      max_pressure: 25.0        # Presión máxima en PSI
+    - i2c_address: 0x2B         # Dirección I2C del sensor de salida de la válvula 2
+      name: "valve_2_outlet"    # Nombre del sensor de salida de la válvula 2
+      min_pressure: 0.0         # Presión mínima en PSI
+      max_pressure: 25.0        # Presión máxima en PSI
+  read_interval: 2              # Intervalo en segundos para leer los sensores
 
 valves:
-  relay_module:
-    addresses:
+  relay_module:                 # Módulo de relés para control de válvulas
+    addresses:                  # Direcciones de los relés
       valve_1: 1                # Número del relé para la válvula 1
       valve_2: 2                # Número del relé para la válvula 2
   trigger_level: "high"         # Nivel de disparo del relé (high o low)
@@ -33,12 +40,12 @@ valves:
 greengrass:
   group_name: "Capstone-Group"  # Nombre del grupo de Greengrass
   functions:
-    - name: "ValveControl"
-      arn: "arn:aws:lambda:region:account-id:function:ValveControl"
+    - name: "ValveControl"      # Nombre de la función Lambda
+      arn: "arn:aws:lambda:region:account-id:function:ValveControl" # ARN de la función Lambda
 
 aws:
   region: "us-east-1"                             # Cambia según tu región
-  iot_core_endpoint: "your_aws_iot_core_endpoint"
+  iot_core_endpoint: "your_aws_iot_core_endpoint" # Endpoint de AWS IoT Core
   iot_topics:
     valve_control: "raspberry-2/valve_control"      # Tópico MQTT para control de válvulas
     settings_update: "raspberry-2/settings_update" # Tópico para actualizaciones de configuración
@@ -51,14 +58,14 @@ mqtt:
     - "192.168.1.147"  # Dirección IP del broker MQTT (Ethernet, Raspberry Pi #3)
     - "192.168.2.147"  # Dirección IP del broker MQTT (Wi-Fi, Raspberry Pi #3)
   port: 1883
-  username: "raspberry-2"
-  password: "Elefante"
+  username: "raspberry-2" # Nombre de usuario
+  password: "Elefante"  # Contraseña
   topics:
     valve_control: "raspberry-2/valve_control"  # Tópico para recibir comandos de control de válvulas
     pressure_data: "raspberry-2/pressure_data"  # Tópico para publicar datos de presión
     sensor_data: "raspberry-2/sensor_data"      # Tópico para publicar datos de sensores
 
-data_queue:
+data_queue:                     # Configuración de la cola de datos
   max_size: 10                  # Tamaño máximo de la cola de datos
   save_interval: 60              # Intervalo de guardado de datos en segundos
 

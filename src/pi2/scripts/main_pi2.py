@@ -178,17 +178,22 @@ def main():
     logging.info("Conexión a Internet verificada.")
 
     # Inicializar sensores de presión
-    logging.info("Inicializando sensores de presión...")
-    sensors = [PressureSensor(sensor_cfg) for sensor_cfg in config['pressure_sensors']['sensors']]
-    if not sensors:
-        logging.error("No se detectaron sensores de presión configurados. Terminando el programa.")
+    try:
+        logging.info("Inicializando sensores de presión...")
+        sensors = [PressureSensor(sensor_cfg) for sensor_cfg in config['pressure_sensors']['sensors']]
+
+        if not sensors:
+            logging.error("No se detectaron sensores de presión configurados. Terminando el programa.")
+            return
+        logging.info(f"{len(sensors)} sensores de presión inicializados.")
+    except Exception as e:
+        logging.error(f"Error inicializando sensores de presión: {e}")
         return
-    logging.info(f"{len(sensors)} sensores de presión inicializados.")
 
     # Inicializar control de relés
     logging.info("Inicializando control de válvulas...")
     try:
-        mqtt_client = MQTTPublisher(config_path="/home/raspberry-2/capstonepupr/src/pi2/config/pi2_config.yaml", local=True)
+        #mqtt_client = MQTTPublisher(config_path="/home/raspberry-2/capstonepupr/src/pi2/config/pi2_config.yaml", local=True)
         #mqtt_client.connect()
         relay_control = RelayControl(config['valves'], mqtt_client)
     except Exception as e:
@@ -200,34 +205,50 @@ def main():
     # mqtt_client = MQTTClient(config['mqtt'])
     # mqtt_client.connect()
 
-        # Inicializar cliente MQTT
-    logging.info("Inicializando cliente MQTT...")
-    mqtt_client = MQTTPublisher(config_path="/home/raspberry-2/capstonepupr/src/pi2/config/pi2_config.yaml", local=True)
+    # Inicializar cliente MQTT
     try:
+        logging.info("Inicializando cliente MQTT...")
+        mqtt_client = MQTTPublisher(config_path="/home/raspberry-2/capstonepupr/src/pi2/config/pi2_config.yaml", local=True)
         mqtt_client.connect()
         logging.info("Conexión al broker MQTT exitosa.")
     except Exception as e:
         logging.error(f"Error al conectar con el broker MQTT: {e}")
         raise ConnectionError("Conexión MQTT no disponible.")
+        return
 
      # Inicializar Greengrass Manager
-    greengrass_manager = GreengrassManager(config_path="/home/raspberry-2/capstonepupr/src/pi2/config/pi2_config.yaml")
+    try:
+        greengrass_manager = GreengrassManager(config_path="/home/raspberry-2/capstonepupr/src/pi2/config/pi2_config.yaml")
+        logging.info("Greengrass Manager inicializado.")
+    except Exception as e:
+        logging.error(f"Error inicializando Greengrass Manager: {e}")
+        return
 
     # Inicializar buffer de datos
     data_queue = queue.Queue(maxsize=config['data_queue']['max_size'])
     logging.info(f"Queue de datos inicializada con tamaño máximo: {config['data_queue']['max_size']}")
 
     # Iniciar hilo para publicar datos
-    publish_thread = Thread(
-        target=publish_data,
-        args=(mqtt_client, greengrass_manager, config['mqtt']['topics']['sensor_data'], data_queue),
-        daemon=True
-    )
+    def publish_data():
+        while True:
+            try:
+                payload = data_queue.get()
+                mqtt_client.publish(config['mqtt']['topics']['sensor_data'], payload)
+                logging.info(f"Datos publicados en MQTT: {payload}")
+                
+                response = greengrass_manager.invoke_function(payload)
+                logging.info(f"Datos procesados por Greengrass: {response}")
+
+            except Exception as e:
+                logging.error(f"Error publicando datos: {e}")
+    
+    publish_thread = Thread(target=publish_data,daemon=True)
     publish_thread.start()
 
+    # Ciclo principal
+    logging.info("Ejecutando ciclo principal...")
     try:
         while True:
-            logging.info("Ejecutando ciclo principal...")
             logging.info("Leyendo sensores de presión...")
             readings = []
             for sensor in sensors:
