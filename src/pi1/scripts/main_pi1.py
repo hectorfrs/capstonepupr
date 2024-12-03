@@ -219,6 +219,23 @@ def main():
     sensors = [
         CustomAS7265x(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml") for _ in sensors_config
     ]
+    # Configurar sensores conectados al MUX
+    for channel, sensor_config in enumerate(sensors_config):
+        mux.select_channel(channel)
+        if is_sensor_connected(bus, sensor_config["address"]):
+            sensor = CustomAS7265x(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml")
+            sensors.append(sensor)
+            logging.info(f"Sensor configurado en canal {channel}.")
+        else:
+            logging.info(f"No se detectó sensor en canal {channel}.")
+            mux.disable_all_channels()
+    
+    # Si no hay sensores conectados, advertir al usuario
+        if not sensors:
+            logging.info("Advertencia: No se detectaron sensores conectados. Saliendo.")
+            return
+
+
     logging.info(f"{len(sensors)} sensores configurados con éxito.")
 
     # Leer espectro calibrado

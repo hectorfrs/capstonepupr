@@ -36,6 +36,15 @@ class MUXController:
             print(f"Error al escribir en el registro {hex(register)} del dispositivo {hex(self.i2c_address)}: {e}")
             raise
 
+    def is_sensor_connected(bus, address):
+        """
+        Verifica si hay un dispositivo en la dirección I2C especificada.
+        """
+        try:
+            bus.read_byte(address)
+            return True
+        except OSError:
+            return False
 
     def select_channel(self, channel):
         """
