@@ -118,15 +118,19 @@ def process_sensor(mux, sensor, channel, sensor_name, thresholds, data_queue):
     :param data_queue: Buffer para almacenar datos procesados.
     """
     try:
+        # Seleccionar canal en el MUX
         mux.select_channel(channel)
         logging.info(f"Canal {channel} activado para el sensor {sensor_name}.")
         
+        # Leer datos espectrales del sensor
         spectral_data = sensor.read_advanced_spectrum()
         logging.info(f"Datos leídos del sensor {sensor_name}: {spectral_data}")
 
+        # Identificar material
         detected_material = identify_plastic(spectral_data, thresholds)
         logging.info(f"Material detectado por {sensor_name}: {detected_material}")
 
+        # Crear payload para publicación
         payload = {
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "sensor": sensor_name,
@@ -134,11 +138,17 @@ def process_sensor(mux, sensor, channel, sensor_name, thresholds, data_queue):
             **spectral_data
         }
 
-        data_queue.put(payload)
+        # Encolar datos para publicación
+        data_queue.put(payload, timeout=1)
         logging.info(f"Datos encolados para publicación: {payload}")
 
+    except queue.Full:
+        logging.error(f"La cola de datos está llena. Datos del sensor {sensor_name} descartados.")
     except Exception as e:
         logging.error(f"Error procesando datos del sensor {sensor_name} en el canal {channel}: {e}")
+    finally:
+        # Limpieza o reinicio del MUX en caso de error
+        mux.reset_channel(channel)
 
 
 def publish_data(mqtt_client, greengrass_manager, topic, data_queue):
