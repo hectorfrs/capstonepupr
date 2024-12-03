@@ -60,15 +60,15 @@ def detect_material(config):
     Simula la detección de materiales plásticos utilizando datos de configuración.
     """
     # Datos espectrales simulados para la demostración
-    simulated_spectral_data = {
-        "channel_1": 150,
-        "channel_2": 180,
-        "channel_3": 100
-    }
+    # simulated_spectral_data = {
+    #     "channel_1": 150,
+    #     "channel_2": 180,
+    #     "channel_3": 100
+    # }
 
     # Comparar datos simulados con umbrales configurados
-    detected_material = "Otros"                                     # Valor predeterminado
-    confidence = 0.0
+    # detected_material = "Otros"                                     # Valor predeterminado
+    # confidence = 0.0
 
     for material, thresholds in config["plastic_thresholds"].items():
         matches = all(
