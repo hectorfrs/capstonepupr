@@ -1,4 +1,5 @@
-import qwiic_micro_pressure
+#import qwiic_micro_pressure
+import qwiic_i2c
 from utils.json_manager import generate_json, save_json
 
 class PressureSensorManager:
