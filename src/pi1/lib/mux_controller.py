@@ -1,4 +1,5 @@
 import yaml
+from smbus2 import SMBus
 from qwiic_tca9548a import QwiicTCA9548A
 
 
