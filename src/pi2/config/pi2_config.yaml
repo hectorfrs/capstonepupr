@@ -26,9 +26,9 @@ pressure_sensors:
 valves:
   relay_module:
     addresses:
-      valve_1: 0x18              # Dirección I2C del módulo de relé para la válvula 1
-      valve_2: 0x19              # Dirección I2C del módulo de relé para la válvula 2
-  trigger_level: "high"          # Nivel de disparo del relé (alto o bajo)
+      valve_1: 1                # Número del relé para la válvula 1
+      valve_2: 2                # Número del relé para la válvula 2
+  trigger_level: "high"         # Nivel de disparo del relé (high o low)
 
 greengrass:
   group_name: "Capstone-Group"  # Nombre del grupo de Greengrass
