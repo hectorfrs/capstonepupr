@@ -58,6 +58,29 @@ class MUXController:
             raise ConnectionError(f"El MUX con dirección {hex(self.i2c_address)} ha perdido la conexión.")
         print("Conexión al MUX validada.")
 
+    def reset_channel(self, channel):
+        """
+        Resetea un canal específico en el MUX desactivando todos los canales
+        y volviendo a activar solo el canal deseado.
+
+        :param channel: Número del canal a resetear (0-7).
+        """
+        if channel < 0 or channel > 7:
+            raise ValueError("El canal debe estar entre 0 y 7.")
+
+        try:
+            # Desactivar todos los canales
+            self.disable_all_channels()
+            print(f"Todos los canales desactivados antes de resetear el canal {channel}.")
+
+            # Activar el canal deseado
+            self.select_channel(channel)
+            print(f"Canal {channel} reseteado y activado.")
+        except Exception as e:
+            print(f"Error al resetear el canal {channel}: {e}")
+            raise
+
+
 
 # # Ejemplo de Uso:
 
