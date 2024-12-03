@@ -26,6 +26,13 @@ class MUXController:
             raise ConnectionError(f"El MUX con dirección {hex(self.i2c_address)} no está conectado.")
         print(f"MUX conectado en la dirección {hex(self.i2c_address)}.")
 
+    def write_register(self, register, value):
+        try:
+            self.bus.write_byte_data(self.i2c_address, register, value)
+        except OSError as e:
+            print(f"Error escribiendo en el registro {hex(register)} del dispositivo {hex(self.i2c_address)}: {e}")
+            raise
+
     def select_channel(self, channel):
         """
         Activa un canal específico en el MUX.
