@@ -160,7 +160,7 @@ def main():
     logging.info("Inicializando control de válvulas...")
     try:
         mqtt_client = MQTTPublisher(config_path="/home/raspberry-2/capstonepupr/src/pi2/config/pi2_config.yaml", local=True)
-        mqtt_client.connect()
+        #mqtt_client.connect()
         relay_control = RelayControl(config['valves'], mqtt_client)
     except Exception as e:
         logging.error(f"Error inicializando control de válvulas: {e}")
