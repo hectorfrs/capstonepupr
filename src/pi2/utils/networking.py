@@ -2,88 +2,126 @@ import os
 import subprocess
 import yaml
 
+
 class NetworkManager:
     """
-    Clase para manejar la conexión de red en un Raspberry Pi, priorizando LAN (Ethernet) y
-    utilizando Wi-Fi como respaldo. Este enfoque asegura que el dispositivo siempre intente
-    mantenerse conectado a Internet.
+    Clase para manejar la conectividad de red en Raspberry Pi.
+    Incluye configuración para Ethernet y Wi-Fi según los parámetros del archivo YAML.
     """
-    def __init__(self, lan_config, wifi_config):
-        """
-        Inicializa las configuraciones de red.
 
-        :param lan_config: Diccionario con configuración de LAN (IP estática y gateway).
-        :param wifi_config: Diccionario con configuración de Wi-Fi (SSID, password, IP y gateway).
+    def __init__(self, config_path="config/pi2_config.yaml"):
         """
-        self.lan_config = lan_config
-        self.wifi_config = wifi_config
-        print("Configuración de Networking inicializada.")
+        Inicializa el NetworkManager cargando la configuración de red.
 
-    def check_connection(self, interface):
+        :param config_path: Ruta al archivo YAML con la configuración de red.
         """
-        Verifica si hay conexión a Internet desde una interfaz específica utilizando 'ping'.
+        self.config = self.load_config(config_path)
 
-        :param interface: Nombre de la interfaz de red (ejemplo: 'eth0' para LAN, 'wlan0' para Wi-Fi).
-        :return: True si hay conexión, False de lo contrario.
+        # Configuración de Ethernet y Wi-Fi
+        self.ethernet_config = self.config['network']['ethernet']
+        self.wifi_config = self.config['network']['wifi']
+
+    @staticmethod
+    def load_config(config_path):
         """
-        print(f"Comprobando conexión a Internet en la interfaz {interface}...")
-        try:
-            # Comando 'ping' para verificar conectividad con un servidor externo
-            result = subprocess.run(
-                ["ping", "-c", "1", "-I", interface, "8.8.8.8"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
-            if result.returncode == 0:
-                print(f"Conexión establecida a través de {interface}.")
-                return True
-            else:
-                print(f"No se pudo conectar a través de {interface}.")
-                return False
-        except Exception as e:
-            print(f"Error al verificar conexión en {interface}: {e}")
-            return False
+        Carga la configuración desde un archivo YAML.
+
+        :param config_path: Ruta al archivo YAML.
+        :return: Diccionario con la configuración cargada.
+        """
+        with open(config_path, "r") as file:
+            return yaml.safe_load(file)
+
+    def configure_ethernet(self):
+        """
+        Configura la conexión Ethernet usando los parámetros del archivo YAML.
+        """
+        print("Configurando conexión Ethernet...")
+        eth_config = f"""
+auto eth0
+iface eth0 inet static
+    address {self.ethernet_config['ip']}
+    netmask 255.255.255.0
+    gateway {self.ethernet_config['gateway']}
+        """
+        self._write_network_config(eth_config)
+        self.restart_network()
+        print("Conexión Ethernet configurada.")
 
     def configure_wifi(self):
         """
-        Configura la conexión Wi-Fi utilizando el comando 'nmcli'.
+        Configura la conexión Wi-Fi usando los parámetros del archivo YAML.
+        """
+        print("Configurando conexión Wi-Fi...")
+        wifi_config = f"""
+country=US
+ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+update_config=1
+network={{
+    ssid="{self.wifi_config['ssid']}"
+    psk="{self.wifi_config['password']}"
+    key_mgmt=WPA-PSK
+}}
+        """
+        with open("/etc/wpa_supplicant/wpa_supplicant.conf", "w") as file:
+            file.write(wifi_config)
+        subprocess.run(["wpa_cli", "-i", "wlan0", "reconfigure"], check=True)
+        print("Conexión Wi-Fi configurada.")
+
+    def check_connection(self):
+        """
+        Verifica la conexión a Internet intentando conectarse a un servidor externo.
 
         :return: True si la conexión es exitosa, False de lo contrario.
         """
-        print("Intentando conectar a la red Wi-Fi...")
         try:
-            # Usar nmcli para conectarse al SSID especificado
-            os.system(f'nmcli dev wifi connect "{self.wifi_config["ssid"]}" password "{self.wifi_config["password"]}"')
-            # Verificar conexión en la interfaz Wi-Fi
-            if self.check_connection("wlan0"):
-                print("Conexión Wi-Fi exitosa.")
-                return True
-            else:
-                print("No se pudo establecer conexión Wi-Fi.")
-                return False
-        except Exception as e:
-            print(f"Error al conectar a Wi-Fi: {e}")
+            subprocess.run(["ping", "-c", "1", "8.8.8.8"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            print("Conexión a Internet verificada.")
+            return True
+        except subprocess.CalledProcessError:
+            print("No hay conexión a Internet.")
             return False
 
-    def ensure_connection(self):
+    @staticmethod
+    def restart_network():
         """
-        Garantiza que el dispositivo esté conectado a Internet. Prioriza la conexión LAN (Ethernet)
-        y utiliza Wi-Fi como respaldo si LAN no está disponible.
-
-        :return: True si hay conexión, False de lo contrario.
+        Reinicia los servicios de red para aplicar los cambios.
         """
-        print("Iniciando proceso para garantizar conectividad a Internet...")
+        print("Reiniciando servicios de red...")
+        subprocess.run(["sudo", "systemctl", "restart", "networking"], check=True)
 
-        # Verificar conexión LAN
-        if self.check_connection("eth0"):
-            print("Conexión LAN activa. No es necesario usar Wi-Fi.")
-            return True
+    @staticmethod
+    def _write_network_config(config):
+        """
+        Escribe la configuración de Ethernet en el archivo de interfaces.
 
-        # Intentar conexión Wi-Fi si LAN falla
-        if self.configure_wifi():
-            print("Conexión Wi-Fi activa como respaldo.")
-            return True
+        :param config: Configuración de red en formato string.
+        """
+        with open("/etc/network/interfaces", "w") as file:
+            file.write(config)
 
-        # Si ambos fallan
-        print("Error: No se pudo establecer ninguna conexión de red.")
-        return False
+
+# # Ejemplo de uso:
+
+# #Configurar la conexión Ethernet y Wi-Fi
+
+# from utils.networking import NetworkManager
+
+# def main():
+#     # Inicializar el administrador de red
+#     network_manager = NetworkManager(config_path="config/pi1_config.yaml")
+
+#     # Configurar Ethernet
+#     network_manager.configure_ethernet()
+
+#     # Configurar Wi-Fi
+#     network_manager.configure_wifi()
+
+#     # Verificar conexión a Internet
+#     if network_manager.check_connection():
+#         print("El dispositivo está conectado a Internet.")
+#     else:
+#         print("No hay conexión a Internet.")
+
+# if __name__ == "__main__":
+#     main()
