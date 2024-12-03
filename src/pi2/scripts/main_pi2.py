@@ -188,6 +188,17 @@ def main():
         logging.error(f"Error inicializando sensores de presión: {e}")
         return
 
+    # Inicializar cliente MQTT
+    try:
+        logging.info("Inicializando cliente MQTT...")
+        mqtt_client = MQTTPublisher(config_path="/home/raspberry-2/capstonepupr/src/pi2/config/pi2_config.yaml", local=True)
+        mqtt_client.connect()
+        logging.info("Conexión al broker MQTT exitosa.")
+    except Exception as e:
+        logging.error(f"Error al conectar con el broker MQTT: {e}")
+        raise ConnectionError("Conexión MQTT no disponible.")
+        return
+
     # Inicializar control de relés
     logging.info("Inicializando control de válvulas...")
     try:
@@ -203,16 +214,7 @@ def main():
     # mqtt_client = MQTTClient(config['mqtt'])
     # mqtt_client.connect()
 
-    # Inicializar cliente MQTT
-    try:
-        logging.info("Inicializando cliente MQTT...")
-        mqtt_client = MQTTPublisher(config_path="/home/raspberry-2/capstonepupr/src/pi2/config/pi2_config.yaml", local=True)
-        mqtt_client.connect()
-        logging.info("Conexión al broker MQTT exitosa.")
-    except Exception as e:
-        logging.error(f"Error al conectar con el broker MQTT: {e}")
-        raise ConnectionError("Conexión MQTT no disponible.")
-        return
+    
 
      # Inicializar Greengrass Manager
     try:
@@ -244,6 +246,10 @@ def main():
     publish_thread.start()
 
     # Ciclo principal
+    if not mqtt_client:
+        logging.error("MQTT Client no está inicializado. Abortando control de válvulas.")
+        return
+    logging.info(f"Estado de mqtt_client antes de usar: {mqtt_client}")
     logging.info("Ejecutando ciclo principal...")
     try:
         while True:
