@@ -56,23 +56,25 @@ class MUXController:
 
     def disable_all_channels(self):
         """
-        Desactiva todos los canales del MUX utilizando smbus.
+        Desactiva todos los canales del MUX escribiendo 0x00 en el registro de control utilizando smbus2.
         """
         try:
-            bus = smbus.SMBus(self.i2c_bus)
-            bus.write_byte(self.i2c_address, 0x00)
-            print("Todos los canales desactivados en el MUX (smbus).")
+            # Crear una instancia de SMBus para el bus I2C configurado
+            with SMBus(self.i2c_bus) as bus:
+                # Escribir 0x00 en la dirección del dispositivo MUX para desactivar todos los canales
+                bus.write_byte(self.i2c_address, 0x00)
+            print("Todos los canales desactivados en el MUX (smbus2).")
         except Exception as e:
             print(f"Error al desactivar todos los canales del MUX: {e}")
             raise
 
-    def validate_connection(self):
-        """
-        Valida si el MUX está conectado y funcionando correctamente.
-        """
-        if not self.mux.connected:
-            raise ConnectionError(f"El MUX con dirección {hex(self.i2c_address)} ha perdido la conexión.")
-        print("Conexión al MUX validada.")
+        def validate_connection(self):
+            """
+            Valida si el MUX está conectado y funcionando correctamente.
+            """
+            if not self.mux.connected:
+                raise ConnectionError(f"El MUX con dirección {hex(self.i2c_address)} ha perdido la conexión.")
+            print("Conexión al MUX validada.")
 
     def reset_channel(self, channel):
         """
