@@ -181,7 +181,7 @@ def publish_data(mqtt_client, greengrass_manager, topic, data_queue):
                 return True
             except OSError:
                 return False
-                
+
 def main():
     """
     Función principal para manejar la lógica del Raspberry Pi 1.
@@ -225,9 +225,19 @@ def main():
     sensors_config = config['mux']['channels']
     thresholds = config['plastic_thresholds']
 
+    # sensors = [
+    #     CustomAS7265x(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml") for _ in sensors_config
+    # ]
     sensors = [
-        CustomAS7265x(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml") for _ in sensors_config
-    ]
+    CustomAS7265x(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml")
+    for sensor_config in sensors_config
+    if CustomAS7265x(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml").is_connected()
+]
+
+if not sensors:
+    logging.info("No se detectaron sensores conectados. Terminando el programa.")
+    return
+
     # Configurar sensores conectados al MUX
     for channel, sensor_config in enumerate(sensors_config):
         mux.select_channel(channel)
@@ -239,12 +249,6 @@ def main():
             logging.info(f"No se detectó sensor en canal {channel}.")
             mux.disable_all_channels()
     
-    # Si no hay sensores conectados, advertir al usuario
-        if not sensors:
-            logging.info("Advertencia: No se detectaron sensores conectados. Saliendo.")
-            return
-
-
     logging.info(f"{len(sensors)} sensores configurados con éxito.")
 
     # Leer espectro calibrado
