@@ -11,7 +11,7 @@ class MQTTPublisher:
     Soporta un broker local y AWS IoT Core.
     """
 
-    def __init__(self, config_path="config/pi2_config.yaml", use_aws=False):
+    def __init__(self, config_path="config/pi2_config.yaml", use_aws=False, local=None):
         """
         Inicializa el cliente MQTT usando la configuración YAML.
 
@@ -19,7 +19,7 @@ class MQTTPublisher:
         :param use_aws: Booleano para indicar si se debe conectar a AWS IoT Core.
         """
         self.config = self.load_config(config_path)
-        
+
         # Si `local` está especificado, sobreescribe `use_aws`
         self.use_aws = not local if local is not None else use_aws
 
