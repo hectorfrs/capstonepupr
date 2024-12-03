@@ -25,7 +25,7 @@ sensors:
     integration_time: 100         # Tiempo de integración en ms para cada lectura
     gain: 3                       # Configuración de ganancia para los sensores
     i2c_bus: 1                    # Bus I2C donde está conectado el MUX y los sensores
-  read_interval: 5  # Intervalo entre lecturas en segundos
+  read_interval: 1                # Intervalo entre lecturas en segundos
 
 greengrass:
   group_name: "Capstone-Group"   # Nombre del grupo de Greengrass

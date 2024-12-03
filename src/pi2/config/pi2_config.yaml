@@ -37,6 +37,7 @@ greengrass:
       arn: "arn:aws:lambda:region:account-id:function:ValveControl"
 
 aws:
+  region: "us-east-1"                             # Cambia según tu región
   iot_core_endpoint: "your_aws_iot_core_endpoint"
   iot_topics:
     valve_control: "raspberry-2/valve_control"      # Tópico MQTT para control de válvulas

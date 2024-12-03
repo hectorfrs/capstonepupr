@@ -39,7 +39,7 @@ def detect_material(config):
     }
 
     # Comparar datos simulados con umbrales configurados
-    detected_material = "Otros"  # Valor predeterminado
+    detected_material = "Otros"                                     # Valor predeterminado
     confidence = 0.0
 
     for material, thresholds in config["plastic_thresholds"].items():
@@ -49,19 +49,19 @@ def detect_material(config):
         )
         if matches:
             detected_material = material
-            confidence = 1.0  # Simula confianza máxima (puede calcularse dinámicamente)
+            confidence = 0.95                                       # Simula confianza máxima (puede calcularse dinámicamente)
             break
 
     detection_data = {
         "material": detected_material,
         "confidence": confidence,
         "spectral_data": simulated_spectral_data,
-        "sensor_id": config["mux"]["channels"][0]["sensor_name"],  # Primer sensor del MUX
-        "mux_channel": config["mux"]["channels"][0]["channel"],  # Canal del MUX
+        "sensor_id": config["mux"]["channels"][0]["sensor_name"],   # Primer sensor del MUX
+        "mux_channel": config["mux"]["channels"][0]["channel"],     # Canal del MUX
         "timestamp": datetime.now().isoformat(),
-        "processing_time_ms": 120,  # Simulado
-        "device_id": config["network"]["ethernet"]["ip"],  # Dirección IP del dispositivo
-        "location": "line_1_zone_A"  # Estático, puedes actualizar si es dinámico
+        "processing_time_ms": 120,                                  # Simulado
+        "device_id": config["network"]["ethernet"]["ip"],           # Dirección IP del dispositivo
+        "location": "line_1_zone_A"                                 # Estático, puedes actualizar si es dinámico
     }
 
     return detection_data
@@ -210,6 +210,10 @@ def main():
         CustomAS7265x(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml") for _ in sensors_config
     ]
     logging.info(f"{len(sensors)} sensores configurados con éxito.")
+
+    # Leer espectro calibrado
+    calibrated_data = sensor.read_calibrated_spectrum()
+    logging.info("Datos calibrados:", calibrated_data)
 
     # Inicializar cliente MQTT
     logging.info("Inicializando cliente MQTT...")
