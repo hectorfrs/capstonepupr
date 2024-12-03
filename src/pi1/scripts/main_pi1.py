@@ -137,9 +137,9 @@ def configure_logging(config):
 
     print(f"Logging configurado en {log_file}.")
 
-# Redirigir stdout y stderr al logger
-sys.stdout = StreamToLogger(logger, logging.INFO)  # Redirige stdout
-sys.stderr = StreamToLogger(logger, logging.ERROR)  # Redirige stderr
+    # Redirigir stdout y stderr al logger después de configurarlo
+    sys.stdout = StreamToLogger(logging.getLogger(), logging.INFO)
+    sys.stderr = StreamToLogger(logging.getLogger(), logging.ERROR)
 
 def identify_plastic(spectral_data, thresholds):
     """
@@ -199,6 +199,10 @@ def process_sensor(mux, sensor, channel, sensor_name, thresholds, data_queue):
     finally:
         # Limpieza o reinicio del MUX en caso de error
         mux.reset_channel(channel)
+        try:
+            mux.disable_all_channels()
+        except Exception as e:
+            logging.warning(f"Error limpiando el canal {channel}: {e}")
 
 
 def publish_data(mqtt_client, greengrass_manager, topic, data_queue):
@@ -222,15 +226,15 @@ def publish_data(mqtt_client, greengrass_manager, topic, data_queue):
         except Exception as e:
             logging.error(f"Error publicando datos: {e}")
 
-    def is_connected(self):
-            """
-            Verifica si el sensor está conectado al bus I2C.
-            """
-            try:
-                self.bus.read_byte(self.i2c_address)
-                return True
-            except OSError:
-                return False
+def is_connected(self):
+        """
+        Verifica si el sensor está conectado al bus I2C.
+        """
+        try:
+            self.bus.read_byte(self.i2c_address)
+            return True
+        except OSError:
+            return False
 
 def main():
     """
@@ -314,7 +318,7 @@ def main():
     greengrass_manager = GreengrassManager(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml")
 
     # Inicializar buffer de datos
-    data_queue = queue.Queue(maxsize=10)
+    data_queue = queue.Queue(maxsize=config['data_queue']['maxsize'])
 
     # Iniciar hilo para publicar datos
     publish_thread = Thread(
@@ -337,6 +341,12 @@ def main():
                     data_queue=data_queue
                 )
             time.sleep(config['sensors']['read_interval'])
+
+        except queue.Full:
+            logging.error(f"La cola de datos está llena. Datos del sensor {sensor_name} descartados.")
+
+        except OSError as e:
+            logging.error(f"Error I²C procesando el sensor {sensor_name}: {e}")
 
         except Exception as e:
             logging.error(f"Error en el loop principal: {e}")
