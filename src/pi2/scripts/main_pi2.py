@@ -124,6 +124,27 @@ def load_config(config_path="/home/raspberry-2/capstonepupr/src/pi2/config/pi2_c
     with open(config_path, "r") as file:
         return yaml.safe_load(file)
 
+def publish_data(mqtt_client, greengrass_manager, topic, data_queue):
+    """
+    Publica datos del buffer a MQTT y AWS IoT Core.
+
+    :param mqtt_client: Instancia del cliente MQTT.
+    :param greengrass_manager: Instancia del gestor de Greengrass.
+    :param topic: Tópico MQTT para publicar.
+    :param data_queue: Buffer para obtener datos procesados.
+    """
+    while True:
+        try:
+            payload = data_queue.get()
+            mqtt_client.publish(topic, payload)
+            logging.info(f"Datos publicados en MQTT: {payload}")
+            
+            response = greengrass_manager.invoke_function(payload)
+            logging.info(f"Datos procesados por Greengrass: {response}")
+
+        except Exception as e:
+            logging.error(f"Error publicando datos: {e}")
+
 def main():
     """
     Función principal para la operación de Raspberry Pi #2.
