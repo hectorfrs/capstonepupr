@@ -9,6 +9,7 @@ from utils.json_loggerlogger import configure_logging, log_detection
 from utils.mqtt_client import MQTTClient
 from utils.pressure_sensor import PressureSensor
 from utils.relay_control import RelayControl
+from utils.networking import NetworkManager
 
 import sys
 import os
