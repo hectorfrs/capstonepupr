@@ -39,16 +39,28 @@ class MUXController:
             print(f"Error al activar el canal {channel}: {e}")
             raise
 
+    # def disable_all_channels(self):
+    #     """
+    #     Desactiva todos los canales del MUX, escribiendo 0x00 en el registro de con control.
+    #     """
+    #     try:
+    #         #self.mux.disable_all_channels()
+    #         self.mux._i2c.writeByte(self.i2c_address, 0x00)  # Dirección, valor
+    #         print("Todos los canales desactivados en el MUX.")
+    #     except Exception as e:
+    #         print(f"Error al desactivar los canales: {e}")
+    #         raise
+
     def disable_all_channels(self):
         """
-        Desactiva todos los canales del MUX, escribiendo 0x00 en el registro de con control.
+        Desactiva todos los canales del MUX utilizando smbus.
         """
         try:
-            #self.mux.disable_all_channels()
-            self.mux._i2c.writeByte(self.i2c_address, 0x00)
-            print("Todos los canales desactivados en el MUX.")
+            bus = smbus.SMBus(self.i2c_bus)
+            bus.write_byte(self.i2c_address, 0x00)
+            print("Todos los canales desactivados en el MUX (smbus).")
         except Exception as e:
-            print(f"Error al desactivar los canales: {e}")
+            print(f"Error al desactivar todos los canales del MUX: {e}")
             raise
 
     def validate_connection(self):
