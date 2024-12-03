@@ -1,40 +1,41 @@
-import json
-import subprocess
+import boto3
+import logging
 
-
-def process_with_greengrass(function_name, payload):
+class GreengrassManager:
     """
-    Procesa los datos localmente utilizando AWS IoT Greengrass.
-
-    :param function_name: El ARN de la función Lambda que se ejecutará localmente.
-    :param payload: Diccionario con los datos a enviar a la función Lambda.
-    :return: Respuesta del procesamiento local, si está disponible.
+    Clase para manejar interacciones con AWS Greengrass.
     """
-    print(f"Invocando función de Greengrass: {function_name}")
-    try:
-        # Serializar el payload en formato JSON
-        payload_json = json.dumps(payload)
-        
-        # Ejecutar el comando CLI de Greengrass para invocar la función Lambda
-        response = subprocess.run(
-            [
-                "sudo", "/greengrass/v2/bin/greengrass-cli",
-                "lambda", "invoke",
-                "--arn", function_name
-            ],
-            input=payload_json.encode('utf-8'),     # Pasar el payload al proceso
-            capture_output=True,                    # Capturar salida del comando
-            text=True                               # Usar texto en lugar de bytes
+
+    def __init__(self, config_path):
+        self.config = self.load_config(config_path)
+        self.client = boto3.client(
+            'lambda',
+            region_name=self.config['aws']['region']
         )
+        logging.info("Greengrass Manager inicializado.")
 
-        # Verificar si el comando fue exitoso
-        if response.returncode != 0:
-            raise RuntimeError(f"Error en Greengrass CLI: {response.stderr}")
+    @staticmethod
+    def load_config(config_path):
+        """
+        Carga la configuración desde un archivo YAML.
+        """
+        import yaml
+        with open(config_path, 'r') as file:
+            return yaml.safe_load(file)
 
-        # Retornar la respuesta de la función Lambda
-        print(f"Respuesta de Greengrass: {response.stdout}")
-        return json.loads(response.stdout)
+    def invoke_function(self, payload):
+        """
+        Invoca una función de Lambda en Greengrass.
 
-    except Exception as e:
-        print(f"Fallo al procesar datos con Greengrass: {e}")
-        return None
+        :param payload: Datos a enviar a la función.
+        :return: Respuesta de la función Lambda.
+        """
+        try:
+            response = self.client.invoke(
+                FunctionName=self.config['greengrass']['functions'][0]['name'],
+                Payload=str(payload).encode('utf-8')
+            )
+            return response['Payload'].read().decode('utf-8')
+        except Exception as e:
+            logging.error(f"Error al invocar función de Greengrass: {e}")
+            return None
