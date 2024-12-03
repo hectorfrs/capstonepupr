@@ -57,6 +57,10 @@ mqtt:
     valve_control: "raspberry-2/valve_control"  # Tópico para recibir comandos de control de válvulas
     pressure_data: "raspberry-2/pressure_data"  # Tópico para publicar datos de presión
 
+data_queue:
+  max_size: 10                  # Tamaño máximo de la cola de datos
+  save_interval: 60              # Intervalo de guardado de datos en segundos
+
 logging:
   log_file: "/logs/pi2_logs.log"                              # Archivo de logs para registrar las operaciones
   general_log_file: "/home/raspberry-2/logs/pi2_general.log"  # Archivo principal de logs generales

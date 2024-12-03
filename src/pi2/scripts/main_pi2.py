@@ -4,6 +4,7 @@ import yaml
 import time
 import logging
 
+from queue import Queue
 from datetime import datetime
 from utils.json_manager import generate_json, save_json
 from utils.json_logger import configure_logging, log_detection
@@ -187,7 +188,8 @@ def main():
     greengrass_manager = GreengrassManager(config_path="/home/raspberry-2/capstonepupr/src/pi2/config/pi2_config.yaml")
 
     # Inicializar buffer de datos
-    data_queue = Queue()
+    data_queue = queue.Queue(maxsize=config['data_queue']['maxsize'])
+    logging.info(f"Queue de datos inicializada con tamaño máximo: {config['data_queue']['maxsize']}")
 
     # Iniciar hilo para publicar datos
     publish_thread = Thread(
