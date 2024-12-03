@@ -260,7 +260,7 @@ def main():
         raise
     logging.info("Conexión a Internet verificada.")
 
-    # Inicializar cliente MQTT
+        # Inicializar cliente MQTT
     logging.info("Inicializando cliente MQTT...")
     mqtt_client = MQTTPublisher(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml", local=True)
     try:
@@ -272,9 +272,6 @@ def main():
 
     # Inicializar Greengrass Manager
     greengrass_manager = GreengrassManager(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml")
-
-    # Inicializar buffer de datos
-    data_queue = queue.Queue(maxsize=config['data_queue']['maxsize'])
 
     # Inicializar MUX
     logging.info("Inicializando MUX...")
@@ -319,7 +316,10 @@ def main():
     #calibrated_data = sensors.read_calibrated_spectrum()
     #logging.info("Datos calibrados:", calibrated_data)
 
-    
+
+    # Inicializar buffer de datos
+    data_queue = queue.Queue(maxsize=config['data_queue']['maxsize'])
+
     # Iniciar hilo para publicar datos
     publish_thread = Thread(
         target=publish_data,
