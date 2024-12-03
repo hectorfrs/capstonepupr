@@ -41,10 +41,10 @@ class MUXController:
 
     def disable_all_channels(self):
         """
-        Desactiva todos los canales del MUX.
+        Desactiva todos los canales del MUX, escribiendo 0x00 en el registro de control.
         """
         try:
-            self.mux.disable_all_channels()
+            self.mux.disable_all_channels(0)
             print("Todos los canales desactivados en el MUX.")
         except Exception as e:
             print(f"Error al desactivar los canales: {e}")
