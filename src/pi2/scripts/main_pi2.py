@@ -12,15 +12,26 @@ from utils.mqtt_client import MQTTClient
 from utils.pressure_sensor import PressureSensor
 from utils.relay_control import RelayControl
 from utils.networking import NetworkManager
+from logging.handlers import RotatingFileHandler
 
-import sys
-import os
 # Añadir el directorio principal de src/pi2 al PYTHONPATH
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
-import logging
-import os
-from logging.handlers import RotatingFileHandler
+class StreamToLogger:
+    """
+    Redirige una salida (stdout o stderr) al logger.
+    """
+    def __init__(self, logger, level):
+        self.logger = logger
+        self.level = level
+
+    def write(self, message):
+        if message.strip():  # Evitar logs en blanco
+            self.logger.log(self.level, message.strip())
+
+    def flush(self):
+        pass  # Necesario para compatibilidad con sys.stdout y sys.stderr
 
 def configure_logging(config):
     """
@@ -93,6 +104,9 @@ def configure_logging(config):
     mqtt_logger.addHandler(mqtt_handler)
     loggers['mqtt'] = mqtt_logger
 
+    # Redirigir stdout y stderr al logger después de configurarlo
+    sys.stdout = StreamToLogger(logging.getLogger(), logging.INFO)
+    sys.stderr = StreamToLogger(logging.getLogger(), logging.ERROR)
     return loggers
 
 
