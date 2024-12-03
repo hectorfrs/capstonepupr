@@ -8,7 +8,7 @@ class PressureSensor:
     Clase para manejar múltiples sensores de presión conectados al bus I2C.
     """
 
-    def __init__(self, config_path="config/pi2_config.yaml", log_path="data/pressure_logs.json"):
+    def __init__(self, config_path="/home/raspberry-2/capstonepupr/src/pi2/config/pi2_config.yaml", log_path="data/pressure_logs.json"):
         """
         Inicializa los sensores de presión basados en la configuración del YAML.
 
