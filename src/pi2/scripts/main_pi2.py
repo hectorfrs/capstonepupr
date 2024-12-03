@@ -180,12 +180,10 @@ def main():
     # Inicializar sensores de presión
     try:
         logging.info("Inicializando sensores de presión...")
-        sensors = [PressureSensor(sensor_cfg) for sensor_cfg in config['pressure_sensors']['sensors']]
-
-        if not sensors:
-            logging.error("No se detectaron sensores de presión configurados. Terminando el programa.")
-            return
-        logging.info(f"{len(sensors)} sensores de presión inicializados.")
+        sensors_manager = PressureSensorManager(config['pressure_sensors']['sensors'])
+        readings = sensors_manager.read_all_sensors()
+        for reading in readings:
+            logging.info(f"Sensor: {reading['name']}, Pressure: {reading['pressure']} PSI")
     except Exception as e:
         logging.error(f"Error inicializando sensores de presión: {e}")
         return
