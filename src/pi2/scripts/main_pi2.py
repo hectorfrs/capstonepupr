@@ -8,8 +8,9 @@ from datetime import datetime
 from utils.json_manager import generate_json, save_json
 from utils.json_logger import configure_logging, log_detection
 from utils.mqtt_publisher import MQTTPublisher
-from utils.pressure_sensor import PressureSensor
-from utils.relay_control import RelayControl
+from lib.pressure_sensor import PressureSensor
+from lib.valve_control import ValveControl
+#from utils.relay_control import RelayControl
 from utils.networking import NetworkManager
 from logging.handlers import RotatingFileHandler
 
