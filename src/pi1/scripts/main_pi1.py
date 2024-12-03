@@ -1,6 +1,10 @@
+
+import sys
+import os
 import yaml
 import time
 import logging
+
 from threading import Thread
 from queue import Queue
 from datetime import datetime
@@ -15,12 +19,25 @@ from utils.json_manager import generate_json, save_json
 from utils.json_logger import log_detection
 from logging.handlers import RotatingFileHandler
 
-import sys
-import os
 # Agregar la ruta del proyecto al PYTHONPATH
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 # Agregar el directorio 'lib' al path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
+
+class StreamToLogger:
+    """
+    Redirige una salida (stdout o stderr) al logger.
+    """
+    def __init__(self, logger, level):
+        self.logger = logger
+        self.level = level
+
+    def write(self, message):
+        if message.strip():  # Evitar logs en blanco
+            self.logger.log(self.level, message.strip())
+
+    def flush(self):
+        pass  # Necesario para compatibilidad con sys.stdout y sys.stderr
 
 def load_config(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml"):
     """
@@ -77,20 +94,7 @@ def detect_material(config):
 
     return detection_data
 
-class StreamToLogger:
-    """
-    Redirige una salida (stdout o stderr) al logger.
-    """
-    def __init__(self, logger, level):
-        self.logger = logger
-        self.level = level
 
-    def write(self, message):
-        if message.strip():  # Evitar logs en blanco
-            self.logger.log(self.level, message.strip())
-
-    def flush(self):
-        pass  # Necesario para compatibilidad con sys.stdout y sys.stderr
 
 def configure_logging(config):
     log_file = os.path.expanduser(config['logging']['log_file'])    # Expande '~' al directorio del usuario
@@ -235,16 +239,10 @@ def main():
     # Cargar configuración
     config = load_config()
 
-    
     # Configurar logging
     configure_logging(config)
-    # logging.basicConfig(
-    #     filename=config['logging']['log_file'],
-    #     level=logging.INFO,
-    #     format='%(asctime)s %(levelname)s: %(message)s'
-    # )
+    print("Logging configurado.")
     logging.info("Sistema iniciado en Raspberry Pi #1.")
-    #print("Logging configurado.")
 
     # Configurar red
     logging.info("Verificando conexión a Internet...")
