@@ -37,8 +37,8 @@ aws:
   region: "us-east-1"                             # Cambia según tu región
   iot_core_endpoint: "your_aws_iot_core_endpoint" # Endpoint de AWS IoT Core
   iot_topics:
-    sensor_data: "pi1/sensor_data"                # Tópico para enviar datos de los sensores
-    settings_update: "pi1/settings_update"        # Tópico para recibir actualizaciones de configuración
+    sensor_data: "raspberry-1/sensor_data"                # Tópico para enviar datos de los sensores
+    settings_update: "raspberry-1/settings_update"        # Tópico para recibir actualizaciones de configuración
   cert_path: "/certs/certificate.pem.crt"         # Certificado del cliente
   key_path: "/certs/private.pem.key"              # Llave privada
   ca_path: "/certs/AmazonRootCA1.pem"             # Certificado raíz de Amazon
@@ -51,8 +51,8 @@ mqtt:
   username: "raspberry-1"                                  # Usuario para el broker local
   password: "Elefante"                       # Contraseña para el broker local
   topics:
-    sensor_data: "pi1/sensor_data"                # Tópico para publicar datos de sensores
-    settings_update: "pi1/settings_update"        # Tópico para recibir actualizaciones de configuración
+    sensor_data: "raspberry-1/sensor_data"                # Tópico para publicar datos de sensores
+    settings_update: "raspberry-1/settings_update"        # Tópico para recibir actualizaciones de configuración
 
 plastic_thresholds:
   # PET (Polietileno Tereftalato): Común en botellas plásticas transparentes. 

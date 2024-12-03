@@ -39,8 +39,8 @@ greengrass:
 aws:
   iot_core_endpoint: "your_aws_iot_core_endpoint"
   iot_topics:
-    valve_control: "pi2/valve_control"      # Tópico MQTT para control de válvulas
-    settings_update: "pi2/settings_update" # Tópico para actualizaciones de configuración
+    valve_control: "raspberry-2/valve_control"      # Tópico MQTT para control de válvulas
+    settings_update: "raspberry-2/settings_update" # Tópico para actualizaciones de configuración
   cert_path: "/certs/certificate.pem.crt"  # Certificado del cliente
   key_path: "/certs/private.pem.key"       # Llave privada
   ca_path: "/certs/AmazonRootCA1.pem"      # Certificado raíz de Amazon
@@ -53,8 +53,8 @@ mqtt:
   username: "raspberry-2"
   password: "Elefante"
   topics:
-    valve_control: "pi2/valve_control"  # Tópico para recibir comandos de control de válvulas
-    pressure_data: "pi2/pressure_data"  # Tópico para publicar datos de presión
+    valve_control: "raspberry-2/valve_control"  # Tópico para recibir comandos de control de válvulas
+    pressure_data: "raspberry-2/pressure_data"  # Tópico para publicar datos de presión
 
 logging:
   log_file: "/logs/pi2_logs.log"  # Archivo de logs para registrar las operaciones
