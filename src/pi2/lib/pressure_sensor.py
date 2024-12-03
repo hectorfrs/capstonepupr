@@ -3,7 +3,7 @@ from utils.json_manager import generate_json, save_json
 import yaml
 
 
-class PressureSensorManager:
+class PressureSensor:
     """
     Clase para manejar múltiples sensores de presión conectados al bus I2C.
     """
