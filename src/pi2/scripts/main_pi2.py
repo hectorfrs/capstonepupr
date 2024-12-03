@@ -10,7 +10,7 @@ from utils.json_logger import configure_logging, log_detection
 from utils.mqtt_publisher import MQTTPublisher
 #from lib.pressure_sensor import PressureSensor
 from lib.valve_control import ValveControl
-from utils.relay_control import RelayControl
+from lib.relay_control import RelayControl
 from utils.networking import NetworkManager
 from logging.handlers import RotatingFileHandler
 
@@ -156,9 +156,15 @@ def main():
     logging.info("Inicializando sensores de presión...")
     #sensors = [PressureSensor(sensor_cfg) for sensor_cfg in config['pressure_sensors']['sensors']]
 
-    # Inicializar control de relés para las válvulas
+    # Inicializar control de relés
     logging.info("Inicializando control de válvulas...")
-    relay_control = RelayControl(config['valves'])
+    try:
+        mqtt_client = MQTTPublisher(config_path="/home/raspberry-2/capstonepupr/src/pi2/config/pi2_config.yaml")
+        mqtt_client.connect()
+        relay_control = RelayControl(config['valves'], mqtt_client)
+    except Exception as e:
+        logging.error(f"Error inicializando control de válvulas: {e}")
+        return
 
     # Configurar cliente MQTT
     # logging.info("Configurando cliente MQTT...")
@@ -224,6 +230,15 @@ def main():
                 topic=config['mqtt']['topics']['sensor_data'],
                 payload=log_data
             )
+
+            # Enviar datos al buffer
+            data_queue.put(generate_json(
+                sensor_id=valve_name,
+                pressure=pressure,
+                valve_state="active" if pressure > config['pressure_sensors']['max_pressure'] else "inactive",
+                action="read_pressure",
+                metadata={}
+                ))
 
             # Esperar antes de la siguiente lectura
             logging.info("Esperando %s segundos antes de la siguiente lectura.", config['sensors']['read_interval'])
