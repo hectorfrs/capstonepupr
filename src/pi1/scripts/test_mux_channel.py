@@ -1,5 +1,5 @@
 from smbus2 import SMBus
-from lib.mux_controller import MUXController
+from lib.mux_manager import MUXManager
 
 def scan_mux_channels(mux_address=0x70, num_channels=8):
     with SMBus(1) as bus:
