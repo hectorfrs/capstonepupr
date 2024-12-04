@@ -3,3 +3,4 @@ boto3
 opencv-python
 Pillow
 PyYAML
+customtkinter

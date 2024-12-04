@@ -15,7 +15,8 @@ PI=$1
 install_dependencies() {
   echo "Instalando dependencias comunes..."
   sudo apt-get update
-  sudo apt-get install -y python3 python3-pip python3-venv i2c-tools git
+  sudo apt-get install -y python3 python3-pip python3-venv i2c-tools git libcamera-apps python3-picamera2 python3-tk awscli
+
   pip3 install --break-system-packages -r requirements.txt
 }
 
