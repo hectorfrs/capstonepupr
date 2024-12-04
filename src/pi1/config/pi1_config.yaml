@@ -31,7 +31,7 @@ network:
 mux:
   i2c_address: 0x70               # Dirección I2C del MUX de SparkFun
   channels:                       # Canales asignados a los sensores AS7265x
-    - channel: 0
+    - channel: 0                  
       sensor_name: "AS7265x_1"
     - channel: 1
       sensor_name: "AS7265x_2"
