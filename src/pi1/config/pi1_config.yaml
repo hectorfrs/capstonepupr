@@ -1,5 +1,20 @@
 # Configuración específica para Raspberry Pi 1
 
+system:
+  enable_camera: false                # Raspberry Pi #1 no tiene cámara
+  enable_sensors: true                # Sensores espectroscópicos AS7265x habilitados
+  enable_sensor_leds: false           # Apagar LEDs de los sensores AS7265x
+  enable_touch_screen: false          # No aplica a Raspberry Pi #1
+  enable_mqtt: true                   # MQTT habilitado
+  enable_greengrass: true             # AWS Greengrass habilitado
+  enable_aws: true                    # Conexión a AWS habilitada
+  enable_logging: true                # Logs habilitados
+  enable_sensor_diagnostics: true     # Diagnósticos de sensores habilitados
+  enable_mux_diagnostics: true        # Diagnósticos del MUX habilitados
+  enable_auto_restart: true           # Reinicio automático habilitado
+  enable_network_monitoring: true     # Monitoreo de red habilitado
+  enable_detailed_logging: true       # Nivel detallado de logs
+
 network:
   ethernet:
     ip: "192.168.1.145"           # Dirección IP estática para Ethernet
@@ -26,6 +41,7 @@ sensors:
     gain: 3                       # Configuración de ganancia para los sensores
     i2c_bus: 1                    # Bus I2C donde está conectado el MUX y los sensores
   read_interval: 3                # Intervalo entre lecturas en segundos
+  led_intensity: 0                # Intensidad de los LEDs de los sensores (0-255 (0 para apagarlos))
 
 greengrass:
   group_name: "Capstone-Group"   # Nombre del grupo de Greengrass

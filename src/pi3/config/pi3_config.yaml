@@ -63,13 +63,38 @@ mqtt:
     enabled: true                               # Indica que este Raspberry Pi actúa como broker MQTT
     port: 1883                                  # Puerto para el broker MQTT local
     username: "raspberry-3"
-  password: "Elefante"                                  
+    password: "Elefante"     
+    keepalive: 60                             
   topics:
     settings_update_pi1: "raspberry-1/settings_update"  # Tópico para enviar ajustes a Raspberry Pi #1
     settings_update_pi2: "raspberry-2/settings_update"  # Tópico para enviar ajustes a Raspberry Pi #2
     sensor_data_pi1: "raspberry-1/sensor_data"          # Tópico para recibir datos de Raspberry Pi #1
     sensor_data_pi2: "raspberry-2/sensor_data"          # Tópico para recibir datos de Raspberry Pi #2
     data_publish: "raspberry-3/data"
+system:
+  enable_camera: true                  # Cámara en Raspberry Pi #3
+  enable_sensors: true                 # Sensores en Raspberry Pi #1 y #2
+  enable_sensor_leds: false            # Apagar LEDs en sensores compatibles (AS7265x)
+  enable_touch_screen: true            # Pantalla táctil en Raspberry Pi #3
+  enable_weight_sensor: true           # Sensor de peso en Raspberry Pi #3
+  enable_mqtt: true                    # MQTT en todas las Raspberry Pi
+  enable_greengrass: true              # AWS Greengrass en todas las Raspberry Pi
+  enable_aws: true                     # AWS IoT Core
+  enable_logging: true                 # Registro de logs
+
+  enable_debug: true                   # Modo de depuración
+  enable_auto_restart: true            # Reinicio automático
+  enable_network_monitoring: true      # Monitoreo de conectividad de red
+  enable_manual_valve_control: true    # Control manual de válvulas (Raspberry Pi #2)
+  enable_auto_calibration: true        # Calibración automática de sensores (Raspberry Pi #2)
+  enable_sensor_simulation: true       # Simulación de datos de sensores
+  enable_view_only_mode: true          # Modo de visualización (Raspberry Pi #3)
+  enable_camera_light: true            # Control de iluminación de cámara (Raspberry Pi #3)
+  enable_weight_simulation: true       # Simulación de datos del sensor de peso (Raspberry Pi #3)
+  enable_weight_alerts: true           # Alertas de peso máximo (Raspberry Pi #3)
+
+
+
 
 logging:
   log_file: "/logs/pi3_logs.log"  # Archivo de logs para registrar las operaciones

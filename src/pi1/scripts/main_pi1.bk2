@@ -218,6 +218,16 @@ def publish_data(mqtt_client, greengrass_manager, topic, data_queue):
         except Exception as e:
             logging.error(f"Error publicando datos: {e}")
 
+def is_connected(self):
+        """
+        Verifica si el sensor está conectado al bus I2C.
+        """
+        try:
+            self.bus.read_byte(self.i2c_address)
+            return True
+        except OSError:
+            return False
+
 def run_diagnostics(config, mux, sensors):
     """
     Ejecuta diagnósticos de sensores y MUX según la configuración.
@@ -230,38 +240,49 @@ def run_diagnostics(config, mux, sensors):
         from lib.mux_diagnostics import run_mux_diagnostics
         run_mux_diagnostics(mux)
 
+
 def main():
     """
     Función principal para manejar la lógica del Raspberry Pi 1.
     """
+    # Configurar logging
+    configure_logging(config)
+    print("Logging configurado.")
+    logging.info("Sistema iniciado en Raspberry Pi #1.")
+
     # Inicializa la gestión de configuración en tiempo real
-    config_manager = RealTimeConfigManager(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml")
+    onfig_manager = RealTimeConfigManager(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml")
     config_manager.start_monitoring()
 
     try:
-        # Usar configuración actualizada
+        
+        # Usar configuración actualizada en cualquier parte del programa
         config = config_manager.get_config()
-
-        # Configurar logging
-        configure_logging(config)
-        logging.info("Sistema iniciado en Raspberry Pi #1.")
 
         # Configurar red
         logging.info("Verificando conexión a Internet...")
-        network_manager = NetworkManager(config_path=config_manager.config_path)
-        if not network_manager.check_connection():
-            logging.error("No hay conexión a Internet. Verifique la configuración de red.")
-            raise ConnectionError("Conexión de red no disponible.")
-
+        try:
+            network_manager = NetworkManager(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml")
+            if not network_manager.check_connection():
+                logging.error("No hay conexión a Internet. Verifique la configuración de red.")
+                raise ConnectionError("Conexión de red no disponible.")
+        except Exception as e:
+            logging.error(f"Error configurando la red: {e}")
+            raise
         logging.info("Conexión a Internet verificada.")
 
-        # Inicializar cliente MQTT
+            # Inicializar cliente MQTT
         logging.info("Inicializando cliente MQTT...")
-        mqtt_client = MQTTPublisher(config_path=config_manager.config_path, local=True)
-        mqtt_client.connect()
+        mqtt_client = MQTTPublisher(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml", local=True)
+        try:
+            mqtt_client.connect()
+            logging.info("Conexión al broker MQTT exitosa.")
+        except Exception as e:
+            logging.error(f"Error al conectar con el broker MQTT: {e}")
+            raise ConnectionError("Conexión MQTT no disponible.")
 
         # Inicializar Greengrass Manager
-        greengrass_manager = GreengrassManager(config_path=config_manager.config_path)
+        greengrass_manager = GreengrassManager(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml")
 
         # Inicializar MUX
         logging.info("Inicializando MUX...")
@@ -269,28 +290,51 @@ def main():
             i2c_bus=config['sensors']['as7265x']['i2c_bus'],
             i2c_address=config['mux']['i2c_address']
         )
-
-        # Inicializar Sensores
+        logging.info(f"MUX conectado en la dirección 0x{config['mux']['i2c_address']:02X}.")
+        
+        # Inicializar sensores
+        logging.info("Inicializando sensores AS7265x...")
         sensors_config = config['mux']['channels']
-        sensors = [
-            CustomAS7265x(config_path=config_manager.config_path)
-            for sensor_config in sensors_config
-            if CustomAS7265x(config_path=config_manager.config_path).is_connected()
-        ]
+        thresholds = config['plastic_thresholds']
 
-        # Diagnósticos
+        # sensors = [
+        #     CustomAS7265x(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml") for _ in sensors_config
+        # ]
+        sensors = [
+        CustomAS7265x(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml")
+        for sensor_config in sensors_config
+        if CustomAS7265x(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml").is_connected()
+    ]
+        # Ejecutar diagnósticos (si está habilitado)
         run_diagnostics(config, mux, sensors)
 
-        # Manejo de sensores conectados
         if not sensors:
             logging.error("No se detectaron sensores conectados. Terminando el programa.")
             return
 
-        # Configurar Buffer de Datos
-        data_queue = Queue(maxsize=config['data_queue']['max_size'])
+        # Configurar sensores conectados al MUX
+        for channel, sensor_config in enumerate(sensors_config):
+            mux.select_channel(channel)
+            if is_sensor_connected(bus, sensor_config["address"]):
+                sensor = CustomAS7265x(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml")
+                sensors.append(sensor)
+                logging.info(f"Sensor configurado en canal {channel}.")
+            else:
+                logging.info(f"No se detectó sensor en canal {channel}.")
+                mux.disable_all_channels()
+        
+        logging.info(f"{len(sensors)} sensores configurados con éxito.")
+
+        # Leer espectro calibrado
+        #calibrated_data = sensors.read_calibrated_spectrum()
+        #logging.info("Datos calibrados:", calibrated_data)
+
+
+        # Inicializar buffer de datos
+        data_queue = queue.Queue(maxsize=config['data_queue']['max_size'])
         logging.info(f"Queue de datos inicializada con tamaño máximo: {config['data_queue']['max_size']}")
 
-        # Hilo para Publicar Datos
+        # Iniciar hilo para publicar datos
         publish_thread = Thread(
             target=publish_data,
             args=(mqtt_client, greengrass_manager, config['mqtt']['topics']['sensor_data'], data_queue),
@@ -298,21 +342,42 @@ def main():
         )
         publish_thread.start()
 
-        # Loop Principal
         while True:
-            for sensor_idx, sensor_config in enumerate(sensors_config):
-                process_sensor(
-                    mux=mux,
-                    sensor=sensors[sensor_idx],
-                    channel=sensor_config['channel'],
-                    sensor_name=sensor_config['sensor_name'],
-                    thresholds=config['plastic_thresholds'],
-                    data_queue=data_queue
-                )
-            time.sleep(config['sensors']['read_interval'])
+            try:
+                for sensor_idx, sensor_config in enumerate(sensors_config):
+                    logging.info(f"Procesando datos del sensor {sensor_config['sensor_name']} en el canal {sensor_config['channel']}...")
+                    process_sensor(
+                        mux=mux,
+                        sensor=sensors[sensor_idx],
+                        channel=sensor_config['channel'],
+                        sensor_name=sensor_config['sensor_name'],
+                        thresholds=thresholds,
+                        data_queue=data_queue
+                    )
+                time.sleep(config['sensors']['read_interval'])
+
+            except queue.Full:
+                logging.error(f"La cola de datos está llena. Datos del sensor {sensor_name} descartados.")
+
+            except OSError as e:
+                logging.error(f"Error I²C procesando el sensor {sensor_name}: {e}")
 
     except Exception as e:
-        logging.error(f"Error en el flujo principal: {e}")
+                logging.error(f"Error en el loop principal: {e}")
+    
+
+        logging.info("Iniciando detección de materiales...")
+
+        # Detectar material
+        detection_result = detect_material(config)
+        logging.info(f"Material detectado: {detection_result}")
+
+        # Registrar detección
+        log_detection(detection_result, config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml")
+
     finally:
+        # Detener el monitoreo al salir
         config_manager.stop_monitoring()
-        mqtt_client.disconnect()
+
+if __name__ == "__main__":
+    main()
