@@ -20,7 +20,7 @@ from utils.json_manager import generate_json, save_json
 from utils.json_logger import log_detection
 from utils.real_time_config import RealTimeConfigManager
 from utils.alert_manager import AlertManager
-from utils.sensor_diagnostics import run_sensor_diagnostics
+from lib.sensor_diagnostics import run_sensor_diagnostics
 from lib.mux_diagnostics import run_mux_diagnostics
 
 from logging.handlers import RotatingFileHandler
