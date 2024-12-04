@@ -305,10 +305,10 @@ def main():
         logging.info("Sistema iniciado en Raspberry Pi #1.")
 
         # Inicializa la gestión de alertas
-        alert_manager = AlertManager(
-            mqtt_client=None, 
-            alert_topic=config['mqtt']['topics']['alerts']
-        )
+        # alert_manager = AlertManager(
+        #     mqtt_client=None, 
+        #     alert_topic=config['mqtt']['topics']['alerts']
+        # )
 
         # Configurar red y monitoreo
         logging.info("Iniciando monitoreo de red...")
@@ -347,7 +347,7 @@ def main():
         # Inicializar Sensores
         sensors_config = config['mux']['channels']
         for sensor_config in sensors_config:
-            sensors = CustomAS7265x(config_path=config_manager.config_path)
+            sensor = CustomAS7265x(config_path=config_manager.config_path)
             if sensor.is_connected():
                sensors.append(sensor)
                logging.info(f"Sensor {sensor_config['sensor_name']} conectado correctamente.")
@@ -395,6 +395,7 @@ def main():
         while True:
             for sensor_idx, sensor_config in enumerate(sensors_config):
                 if sensor_idx < len(sensors):
+                    start_time = time.time()
                     process_sensor(
                         mux=mux,
                         sensor=sensors[sensor_idx],
@@ -408,8 +409,6 @@ def main():
                 else:
                     logging.error(f"No se encontró un sensor para el indice {sensor_idx}.")
             try:
-                start_time = time.time()
-                process_sensor(...)  # Llamada existente a la función
                 processing_time = (time.time() - start_time) * 1000  # Milisegundos
                 performance_tracker.add_reading(processing_time)
                 logging.info(f"Tiempo de procesamiento: {processing_time:.2f} ms")
@@ -424,7 +423,7 @@ def main():
                         "average_processing_time_ms": average_time.total_seconds() * 1000,
                         "total_readings": performance_tracker.num_readings
                     }
-                    mqtt_client.publish("pi1/performance_metrics", json.dumps(metrics_payload))
+                    mqtt_client.publish("raspberry-1/performance_metrics", json.dumps(metrics_payload))
                     logging.info(f"Métricas publicadas: {metrics_payload}")
                 last_metrics_publish_time = time.time()
 
@@ -432,31 +431,32 @@ def main():
             run_power_saving_mode(config, mux, sensors)
                 
     except Exception as e:
-        alert_manager.send_alert(
+        error_message = f"Error en el loop principal: {e}"
+        logging.critical(f"Error crítico: {e}")
+        if alert_manager:
+            alert_manager.send_alert(
             level="CRITICAL",
             message="Error en el loop principal",
             metadata={"error": str(e)}
         )
-        logging.critical(f"Error crítico: {e}")
-    
+        
     except KeyboardInterrupt:
         logging.info("Programa detenido por el usuario.")
-    except Exception as e:
-        logging.critical(f"Error crítico en el sistema: {e}")
-        if 'alert_manager' in locals():
-            alert_manager.send_alert("CRITICAL", f"Error crítico en el sistema: {e}")
     finally:
         # Detener monitoreo de red
         if network_manager:
             network_manager.stop_monitoring()
             logging.info("Monitoreo de red detenido.")
         # Desconectar MQTT si está inicializado
-        if mqtt_client:
+        if mqtt_client and hasattr(mqtt_client, 'disconnect'):
             try:
                 mqtt_client.disconnect()
                 logging.info("Cliente MQTT desconectado.")
             except Exception as e:
                 logging.error(f"Error al desconectar MQTT: {e}")
+        else:
+            logging.warning("El cliente MQTT no tiene un método de desconexión.")
+            
         # Detener monitoreo de configuración en tiempo real
         config_manager.stop_monitoring()
         logging.info("Sistema apagado correctamente.")
