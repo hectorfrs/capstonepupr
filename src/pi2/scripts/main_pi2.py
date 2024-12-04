@@ -178,20 +178,25 @@ def main():
     logging.info("Conexión a Internet verificada.")
 
     # Inicializar sensores de presión
+    logging.info("Inicializando sensores de presión...")
     try:
-        logging.info("Inicializando sensores de presión...")
-        sensors = PressureSensorManager(config['pressure_sensors']['sensors'])
-        readings = sensors.read_all_sensors()
-        for reading in readings:
-            logging.info(f"Sensor: {reading['name']}, Pressure: {reading['pressure']} PSI")
+        # Leer configuración desde el archivo config.yaml
+        sensors_config = config['pressure_sensors']['sensors']
+        log_path = config['pressure_sensors'].get('log_path', "data/pressure_logs.json")
+        pressure_manager = PressureSensorManager(sensors_config, log_path)
+        
+        if not pressure_manager.sensors:
+            logging.error("No se detectaron sensores conectados. Terminando el programa.")
+            return
+        logging.info(f"Se inicializaron {len(pressure_manager.sensors)} sensores de presión correctamente.")
     except Exception as e:
         logging.error(f"Error inicializando sensores de presión: {e}")
         return
 
     # Inicializar cliente MQTT
+    logging.info("Inicializando cliente MQTT...")
     try:
-        logging.info("Inicializando cliente MQTT...")
-        mqtt_client = MQTTPublisher(config_path="/home/raspberry-2/capstonepupr/src/pi2/config/pi2_config.yaml", local=True)
+        mqtt_client = MQTTPublisher(config_path=config_path, local=True)
         mqtt_client.connect()
         logging.info("Conexión al broker MQTT exitosa.")
     except Exception as e:
@@ -199,9 +204,10 @@ def main():
         raise ConnectionError("Conexión MQTT no disponible.")
         return
 
-     # Inicializar Greengrass Manager
+    # Inicializar Greengrass Manager
+    logging.info("Inicializando Greengrass...")
     try:
-        greengrass_manager = GreengrassManager(config_path="/home/raspberry-2/capstonepupr/src/pi2/config/pi2_config.yaml")
+        greengrass_manager = GreengrassManager(config_path=config_path)
         logging.info("Greengrass Manager inicializado.")
     except Exception as e:
         logging.error(f"Error inicializando Greengrass Manager: {e}")
@@ -247,14 +253,11 @@ def main():
     try:
         while True:
             logging.info("Leyendo sensores de presión...")
-            readings = []
-            for sensor in sensors:
-                pressure = sensor.read_pressure()
-                readings.append({
-                    'sensor_name': sensor.name,
-                    'pressure': pressure,
-                    'status': "OK" if config['pressure_sensors']['min_pressure'] <= pressure <= config['pressure_sensors']['max_pressure'] else "ALERT"
-                })
+            readings = sensors.read_all_sensors()
+            for reading in readings:
+                logging.info(f"Sensor: {reading['name']}, Pressure: {reading['pressure']} PSI")
+                # Publicar datos a través de MQTT
+                mqtt_client.publish("sensor/data", str(reading))
 
                 # Controlar válvulas según la presión
                 if pressure > config['pressure_thresholds']['high']:
