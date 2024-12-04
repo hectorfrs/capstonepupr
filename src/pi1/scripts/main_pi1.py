@@ -117,11 +117,13 @@ def configure_logging(config):
 
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
+    # Configuración del formato de los logs
+    LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 
     logging.basicConfig(
         filename=log_file,                                          # Archivo de log especificado en config.yaml
         level=logging.INFO,                                         # Nivel de logging (puedes usar DEBUG, INFO, WARNING, etc.)
-        format="%(asctime)s - %(levelname)s - %(message)s",
+        format=LOG_FORMAT,                                          # Formato del log
         datefmt="%Y-%m-%d %H:%M:%S",                                # Formato de la fecha y hora
     )
 
