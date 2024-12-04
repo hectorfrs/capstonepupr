@@ -8,22 +8,25 @@ import logging
 from threading import Thread
 from queue import Queue
 from datetime import datetime
+from datetime import timedelta
 from asyncio import Handle
 
-from lib.mux_controller import MUXController
+from lib.mux_manager import MUXManager
 from lib.as7265x import CustomAS7265x
 from utils.mqtt_publisher import MQTTPublisher
 from utils.greengrass import GreengrassManager
-from utils.networking import NetworkManager
+from utils.network_manager import NetworkManager
 from utils.json_manager import generate_json, save_json
 from utils.json_logger import log_detection
 from utils.real_time_config import RealTimeConfigManager
+from utils.alert_manager import AlertManager
+from utils.sensor_diagnostics import run_sensor_diagnostics
+from lib.mux_diagnostics import run_mux_diagnostics
 
 from logging.handlers import RotatingFileHandler
 
 # Agregar la ruta del proyecto al PYTHONPATH
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-# Agregar el directorio 'lib' al path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
 class StreamToLogger:
@@ -40,6 +43,23 @@ class StreamToLogger:
 
     def flush(self):
         pass  # Necesario para compatibilidad con sys.stdout y sys.stderr
+
+class PerformanceTracker:
+    """
+    Clase para rastrear estadísticas de rendimiento y procesamiento.
+    """
+    def __init__(self):
+        self.total_processing_time = timedelta()
+        self.num_readings = 0
+
+    def add_reading(self, processing_time):
+        self.total_processing_time += timedelta(milliseconds=processing_time)
+        self.num_readings += 1
+
+    def get_average_time(self):
+        if self.num_readings == 0:
+            return None
+        return self.total_processing_time / self.num_readings
 
 def load_thresholds(config, material):
     """
@@ -64,7 +84,7 @@ def detect_material(config):
 
     for material, thresholds in config["plastic_thresholds"].items():
         matches = all(
-            thresholds[i][0] <= simulated_spectral_data[f"channel_{i+1}"] <= thresholds[i][1]
+            thresholds[i][0] <= spectral_data[f"channel_{i+1}"] <= thresholds[i][1]
             for i in range(len(thresholds))
         )
         if matches:
@@ -89,19 +109,19 @@ def detect_material(config):
 
 
 def configure_logging(config):
-    log_file = os.path.expanduser(config['logging']['log_file'])    # Expande '~' al directorio del usuario
+    """
+    Configura el sistema de logging.
+    """
+    log_file = os.path.expanduser(config['logging']['log_file'])    
     log_dir = os.path.dirname(log_file)
 
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
 
-    # Configuración del formato de los logs
-    LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
-
     logging.basicConfig(
         filename=log_file,                                          # Archivo de log especificado en config.yaml
         level=logging.INFO,                                         # Nivel de logging (puedes usar DEBUG, INFO, WARNING, etc.)
-        format=LOG_FORMAT,
+        format="%(asctime)s - %(levelname)s - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",                                # Formato de la fecha y hora
     )
 
@@ -160,6 +180,12 @@ def process_sensor(mux, sensor, channel, sensor_name, thresholds, data_queue):
     :param data_queue: Buffer para almacenar datos procesados.
     """
     try:
+        # Seleccionar canal
+        mux_manager.select_channel(channel)
+
+        # Reiniciar canal en caso de error
+        mux_manager.reset_channel(channel)
+
         # Seleccionar canal en el MUX
         mux.select_channel(channel)
         logging.info(f"Canal {channel} activado para el sensor {sensor_name}.")
@@ -187,7 +213,11 @@ def process_sensor(mux, sensor, channel, sensor_name, thresholds, data_queue):
     except queue.Full:
         logging.error(f"La cola de datos está llena. Datos del sensor {sensor_name} descartados.")
     except Exception as e:
-        logging.error(f"Error procesando datos del sensor {sensor_name} en el canal {channel}: {e}")
+        alert_manager.send_alert(
+            level="CRITICAL",
+            message=f"Error procesando el sensor {sensor_name} en el canal {channel}: {e}",
+            metadata={"sensor": sensor_name, "channel": channel},
+        )
     finally:
         # Limpieza o reinicio del MUX en caso de error
         mux.reset_channel(channel)
@@ -216,7 +246,11 @@ def publish_data(mqtt_client, greengrass_manager, topic, data_queue):
             logging.info(f"Datos procesados por Greengrass: {response}")
 
         except Exception as e:
-            logging.error(f"Error publicando datos: {e}")
+            alert_manager.send_alert(
+                level="CRITICAL",
+                message=f"Error publicando datos al MQTT: {e}",
+                metadata={"topic": topic},
+            )
 
 def run_diagnostics(config, mux, sensors):
     """
@@ -230,12 +264,27 @@ def run_diagnostics(config, mux, sensors):
         from lib.mux_diagnostics import run_mux_diagnostics
         run_mux_diagnostics(mux)
 
+def run_power_saving_mode(mux, sensors):
+    """
+    Habilita el modo de ahorro de energía apagando sensores y canales no críticos.
+    """
+    logging.info("Entrando en modo de ahorro de energía...")
+    for sensor in sensors:
+        if not sensor.is_critical():
+            sensor.power_off()
+            logging.info(f"Sensor {sensor.name} apagado para ahorrar energía.")
+    mux.disable_all_channels()
+    logging.info("Todos los canales del MUX han sido desactivados.")
+
+        
+
 def main():
     """
     Función principal para manejar la lógica del Raspberry Pi 1.
     """
     # Inicializa la gestión de configuración en tiempo real
-    config_manager = RealTimeConfigManager(config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml")
+    config_path = "/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml"
+    config_manager = RealTimeConfigManager(config_path)
     config_manager.start_monitoring()
 
     try:
@@ -246,14 +295,14 @@ def main():
         configure_logging(config)
         logging.info("Sistema iniciado en Raspberry Pi #1.")
 
-        # Configurar red
-        logging.info("Verificando conexión a Internet...")
-        network_manager = NetworkManager(config_path=config_manager.config_path)
-        if not network_manager.check_connection():
-            logging.error("No hay conexión a Internet. Verifique la configuración de red.")
-            raise ConnectionError("Conexión de red no disponible.")
-
-        logging.info("Conexión a Internet verificada.")
+        # Configurar red y monitoreo
+        network_manager = NetworkManager(config)
+        network_manager.start_monitoring()
+        alert_manager.send_alert(
+            level="CRITICAL",
+            message="No hay conexión a Internet.",
+            metadata={"ethernet_ip": config['network']['ethernet']['ip']}
+        )
 
         # Inicializar cliente MQTT
         logging.info("Inicializando cliente MQTT...")
@@ -263,11 +312,15 @@ def main():
         # Inicializar Greengrass Manager
         greengrass_manager = GreengrassManager(config_path=config_manager.config_path)
 
+        # Inicializar Alert Manager
+        alert_manager = AlertManager(mqtt_client=mqtt_client, alert_topic=config['mqtt']['topics']['alerts'])
+
         # Inicializar MUX
         logging.info("Inicializando MUX...")
-        mux = MUXController(
+        mux_manager = MUXManager(
             i2c_bus=config['sensors']['as7265x']['i2c_bus'],
-            i2c_address=config['mux']['i2c_address']
+            i2c_address=config['mux']['i2c_address'],
+            alert_manager=alert_manager
         )
 
         # Inicializar Sensores
@@ -277,18 +330,36 @@ def main():
             for sensor_config in sensors_config
             if CustomAS7265x(config_path=config_manager.config_path).is_connected()
         ]
-
-        # Diagnósticos
-        run_diagnostics(config, mux, sensors)
-
+        
         # Manejo de sensores conectados
         if not sensors:
-            logging.error("No se detectaron sensores conectados. Terminando el programa.")
-            return
+            alert_manager.send_alert(
+                level="CRITICAL",
+                message="No se detectaron sensores conectados.",
+                metadata={"mux_address": config['mux']['i2c_address']},
+            )
+            raise RuntimeError("No se detectaron sensores conectados. Terminando el programa.")
+        
+        # Diagnósticos de sensores
+        if config['system'].get('enable_sensor_diagnostics', False):
+            logging.info("Ejecutando diagnósticos de sensores...")
+            run_sensor_diagnostics(sensors, alert_manager)
+
+        # Diagnósticos de MUX
+        if config['system'].get('enable_mux_diagnostics', False):
+            logging.info("Ejecutando diagnósticos del MUX...")
+            run_mux_diagnostics(mux, [ch['channel'] for ch in config['mux']['channels']], alert_manager)
+
+        logging.info(f"{len(sensors)} sensores configurados con éxito.")
 
         # Configurar Buffer de Datos
         data_queue = Queue(maxsize=config['data_queue']['max_size'])
         logging.info(f"Queue de datos inicializada con tamaño máximo: {config['data_queue']['max_size']}")
+
+        # Inicializar Traker de Performance
+        performance_tracker = PerformanceTracker()
+        last_metrics_publish_time = time.time()
+        METRICS_INTERVAL = config['system'].get('metrics_interval', 60)  # Intervalo en segundos
 
         # Hilo para Publicar Datos
         publish_thread = Thread(
@@ -297,6 +368,9 @@ def main():
             daemon=True
         )
         publish_thread.start()
+
+        mux_status = mux_manager.get_status()
+        logging.info(f"Estado inicial del MUX: {mux_status}")
 
         # Loop Principal
         while True:
@@ -307,12 +381,53 @@ def main():
                     channel=sensor_config['channel'],
                     sensor_name=sensor_config['sensor_name'],
                     thresholds=config['plastic_thresholds'],
-                    data_queue=data_queue
+                    data_queue=data_queue,
+                    alert_manager=alert_manager,
                 )
             time.sleep(config['sensors']['read_interval'])
 
+            try:
+                start_time = time.time()
+                process_sensor(...)  # Llamada existente a la función
+                processing_time = (time.time() - start_time) * 1000  # Milisegundos
+                performance_tracker.add_reading(processing_time)
+                logging.info(f"Tiempo de procesamiento: {processing_time:.2f} ms")
+            except Exception as e:
+                logging.error(f"Error durante el procesamiento: {e}")
+
+            # Publicar métricas periódicamente
+            if time.time() - last_metrics_publish_time > METRICS_INTERVAL:
+                average_time = performance_tracker.get_average_time()
+                if average_time:
+                    metrics_payload = {
+                        "average_processing_time_ms": average_time.total_seconds() * 1000,
+                        "total_readings": performance_tracker.num_readings
+                    }
+                    mqtt_client.publish("pi1/performance_metrics", json.dumps(metrics_payload))
+                    logging.info(f"Métricas publicadas: {metrics_payload}")
+                last_metrics_publish_time = time.time()
+
+                # Ahorro de energía
+            run_power_saving_mode(config, mux, sensors)
+                
     except Exception as e:
-        logging.error(f"Error en el flujo principal: {e}")
+        alert_manager.send_alert(
+            level="CRITICAL",
+            message="Error en el loop principal",
+            metadata={"error": str(e)}
+    )
+    
+    except KeyboardInterrupt:
+        logging.info("Programa detenido por el usuario.")
+    except Exception as e:
+        logging.critical(f"Error crítico en el sistema: {e}")
+        if 'alert_manager' in locals():
+            alert_manager.send_alert("CRITICAL", f"Error crítico en el sistema: {e}")
     finally:
+        network_manager.stop_monitoring()
         config_manager.stop_monitoring()
         mqtt_client.disconnect()
+        logging.info("Sistema apagado correctamente.")
+
+if __name__ == "__main__":
+    main()

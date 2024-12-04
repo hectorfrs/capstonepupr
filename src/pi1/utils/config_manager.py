@@ -1,72 +1,83 @@
 import yaml
-import os
 import logging
+import os
 
 class ConfigManager:
     """
-    Clase para manejar la carga y validación de archivos de configuración YAML.
+    Clase para manejar la configuración del sistema desde un archivo YAML.
     """
+
     def __init__(self, config_path):
+        """
+        Inicializa el ConfigManager cargando la configuración desde el archivo YAML.
+
+        :param config_path: Ruta al archivo YAML.
+        """
         self.config_path = config_path
         self.config = self.load_config()
 
     def load_config(self):
         """
-        Carga un archivo de configuración YAML.
-        
+        Carga la configuración desde un archivo YAML.
+
         :return: Diccionario con la configuración cargada.
         """
-        if not os.path.exists(self.config_path):
-            raise FileNotFoundError(f"El archivo de configuración no existe: {self.config_path}")
-
-        with open(self.config_path, "r") as file:
-            try:
+        try:
+            with open(self.config_path, "r") as file:
                 config = yaml.safe_load(file)
-                logging.info(f"Archivo de configuración cargado correctamente desde {self.config_path}.")
+                logging.info(f"Configuración cargada desde {self.config_path}")
                 return config
-            except yaml.YAMLError as e:
-                logging.error(f"Error al cargar el archivo YAML: {e}")
-                raise
+        except FileNotFoundError:
+            logging.error(f"No se encontró el archivo de configuración: {self.config_path}")
+            raise
+        except yaml.YAMLError as e:
+            logging.error(f"Error al leer el archivo YAML: {e}")
+            raise
 
-    def validate_config(self, default_values):
+    def validate_config(self):
         """
-        Valida y asigna valores predeterminados a las claves faltantes en la configuración.
-
-        :param default_values: Diccionario con los valores predeterminados.
+        Valida las claves requeridas en la configuración y establece valores predeterminados.
         """
-        def recursive_update(d, defaults):
-            for key, value in defaults.items():
-                if key not in d:
-                    d[key] = value
-                elif isinstance(value, dict):
-                    recursive_update(d[key], value)
+        required_sections = ["system", "network", "mux", "sensors", "logging", "mqtt", "aws"]
+        for section in required_sections:
+            if section not in self.config:
+                logging.warning(f"Sección {section} no encontrada en la configuración. Usando valores predeterminados.")
+                self.config[section] = {}
 
-        logging.info("Validando configuración...")
-        recursive_update(self.config, default_values)
-
-    def get(self, key, default=None):
+    def save_config(self):
         """
-        Obtiene un valor de la configuración con soporte para claves anidadas.
+        Guarda la configuración actual en el archivo YAML.
+        """
+        try:
+            with open(self.config_path, "w") as file:
+                yaml.dump(self.config, file, default_flow_style=False)
+                logging.info(f"Configuración guardada en {self.config_path}")
+        except Exception as e:
+            logging.error(f"Error al guardar la configuración: {e}")
+            raise
 
-        :param key: Clave para buscar en la configuración (ejemplo: "system.enable_sensors").
+    def get(self, key_path, default=None):
+        """
+        Obtiene un valor de configuración dado su ruta en el diccionario.
+
+        :param key_path: Ruta de la clave (por ejemplo, "system.enable_sensors").
         :param default: Valor predeterminado si la clave no existe.
-        :return: Valor correspondiente a la clave.
+        :return: Valor de configuración o el predeterminado.
         """
-        keys = key.split(".")
+        keys = key_path.split(".")
         value = self.config
-        for k in keys:
-            value = value.get(k, default)
-            if value is default:
-                break
+        for key in keys:
+            if isinstance(value, dict) and key in value:
+                value = value[key]
+            else:
+                return default
         return value
 
-        # Validar nuevas claves en config_manager.py
-        required_keys = [
-            'enable_sensor_diagnostics',
-            'enable_mux_diagnostics',
-            'enable_detailed_logging'
-        ]
+# Ejemplo de uso
+if __name__ == "__main__":
+    config_manager = ConfigManager("/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml")
+    config_manager.validate_config()
 
-        for key in required_keys:
-            if key not in config['system']:
-                config['system'][key] = False  # Valor predeterminado
+    # Ejemplo de lectura de configuraciones
+    logging.info(f"MQTT habilitado: {config_manager.get('system.enable_mqtt')}")
+    logging.info(f"Tópico para datos de sensores: {config_manager.get('mqtt.topics.sensor_data')}")
