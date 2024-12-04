@@ -315,22 +315,25 @@ def main():
         network_manager = NetworkManager(config)
         network_manager.start_monitoring()
         logging.info("Monitoreo de red iniciado.")
-        alert_manager.send_alert(
-            level="CRITICAL",
-            message="No hay conexión a Internet.",
-            metadata={"ethernet_ip": config['network']['ethernet']['ip']}
-        )
 
+        # Enviar alerta de red
+        if not network_manager.is_connected():
+            alert_manager.send_alert(
+                level="CRITICAL",
+                message="No hay conexión a Internet.",
+                metadata={"ethernet_ip": config['network']['ethernet']['ip']}
+            )
+        
         # Inicializar cliente MQTT
         logging.info("Inicializando cliente MQTT...")
         mqtt_client = MQTTPublisher(config_path=config_manager.config_path, local=True)
         mqtt_client.connect()
 
+         # Inicializar Alert Manager
+        alert_manager = AlertManager(mqtt_client=mqtt_client, alert_topic=config['mqtt']['topics']['alerts'])
+
         # Inicializar Greengrass Manager
         greengrass_manager = GreengrassManager(config_path=config_manager.config_path)
-
-        # Inicializar Alert Manager
-        alert_manager = AlertManager(mqtt_client=mqtt_client, alert_topic=config['mqtt']['topics']['alerts'])
 
         # Inicializar MUX
         logging.info("Inicializando MUX...")
@@ -339,22 +342,19 @@ def main():
             i2c_address=config['mux']['i2c_address'],
             alert_manager=alert_manager
         )
+        logging.info("MUX inicializado correctamente.")
 
         # Inicializar Sensores
         sensors_config = config['mux']['channels']
-        sensors = [
-            CustomAS7265x(config_path=config_manager.config_path)
-            for sensor_config in sensors_config
-            if CustomAS7265x(config_path=config_manager.config_path).is_connected()
-        ]
-        
-        # Manejo de sensores conectados
+        for sensor_config in sensors_config:
+            sensors = CustomAS7265x(config_path=config_manager.config_path)
+            if sensor.is_connected():
+               sensors.append(sensor)
+               logging.info(f"Sensor {sensor_config['sensor_name']} conectado correctamente.")
+            else:
+                logging.warning(f"Sensor {sensor_config['sensor_name']} no conectado.") 
+            
         if not sensors:
-            alert_manager.send_alert(
-                level="CRITICAL",
-                message="No se detectaron sensores conectados.",
-                metadata={"mux_address": config['mux']['i2c_address']},
-            )
             raise RuntimeError("No se detectaron sensores conectados. Terminando el programa.")
         
         # Diagnósticos de sensores
@@ -434,7 +434,8 @@ def main():
             level="CRITICAL",
             message="Error en el loop principal",
             metadata={"error": str(e)}
-    )
+        )
+        logging.critical(f"Error crítico: {e}")
     
     except KeyboardInterrupt:
         logging.info("Programa detenido por el usuario.")
@@ -454,7 +455,7 @@ def main():
                 logging.info("Cliente MQTT desconectado.")
             except Exception as e:
                 logging.error(f"Error al desconectar MQTT: {e}")
-
+        # Detener monitoreo de configuración en tiempo real
         config_manager.stop_monitoring()
         logging.info("Sistema apagado correctamente.")
 
