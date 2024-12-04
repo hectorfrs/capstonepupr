@@ -218,7 +218,7 @@ def process_sensor(mux, sensor, channel, sensor_name, thresholds, data_queue):
         alert_manager.send_alert(
             level="CRITICAL",
             message=f"Error procesando el sensor {sensor_name} en el canal {channel}: {e}",
-            metadata={"sensor": sensor_name, "channel": channel},
+            metadata={"sensor": {sensor_name}, "channel": {channel}},
         )
     finally:
         # Limpieza o reinicio del MUX en caso de error
@@ -251,7 +251,7 @@ def publish_data(mqtt_client, greengrass_manager, topic, data_queue):
             alert_manager.send_alert(
                 level="CRITICAL",
                 message=f"Error publicando datos al MQTT: {e}",
-                metadata={"topic": topic},
+                metadata={"topic": {topic}},
             )
 
 def run_diagnostics(config, mux, sensors):
