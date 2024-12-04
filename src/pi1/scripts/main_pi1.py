@@ -284,6 +284,13 @@ def main():
     """
     Función principal para manejar la lógica del Raspberry Pi 1.
     """
+
+    mqtt_client = None      # Inicialización temprana
+    network_manager = None  # Inicialización temprana
+    alert_manager = None    # Inicialización temprana
+    mux_manager = None      # Inicialización temprana
+    sensors = []            # Inicialización temprana
+
     # Inicializa la gestión de configuración en tiempo real
     config_path = "/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml"
     config_manager = RealTimeConfigManager(config_path)
@@ -297,9 +304,17 @@ def main():
         configure_logging(config)
         logging.info("Sistema iniciado en Raspberry Pi #1.")
 
+        # Inicializa la gestión de alertas
+        alert_manager = AlertManager(
+            mqtt_client=None, 
+            alert_topic=config['mqtt']['topics']['alerts']
+        )
+
         # Configurar red y monitoreo
+        logging.info("Iniciando monitoreo de red...")
         network_manager = NetworkManager(config)
         network_manager.start_monitoring()
+        logging.info("Monitoreo de red iniciado.")
         alert_manager.send_alert(
             level="CRITICAL",
             message="No hay conexión a Internet.",
@@ -374,6 +389,8 @@ def main():
         mux_status = mux_manager.get_status()
         logging.info(f"Estado inicial del MUX: {mux_status}")
 
+        logging.info("Sistema funcionando correctamente.")
+
         # Loop Principal
         while True:
             for sensor_idx, sensor_config in enumerate(sensors_config):
@@ -426,9 +443,19 @@ def main():
         if 'alert_manager' in locals():
             alert_manager.send_alert("CRITICAL", f"Error crítico en el sistema: {e}")
     finally:
-        network_manager.stop_monitoring()
+        # Detener monitoreo de red
+        if network_manager:
+            network_manager.stop_monitoring()
+            logging.info("Monitoreo de red detenido.")
+        # Desconectar MQTT si está inicializado
+        if mqtt_client:
+            try:
+                mqtt_client.disconnect()
+                logging.info("Cliente MQTT desconectado.")
+            except Exception as e:
+                logging.error(f"Error al desconectar MQTT: {e}")
+
         config_manager.stop_monitoring()
-        mqtt_client.disconnect()
         logging.info("Sistema apagado correctamente.")
 
 if __name__ == "__main__":
