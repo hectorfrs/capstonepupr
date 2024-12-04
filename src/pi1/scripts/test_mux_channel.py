@@ -1,5 +1,14 @@
 from smbus2 import SMBus
+import sys
+import os
+import yaml
+import time
+import logging
 from lib.mux_manager import MUXManager
+
+# Agregar la ruta del proyecto al PYTHONPATH
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
 def scan_mux_channels(mux_address=0x70, num_channels=8):
     with SMBus(1) as bus:
