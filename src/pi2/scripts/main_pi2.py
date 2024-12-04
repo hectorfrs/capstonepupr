@@ -310,7 +310,7 @@ if __name__ == '__main__':
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler("logs/capstone_pi2.log"),
+        logging.FileHandler("/home/raspberry-2/capstonepupr/src/pi2/logs/capstone_pi2.log"),
         logging.StreamHandler()
     ]
 )
