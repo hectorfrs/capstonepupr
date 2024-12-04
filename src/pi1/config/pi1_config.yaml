@@ -72,6 +72,7 @@ mqtt:
   topics:
     sensor_data: "raspberry-1/sensor_data"                # Tópico para publicar datos de sensores
     settings_update: "raspberry-1/settings_update"        # Tópico para recibir actualizaciones de configuración
+    alerts: "raspberry-1/alerts"                          # Tópico para enviar alertas
 
 plastic_thresholds:
   # PET (Polietileno Tereftalato): Común en botellas plásticas transparentes. 
