@@ -394,17 +394,19 @@ def main():
         # Loop Principal
         while True:
             for sensor_idx, sensor_config in enumerate(sensors_config):
-                process_sensor(
-                    mux=mux,
-                    sensor=sensors[sensor_idx],
-                    channel=sensor_config['channel'],
-                    sensor_name=sensor_config['sensor_name'],
-                    thresholds=config['plastic_thresholds'],
-                    data_queue=data_queue,
-                    alert_manager=alert_manager,
-                )
-            time.sleep(config['sensors']['read_interval'])
-
+                if sensor_idx < len(sensors):
+                    process_sensor(
+                        mux=mux,
+                        sensor=sensors[sensor_idx],
+                        channel=sensor_config['channel'],
+                        sensor_name=sensor_config['sensor_name'],
+                        thresholds=config['plastic_thresholds'],
+                        data_queue=data_queue,
+                        alert_manager=alert_manager,
+                    )
+                    time.sleep(config['sensors']['read_interval'])
+                else:
+                    logging.error(f"No se encontró un sensor para el indice {sensor_idx}.")
             try:
                 start_time = time.time()
                 process_sensor(...)  # Llamada existente a la función

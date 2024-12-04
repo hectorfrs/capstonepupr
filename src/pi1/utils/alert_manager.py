@@ -7,7 +7,7 @@ class AlertManager:
     """
     Clase para manejar alertas críticas del sistema.
     """
-    def __init__(self, mqtt_client=None, alert_topic="raspberry-1/alerts", local_log_path="/logs/alerts.json"):
+    def __init__(self, mqtt_client=None, alert_topic="raspberry-1/alerts", local_log_path="/home/raspberry-1/logs/alerts.json"):
         """
         Inicializa el manejador de alertas.
 
