@@ -1,7 +1,7 @@
 from smbus2 import SMBus
 
 MUX_I2C_ADDRESS = 0x70  # Dirección I²C del MUX
-CHANNEL_TO_ENABLE = 0    # Cambia el número de canal según sea necesario (0 a 7)
+CHANNEL_TO_ENABLE = 4    # Cambia el número de canal según sea necesario (0 a 7)
 
 def enable_mux_channel(mux_address, channel):
     """
