@@ -306,5 +306,12 @@ def main():
         logging.info("Programa terminado correctamente.")
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler("logs/capstone_pi2.log"),
+        logging.StreamHandler()
+    ]
+)
     main()
