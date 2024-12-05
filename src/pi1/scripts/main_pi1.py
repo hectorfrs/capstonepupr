@@ -29,6 +29,7 @@ from logging.handlers import RotatingFileHandler
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append("/usr/local/lib/python3.11/dist-packages")
 
 class StreamToLogger:
     """
