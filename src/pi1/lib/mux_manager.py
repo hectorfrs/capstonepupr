@@ -1,6 +1,5 @@
 # mux_manager.py - Clase para manejar dinámicamente el estado y la configuración del MUX.
 import logging
-from smbus2 import SMBus
 from lib.mux_controller import MUXController
 from utils.alert_manager import AlertManager
 
@@ -19,7 +18,6 @@ class MUXManager:
         """
         self.mux = MUXController(i2c_bus=i2c_bus, i2c_address=i2c_address)
         self.alert_manager = alert_manager
-        self.bus = SMBus(i2c_bus)
 
     def is_mux_connected(self):
         """
@@ -27,7 +25,7 @@ class MUXManager:
         :return: True si el MUX responde, False en caso contrario.
         """
         try:
-            self.mux.get_status()
+            self.mux.validate_connection()
             logging.info("MUX está accesible.")
             return True
         except Exception as e:
@@ -42,40 +40,32 @@ class MUXManager:
 
     def select_channel(self, channel):
         """
-        Selecciona un canal en el MUX y maneja excepciones.
+        Selecciona un canal en el MUX.
 
-        :param channel: Número del canal a activar.
+        :param channel: Número del canal a activar (0-7) o None para desactivar todos.
         """
-        if channel is not None and (channel < 0 or channel >= 8):
-            raise ValueError(f"Canal inválido: {channel}")
         try:
-            if channel is None:
-                self.mux.disable_all_channels()  # Asumiendo que tienes un método para desactivar todos los canales
-                logging.info("Todos los canales desactivados en el MUX.")
-            else:
-                self.mux.select_channel(channel)
-                logging.info(f"Canal {channel} activado en el MUX.")
+            self.mux.select_channel(channel)
+            logging.info(f"Canal {channel if channel is not None else 'None'} activado en el MUX.")
         except Exception as e:
-            logging.error(f"Error activando canal {channel} en el MUX: {e}")
+            logging.error(f"Error activando canal {channel}: {e}")
             if self.alert_manager:
                 self.alert_manager.send_alert(
                     level="CRITICAL",
-                    message=f"Error activando canal {channel} en el MUX.",
+                    message=f"Error activando canal {channel}.",
                     metadata={"channel": channel, "error": str(e)}
                 )
             raise
 
     def disable_all_channels(self):
         """
-        Desactiva todos los canales del MUX de manera explícita.
+        Desactiva todos los canales del MUX.
         """
         try:
-            for channel in range(8):  # Iterar sobre los 8 canales
-                self.mux.select_channel(channel)  # Activar canal
-                self.mux.select_channel(None)  # Desactivar canal
+            self.mux.disable_all_channels()
             logging.info("Todos los canales del MUX han sido desactivados.")
         except Exception as e:
-            logging.error(f"Error desactivando todos los canales en el MUX: {e}")
+            logging.error(f"Error desactivando todos los canales: {e}")
             if self.alert_manager:
                 self.alert_manager.send_alert(
                     level="WARNING",
@@ -123,56 +113,41 @@ class MUXManager:
                 )
 
     def detect_active_channels(self):
-            """
-            Detecta los canales activos del MUX probando cada canal.
+        """
+        Detecta los canales activos del MUX probando cada canal.
 
-            :return: Lista de canales con sensores conectados.
-            """
-            active_channels = []
-            for channel in range(8):  # El MUX tiene 8 canales
-                try:
-                    # Activar canal
-                    self.mux.select_channel(channel)
-                    # Intentar leer algún dispositivo en este canal
-                    self.bus.read_byte(self.mux.i2c_address)
-                    active_channels.append(channel)
-                    logging.info(f"Dispositivo detectado en el canal {channel}.")
-                except FileNotFoundError:
-                        logging.error(f"No se encontró el dispositivo I2C en el canal {channel}.")
-                except OSError:
-                    # No hay dispositivo conectado en este canal
-                    logging.info(f"No se detectó dispositivo en el canal {channel}.")
-                except Exception as e:
-                    logging.error(f"Error detectando canal {channel}: {e}")
-                    if self.alert_manager:
-                        self.alert_manager.send_alert(
-                            level="WARNING",
-                            message=f"Error detectando canal {channel}",
-                            metadata={"channel": channel, "error": str(e)}
-                        )
-            # Desactivar todos los canales después de la detección
-            self.disable_all_channels()
-            return active_channels
+        :return: Lista de canales con sensores conectados.
+        """
+        active_channels = []
+        try:
+            active_channels = self.mux.detect_active_channels()
+            logging.info(f"Canales activos detectados: {active_channels}")
+        except Exception as e:
+            logging.error(f"Error detectando canales activos: {e}")
+            if self.alert_manager:
+                self.alert_manager.send_alert(
+                    level="WARNING",
+                    message="Error detectando canales activos.",
+                    metadata={"error": str(e)}
+                )
+        return active_channels
 
     def run_diagnostics(self):
         """
         Ejecuta diagnósticos básicos en el MUX.
+
         :return: Diccionario indicando si cada canal está funcional.
         """
         diagnostics = {}
-        for channel in range(8):
-            try:
-                self.select_channel(channel)
-                diagnostics[channel] = True
-            except Exception as e:
-                diagnostics[channel] = False
-                logging.error(f"Error en el canal {channel} durante el diagnóstico: {e}")
-                if self.alert_manager:
-                    self.alert_manager.send_alert(
-                        level="ERROR",
-                        message=f"Error en el diagnóstico del canal {channel}.",
-                        metadata={"channel": channel, "error": str(e)}
-                    )
-        self.disable_all_channels()
-        logging.info(f"Resultados del diagnóstico del MUX: {diagnostics}")
+        try:
+            diagnostics = self.mux.run_diagnostics()
+            logging.info(f"Resultados del diagnóstico del MUX: {diagnostics}")
+        except Exception as e:
+            logging.error(f"Error ejecutando diagnósticos del MUX: {e}")
+            if self.alert_manager:
+                self.alert_manager.send_alert(
+                    level="ERROR",
+                    message="Error en los diagnósticos del MUX.",
+                    metadata={"error": str(e)}
+                )
         return diagnostics
