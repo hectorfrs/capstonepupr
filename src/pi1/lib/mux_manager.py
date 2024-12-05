@@ -114,8 +114,6 @@ class MUXManager:
                     metadata={"channel": channel, "error": str(e)}
                 )
 
-    from smbus2 import SMBus  # Asegúrate de importar SMBus
-
     def detect_active_channels(self):
             """
             Detecta los canales activos del MUX probando cada canal.

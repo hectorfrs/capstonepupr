@@ -10,6 +10,7 @@ from queue import Queue
 from datetime import datetime
 from datetime import timedelta
 from asyncio import Handle
+from smbus2 import SMBus
 
 from lib.mux_manager import MUXManager
 from lib.as7265x import CustomAS7265x
