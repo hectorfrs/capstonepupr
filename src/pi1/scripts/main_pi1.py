@@ -272,7 +272,7 @@ def main():
 
     # Configurar logging
     configure_logging(config)
-    logging.info("Sistema iniciado en Raspberry Pi #1.")
+    logging.debug("Sistema iniciado en Raspberry Pi #1.")
     
 
     try:
