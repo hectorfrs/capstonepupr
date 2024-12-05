@@ -321,6 +321,18 @@ def main():
             alert_topic=config['mqtt']['topics']['alerts'],
             local_log_path=config['logging']['log_file']
         )
+        # Inicializar MUX
+        logging.info("Inicializando MUX...")
+        mux_manager = MUXManager(
+            i2c_bus=config['sensors']['as7265x']['i2c_bus'],
+            i2c_address=config['mux']['i2c_address'],
+            alert_manager=alert_manager
+        )
+        if mux_manager is None:
+            logging.critical("MUXManager no se inicializó correctamente. Abortando.")
+            raise RuntimeError("MUXManager no inicializado")
+            
+        logging.info("MUX inicializado correctamente.")
 
         # Detectar y actualizar canales activos en config.yaml
         logging.info("Detectando canales activos en el MUX...")
@@ -331,14 +343,7 @@ def main():
         # Inicializar Greengrass Manager
         greengrass_manager = GreengrassManager(config_path=config_manager.config_path)
 
-        # Inicializar MUX
-        logging.info("Inicializando MUX...")
-        mux_manager = MUXManager(
-            i2c_bus=config['sensors']['as7265x']['i2c_bus'],
-            i2c_address=config['mux']['i2c_address'],
-            alert_manager=alert_manager
-        )
-        logging.info("MUX inicializado correctamente.")
+        
 
         # Inicializar Sensores
         sensors_config = config['mux']['channels']
