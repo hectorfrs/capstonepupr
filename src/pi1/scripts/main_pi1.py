@@ -1,4 +1,4 @@
-
+#main_pi1.py - Script principal para el Raspberry Pi 1.
 import sys
 import os
 import yaml
@@ -43,23 +43,6 @@ class StreamToLogger:
 
     def flush(self):
         pass  # Necesario para compatibilidad con sys.stdout y sys.stderr
-
-class PerformanceTracker:
-    """
-    Clase para rastrear estadísticas de rendimiento y procesamiento.
-    """
-    def __init__(self):
-        self.total_processing_time = timedelta()
-        self.num_readings = 0
-
-    def add_reading(self, processing_time):
-        self.total_processing_time += timedelta(milliseconds=processing_time)
-        self.num_readings += 1
-
-    def get_average_time(self):
-        if self.num_readings == 0:
-            return None
-        return self.total_processing_time / self.num_readings
 
 def load_thresholds(config, material):
     """
@@ -149,11 +132,13 @@ def configure_logging(config):
     logger.setLevel(logging.INFO)
     logger.addHandler(error_handler)
 
-    print(f"Logging configurado en {log_file}.")
-
     # Redirigir stdout y stderr al logger después de configurarlo
     sys.stdout = StreamToLogger(logging.getLogger(), logging.INFO)
     sys.stderr = StreamToLogger(logging.getLogger(), logging.ERROR)
+
+    print(f"Logging configurado en {log_file}.")
+
+    
 
 def identify_plastic(spectral_data, thresholds):
     """
@@ -278,8 +263,27 @@ def run_power_saving_mode(mux, sensors):
     mux.disable_all_channels()
     logging.info("Todos los canales del MUX han sido desactivados.")
 
-        
+def detect_active_channels(mux_address):
+    """
+    Detecta los canales activos del MUX probando cada canal.
 
+    :param mux_address: Dirección I²C del MUX.
+    :return: Lista de canales con sensores conectados.
+    """
+    active_channels = []
+    with SMBus(1) as bus:
+        for channel in range(8):
+            # Activar canal
+            bus.write_byte(mux_address, 1 << channel)
+            try:
+                # Intentar leer un byte de algún dispositivo en este canal
+                bus.read_byte(mux_address)
+                active_channels.append(channel)
+            except OSError:
+                # No hay dispositivo conectado en este canal
+                pass
+    return active_channels
+        
 def main():
     """
     Función principal para manejar la lógica del Raspberry Pi 1.
@@ -296,19 +300,22 @@ def main():
     config_manager = RealTimeConfigManager(config_path)
     config_manager.start_monitoring()
 
+    # Usar configuración actualizada
+    config = config_manager.get_config()
+
+    # Configurar logging
+    configure_logging(config)
+    logging.info("Sistema iniciado en Raspberry Pi #1.")
+    
+
     try:
-        # Usar configuración actualizada
-        config = config_manager.get_config()
+        
 
-        # Configurar logging
-        configure_logging(config)
-        logging.info("Sistema iniciado en Raspberry Pi #1.")
-
-        # Inicializa la gestión de alertas
-        # alert_manager = AlertManager(
-        #     mqtt_client=None, 
-        #     alert_topic=config['mqtt']['topics']['alerts']
-        # )
+        # Inicialización de servicios y componentes
+        alert_manager = AlertManager(
+            alert_topic=config['mqtt']['topics']['alerts'],
+            local_log_path=config['logging']['alert_log_file']
+        )
 
         # Configurar red y monitoreo
         logging.info("Iniciando monitoreo de red...")
@@ -330,7 +337,14 @@ def main():
         mqtt_client.connect()
 
          # Inicializar Alert Manager
-        alert_manager = AlertManager(mqtt_client=mqtt_client, alert_topic=config['mqtt']['topics']['alerts'])
+        #alert_manager = AlertManager(mqtt_client=mqtt_client, alert_topic=config['mqtt']['topics']['alerts'])
+
+        # Detectar y actualizar canales activos en config.yaml
+        logging.info("Detectando canales activos en el MUX...")
+        mux_address = config['mux']['i2c_address']
+        active_channels = detect_active_channels(mux_address)
+        config_manager.set_value('mux', 'active_channels', active_channels)
+        logging.info(f"Canales activos detectados y actualizados: {active_channels}")
 
         # Inicializar Greengrass Manager
         greengrass_manager = GreengrassManager(config_path=config_manager.config_path)
@@ -369,14 +383,12 @@ def main():
 
         logging.info(f"{len(sensors)} sensores configurados con éxito.")
 
+        # Inicializar Traker de Performance
+        performance_tracker = PerformanceTracker(log_interval=config['system'].get('metrics_log_interval', 60))
+
         # Configurar Buffer de Datos
         data_queue = Queue(maxsize=config['data_queue']['max_size'])
         logging.info(f"Queue de datos inicializada con tamaño máximo: {config['data_queue']['max_size']}")
-
-        # Inicializar Traker de Performance
-        performance_tracker = PerformanceTracker()
-        last_metrics_publish_time = time.time()
-        METRICS_INTERVAL = config['system'].get('metrics_interval', 60)  # Intervalo en segundos
 
         # Hilo para Publicar Datos
         publish_thread = Thread(

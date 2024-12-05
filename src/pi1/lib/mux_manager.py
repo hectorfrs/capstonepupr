@@ -1,6 +1,8 @@
+# mux_manager.py - Clase para manejar dinámicamente el estado y la configuración del MUX.
 import logging
 from lib.mux_controller import MUXController
 from utils.alert_manager import AlertManager
+
 
 class MUXManager:
     """
@@ -16,6 +18,25 @@ class MUXManager:
         """
         self.mux = MUXController(i2c_bus=i2c_bus, i2c_address=i2c_address)
         self.alert_manager = alert_manager
+
+    def is_mux_connected(self):
+        """
+        Verifica si el MUX está accesible.
+        :return: True si el MUX responde, False en caso contrario.
+        """
+        try:
+            self.mux.get_status()
+            logging.info("MUX está accesible.")
+            return True
+        except Exception as e:
+            logging.error(f"Error verificando conexión del MUX: {e}")
+            if self.alert_manager:
+                self.alert_manager.send_alert(
+                    level="CRITICAL",
+                    message="MUX no accesible.",
+                    metadata={"error": str(e)}
+                )
+            return False
 
     def select_channel(self, channel):
         """
@@ -90,3 +111,26 @@ class MUXManager:
                     message=f"Error reiniciando canal {channel} en el MUX.",
                     metadata={"channel": channel, "error": str(e)}
                 )
+
+    def run_diagnostics(self):
+        """
+        Ejecuta diagnósticos básicos en el MUX.
+        :return: Diccionario indicando si cada canal está funcional.
+        """
+        diagnostics = {}
+        for channel in range(8):
+            try:
+                self.select_channel(channel)
+                diagnostics[channel] = True
+            except Exception as e:
+                diagnostics[channel] = False
+                logging.error(f"Error en el canal {channel} durante el diagnóstico: {e}")
+                if self.alert_manager:
+                    self.alert_manager.send_alert(
+                        level="ERROR",
+                        message=f"Error en el diagnóstico del canal {channel}.",
+                        metadata={"channel": channel, "error": str(e)}
+                    )
+        self.disable_all_channels()
+        logging.info(f"Resultados del diagnóstico del MUX: {diagnostics}")
+        return diagnostics

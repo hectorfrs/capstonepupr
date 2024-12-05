@@ -1,5 +1,7 @@
+# alert_manager.py - Clase para manejar alertas críticas del sistema.
 import logging
 import json
+import os
 from datetime import datetime
 from utils.mqtt_publisher import MQTTPublisher
 
@@ -7,6 +9,8 @@ class AlertManager:
     """
     Clase para manejar alertas críticas del sistema.
     """
+    ALLOWED_LEVELS = {"INFO", "WARNING", "CRITICAL"}
+
     def __init__(self, mqtt_client=None, alert_topic="raspberry-1/alerts", local_log_path="/home/raspberry-1/logs/alerts.json"):
         """
         Inicializa el manejador de alertas.
@@ -19,6 +23,12 @@ class AlertManager:
         self.alert_topic = alert_topic
         self.local_log_path = local_log_path
 
+        # Crear directorio de logs si no existe
+        log_dir = os.path.dirname(local_log_path)
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)
+            logging.info(f"Directorio creado para logs locales de alertas: {log_dir}")
+
     def send_alert(self, level, message, metadata=None):
         """
         Envía una alerta con el nivel y el mensaje especificado.
@@ -27,6 +37,14 @@ class AlertManager:
         :param message: Mensaje descriptivo de la alerta.
         :param metadata: Datos adicionales (opcional).
         """
+        if level not in self.ALLOWED_LEVELS:
+            logging.error(f"Nivel de alerta inválido: {level}. Debe ser uno de {self.ALLOWED_LEVELS}.")
+            return
+
+        if metadata is not None and not isinstance(metadata, dict):
+            logging.error("El parámetro 'metadata' debe ser un diccionario.")
+            return
+
         alert = {
             "level": level,
             "message": message,
@@ -61,8 +79,25 @@ class AlertManager:
 
         # Guardar en archivo JSON
         try:
+            if os.path.exists(self.local_log_path) and os.path.getsize(self.local_log_path) > 5 * 1024 * 1024:  # 5 MB
+                self._rotate_log()
+
             with open(self.local_log_path, "a") as log_file:
                 json.dump(alert, log_file)
                 log_file.write("\n")
         except Exception as e:
             logging.error(f"Error guardando alerta localmente: {e}")
+
+    def _rotate_log(self):
+        """
+        Realiza una rotación del archivo de logs locales si excede el tamaño máximo.
+        """
+        try:
+            base, ext = os.path.splitext(self.local_log_path)
+            backup_path = f"{base}_backup{ext}"
+            if os.path.exists(backup_path):
+                os.remove(backup_path)
+            os.rename(self.local_log_path, backup_path)
+            logging.info(f"Archivo de log de alertas rotado. Respaldo creado en {backup_path}.")
+        except Exception as e:
+            logging.error(f"Error rotando el archivo de log de alertas: {e}")

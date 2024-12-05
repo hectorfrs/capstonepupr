@@ -1,3 +1,4 @@
+#real_time_config.py - Clase para gestionar y monitorear cambios en el archivo de configuración.
 import yaml
 import os
 import time
@@ -40,6 +41,32 @@ class RealTimeConfigManager:
         except Exception as e:
             logging.error(f"Error cargando configuración: {e}")
 
+    def save_config(self):
+        """
+        Guarda la configuración actualizada en el archivo YAML.
+        """
+        try:
+            with open(self.config_path, 'w') as file:
+                yaml.safe_dump(self.config_data, file)
+            self.last_modified_time = os.path.getmtime(self.config_path)
+            logging.info("Configuración guardada con éxito.")
+        except Exception as e:
+            logging.error(f"Error guardando configuración: {e}")
+
+    def delete_key(self, section, key):
+        """
+        Elimina una clave de una sección en la configuración.
+
+        :param section: Sección del archivo YAML.
+        :param key: Clave a eliminar.
+        """
+        if section in self.config_data and key in self.config_data[section]:
+            del self.config_data[section][key]
+            self.save_config()
+            logging.info(f"Clave {key} eliminada de la sección {section}.")
+        else:
+            logging.warning(f"No se encontró la clave {key} en la sección {section}.")
+
     def monitor_config(self):
         """
         Monitorea el archivo de configuración y recarga cambios si es necesario.
@@ -77,3 +104,20 @@ class RealTimeConfigManager:
         if self.monitor_thread.is_alive():
             self.monitor_thread.join()
         logging.info("Monitoreo del archivo de configuración detenido.")
+    
+    def set_value(self, section, key, value):
+        """
+        Actualiza un valor en la configuración y guarda el archivo YAML.
+
+        :param section: Sección del archivo YAML.
+        :param key: Clave dentro de la sección.
+        :param value: Valor a establecer.
+        """
+        if section not in self.config_data:
+            self.config_data[section] = {}
+        self.config_data[section][key] = value
+        self.save_config()
+
+    
+
+

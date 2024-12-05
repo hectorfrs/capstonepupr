@@ -1,3 +1,4 @@
+# config_manager.py - Clase para manejar la configuración del sistema desde un archivo YAML.
 import yaml
 import logging
 import os
@@ -14,35 +15,56 @@ class ConfigManager:
         :param config_path: Ruta al archivo YAML.
         """
         self.config_path = config_path
-        self.config = self.load_config()
+        self.config = {}
+        self.default_config = {
+            "system": {
+                "enable_sensors": True,
+                "enable_logging": True,
+            },
+            "network": {},
+            "mux": {
+                "i2c_address": 0x70
+            },
+            "sensors": {},
+            "logging": {
+                "log_file": "/home/raspberry-1/logs/pi1_logs.log",
+                "error_log_file": "/home/raspberry-1/logs/pi1_error.log",
+                "max_size_mb": 5,
+                "backup_count": 3
+            },
+            "mqtt": {
+                "broker": "localhost",
+                "port": 1883,
+                "topics": {
+                    "sensor_data": "raspberry-1/sensor_data",
+                    "alerts": "raspberry-1/alerts"
+                }
+            },
+            "aws": {
+                "region": "us-east-1",
+                "iot_core_endpoint": "your_aws_iot_core_endpoint"
+            }
+        }
+        self.load_config()
 
     def load_config(self):
         """
-        Carga la configuración desde un archivo YAML.
-
-        :return: Diccionario con la configuración cargada.
+        Carga la configuración desde un archivo YAML. Si no existe, utiliza valores predeterminados.
         """
         try:
-            with open(self.config_path, "r") as file:
-                config = yaml.safe_load(file)
-                logging.info(f"Configuración cargada desde {self.config_path}")
-                return config
-        except FileNotFoundError:
-            logging.error(f"No se encontró el archivo de configuración: {self.config_path}")
-            raise
+            if os.path.exists(self.config_path):
+                with open(self.config_path, "r") as file:
+                    self.config = yaml.safe_load(file)
+                    logging.info(f"Configuración cargada desde {self.config_path}")
+            else:
+                logging.warning(f"El archivo de configuración no existe: {self.config_path}. Usando configuración predeterminada.")
+                self.config = self.default_config
         except yaml.YAMLError as e:
-            logging.error(f"Error al leer el archivo YAML: {e}")
-            raise
-
-    def validate_config(self):
-        """
-        Valida las claves requeridas en la configuración y establece valores predeterminados.
-        """
-        required_sections = ["system", "network", "mux", "sensors", "logging", "mqtt", "aws"]
-        for section in required_sections:
-            if section not in self.config:
-                logging.warning(f"Sección {section} no encontrada en la configuración. Usando valores predeterminados.")
-                self.config[section] = {}
+            logging.error(f"Error al leer el archivo YAML: {e}. Usando configuración predeterminada.")
+            self.config = self.default_config
+        except Exception as e:
+            logging.error(f"Error cargando configuración: {e}")
+            self.config = self.default_config
 
     def save_config(self):
         """
@@ -54,7 +76,21 @@ class ConfigManager:
                 logging.info(f"Configuración guardada en {self.config_path}")
         except Exception as e:
             logging.error(f"Error al guardar la configuración: {e}")
-            raise
+
+    def validate_config(self):
+        """
+        Valida las claves requeridas en la configuración y establece valores predeterminados si faltan.
+        """
+        for section, defaults in self.default_config.items():
+            if section not in self.config:
+                logging.warning(f"Sección {section} no encontrada en la configuración. Usando valores predeterminados.")
+                self.config[section] = defaults
+            else:
+                for key, value in defaults.items():
+                    if key not in self.config[section]:
+                        logging.warning(f"Clave {key} no encontrada en {section}. Estableciendo valor predeterminado: {value}.")
+                        self.config[section][key] = value
+        self.save_config()
 
     def get(self, key_path, default=None):
         """
@@ -73,11 +109,16 @@ class ConfigManager:
                 return default
         return value
 
-# Ejemplo de uso
-if __name__ == "__main__":
-    config_manager = ConfigManager("/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml")
-    config_manager.validate_config()
+    def set(self, key_path, value):
+        """
+        Establece un valor en la configuración y lo guarda.
 
-    # Ejemplo de lectura de configuraciones
-    logging.info(f"MQTT habilitado: {config_manager.get('system.enable_mqtt')}")
-    logging.info(f"Tópico para datos de sensores: {config_manager.get('mqtt.topics.sensor_data')}")
+        :param key_path: Ruta de la clave (por ejemplo, "system.enable_sensors").
+        :param value: Valor a establecer.
+        """
+        keys = key_path.split(".")
+        config_section = self.config
+        for key in keys[:-1]:
+            config_section = config_section.setdefault(key, {})
+        config_section[keys[-1]] = value
+        self.save_config()
