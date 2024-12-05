@@ -49,8 +49,12 @@ class MUXManager:
         if channel is not None and (channel < 0 or channel >= 8):
             raise ValueError(f"Canal inválido: {channel}")
         try:
-            self.mux.select_channel(channel)
-            logging.info(f"Canal {channel} activado en el MUX.")
+            if channel is None:
+                self.mux.disable_all_channels()  # Asumiendo que tienes un método para desactivar todos los canales
+                logging.info("Todos los canales desactivados en el MUX.")
+            else:
+                self.mux.select_channel(channel)
+                logging.info(f"Canal {channel} activado en el MUX.")
         except Exception as e:
             logging.error(f"Error activando canal {channel} en el MUX: {e}")
             if self.alert_manager:

@@ -2,7 +2,6 @@ import yaml
 from smbus2 import SMBus
 from qwiic_tca9548a import QwiicTCA9548A
 
-
 class MUXController:
     """
     Clase para controlar el MUX Qwiic TCA9548A.
@@ -15,10 +14,9 @@ class MUXController:
         :param i2c_bus: Bus I2C donde está conectado el MUX.
         :param i2c_address: Dirección I2C del MUX.
         """
-
-        # Inicializar el bus I²C
         self.i2c_bus = i2c_bus
         self.i2c_address = i2c_address
+        self.bus = SMBus(i2c_bus)  # Inicializar el bus I2C
 
         # Inicializar el MUX
         self.mux = QwiicTCA9548A(address=self.i2c_address)
@@ -36,6 +34,7 @@ class MUXController:
             print(f"Error al escribir en el registro {hex(register)} del dispositivo {hex(self.i2c_address)}: {e}")
             raise
 
+    @staticmethod
     def is_sensor_connected(bus, address):
         """
         Verifica si hay un dispositivo en la dirección I2C especificada.
@@ -62,7 +61,7 @@ class MUXController:
             print(f"Error al activar el canal {channel}: {e}")
             raise
 
-    # def disable_all_channels(self):
+    def disable_all_channels(self):
         """
         Desactiva todos los canales del MUX.
         """
@@ -102,49 +101,3 @@ class MUXController:
         except Exception as e:
             print(f"Error al resetear el canal {channel}: {e}")
             raise
-
-
-
-# # Ejemplo de Uso:
-
-# from lib.mux_controller import MUXController
-
-# def main():
-#     # Inicializar el controlador del MUX
-#     mux = MUXController(i2c_bus=1, i2c_address=0x70)
-
-#     # Validar conexión
-#     mux.validate_connection()
-
-#     # Activar canal 0
-#     mux.select_channel(0)
-
-#     # Desactivar todos los canales
-#     mux.disable_all_channels()
-
-# if __name__ == "__main__":
-#     main()
-
-
-# #Integración con Sensores
-
-# #Este módulo está diseñado para integrarse perfectamente con as7265x.py y el sistema principal.
-
-# from lib.mux_controller import MUXController
-# from lib.as7265x import CustomAS7265x
-
-# def main():
-#     # Configuración
-#     mux = MUXController(i2c_bus=1, i2c_address=0x70)
-#     sensor = CustomAS7265x(config_path="config/pi1_config.yaml")
-
-#     # Leer datos del sensor en canal 0
-#     mux.select_channel(0)
-#     spectral_data = sensor.read_calibrated_spectrum()
-#     print("Datos espectrales:", spectral_data)
-
-#     # Desactivar todos los canales
-#     mux.disable_all_channels()
-
-# if __name__ == "__main__":
-#     main()
