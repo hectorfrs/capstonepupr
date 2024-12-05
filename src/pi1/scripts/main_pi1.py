@@ -331,14 +331,23 @@ def main():
         if mux_manager is None:
             logging.critical("MUXManager no se inicializó correctamente. Abortando.")
             raise RuntimeError("MUXManager no inicializado")
-            
+
         logging.info("MUX inicializado correctamente.")
 
-        # Detectar y actualizar canales activos en config.yaml
-        logging.info("Detectando canales activos en el MUX...")
-        active_channels = mux_manager.detect_active_channels()
-        config_manager.set_value('mux', 'active_channels', active_channels)
-        logging.info(f"Canales activos detectados y actualizados: {active_channels}")
+        # Detectar y Actualizar Canales Activos
+        try:
+            logging.info("Detectando canales activos en el MUX...")
+            active_channels = mux_manager.detect_active_channels()
+            config_manager.set_value('mux', 'active_channels', active_channels)
+            logging.info(f"Canales activos detectados y actualizados: {active_channels}")
+        except Exception as e:
+            logging.critical(f"Error detectando canales activos: {e}")
+            alert_manager.send_alert(
+                level="CRITICAL",
+                message="Error detectando canales activos",
+                metadata={"error": str(e)}
+            )
+            raise RuntimeError("Error detectando canales activos")
 
         # Inicializar Greengrass Manager
         greengrass_manager = GreengrassManager(config_path=config_manager.config_path)
