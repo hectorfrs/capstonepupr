@@ -314,7 +314,7 @@ def main():
         # Inicializar Alert Manager (temprano, sin depender de otros servicios)
         alert_manager = AlertManager(
             alert_topic=config.get('mqtt', {}).get('topics', {}).get('alerts', 'raspberry-1/alerts'),
-            local_log_path=config['logging']['alert_log_file']
+            local_log_path=config['logging']['log_file']
         )
 
         # Configurar red y monitoreo
@@ -340,7 +340,7 @@ def main():
         alert_manager = AlertManager(
             mqtt_client=mqtt_client,
             alert_topic=config['mqtt']['topics']['alerts'],
-            local_log_path=config['logging']['alert_log_file']
+            local_log_path=config['logging']['log_file']
         )
 
         # Detectar y actualizar canales activos en config.yaml
