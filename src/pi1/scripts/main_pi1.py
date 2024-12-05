@@ -1,7 +1,6 @@
 #main_pi1.py - Script principal para el Raspberry Pi 1.
 import sys
 import os
-print(sys.path)
 import yaml
 import time
 import logging
@@ -27,6 +26,7 @@ from lib.mux_diagnostics import run_mux_diagnostics
 from logging.handlers import RotatingFileHandler
 
 # Agregar la ruta del proyecto al PYTHONPATH
+print(sys.path)
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
