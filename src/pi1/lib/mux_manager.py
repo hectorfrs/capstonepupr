@@ -19,7 +19,7 @@ class MUXManager:
         """
         self.mux = MUXController(i2c_bus=i2c_bus, i2c_address=i2c_address)
         self.alert_manager = alert_manager
-        self.bus = smbus.SMBus(i2c_bus)
+        self.bus = SMBus(i2c_bus)
 
     def is_mux_connected(self):
         """
@@ -129,6 +129,8 @@ class MUXManager:
                     self.bus.read_byte(self.mux.i2c_address)
                     active_channels.append(channel)
                     logging.info(f"Dispositivo detectado en el canal {channel}.")
+                except FileNotFoundError:
+                        logging.error(f"No se encontró el dispositivo I2C en el canal {channel}.")
                 except OSError:
                     # No hay dispositivo conectado en este canal
                     logging.info(f"No se detectó dispositivo en el canal {channel}.")
@@ -141,7 +143,7 @@ class MUXManager:
                             metadata={"channel": channel, "error": str(e)}
                         )
             # Desactivar todos los canales después de la detección
-            self.mux.disable_all_channels()
+            self.disable_all_channels()
             return active_channels
 
     def run_diagnostics(self):
