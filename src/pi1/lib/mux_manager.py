@@ -64,7 +64,8 @@ class MUXManager:
         Desactiva todos los canales del MUX.
         """
         try:
-            self.mux.disable_all_channels()
+            for channel in range(8):  # Desactiva los 8 canales del MUX
+                self.mux.select_channel(None)  # Asegúrate de que `None` desactive los canales
             logging.info("Todos los canales del MUX han sido desactivados.")
         except Exception as e:
             logging.error(f"Error desactivando todos los canales en el MUX: {e}")
@@ -73,7 +74,7 @@ class MUXManager:
                     level="WARNING",
                     message="Error desactivando todos los canales en el MUX.",
                     metadata={"error": str(e)}
-                )
+            )
 
     def get_status(self):
         """
