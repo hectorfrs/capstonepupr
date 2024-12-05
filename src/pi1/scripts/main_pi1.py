@@ -311,9 +311,9 @@ def main():
     try:
         
 
-        # Inicialización de servicios y componentes
+        # Inicializar Alert Manager (temprano, sin depender de otros servicios)
         alert_manager = AlertManager(
-            alert_topic=config['mqtt']['topics']['alerts'],
+            alert_topic=config.get('mqtt', {}).get('topics', {}).get('alerts', 'raspberry-1/alerts'),
             local_log_path=config['logging']['alert_log_file']
         )
 
@@ -336,8 +336,12 @@ def main():
         mqtt_client = MQTTPublisher(config_path=config_manager.config_path, local=True)
         mqtt_client.connect()
 
-         # Inicializar Alert Manager
-        #alert_manager = AlertManager(mqtt_client=mqtt_client, alert_topic=config['mqtt']['topics']['alerts'])
+        # Actualizar Alert Manager con soporte MQTT
+        alert_manager = AlertManager(
+            mqtt_client=mqtt_client,
+            alert_topic=config['mqtt']['topics']['alerts'],
+            local_log_path=config['logging']['alert_log_file']
+        )
 
         # Detectar y actualizar canales activos en config.yaml
         logging.info("Detectando canales activos en el MUX...")
