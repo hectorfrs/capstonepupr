@@ -239,18 +239,6 @@ def publish_data(mqtt_client, greengrass_manager, topic, data_queue):
                 metadata={"topic": {topic}},
             )
 
-def run_diagnostics(config, mux, sensors):
-    """
-    Ejecuta diagnósticos de sensores y MUX según la configuración.
-    """
-    if config['system'].get('enable_sensor_diagnostics', False):
-        from lib.sensor_diagnostics import run_sensor_diagnostics
-        run_sensor_diagnostics(sensors)
-
-    if config['system'].get('enable_mux_diagnostics', False):
-        from lib.mux_diagnostics import run_mux_diagnostics
-        run_mux_diagnostics(mux)
-
 def run_power_saving_mode(mux, sensors):
     """
     Habilita el modo de ahorro de energía apagando sensores y canales no críticos.
