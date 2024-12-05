@@ -1,6 +1,7 @@
 #main_pi1.py - Script principal para el Raspberry Pi 1.
 import sys
 import os
+print(sys.path)
 import yaml
 import time
 import logging
