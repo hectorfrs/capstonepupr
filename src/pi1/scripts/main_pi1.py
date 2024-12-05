@@ -97,6 +97,9 @@ def configure_logging(config):
     """
     log_file = os.path.expanduser(config['logging']['log_file'])    
     log_dir = os.path.dirname(log_file)
+    error_log_file = config["logging"]["error_log_file"]
+    max_log_size = config.get("logging", {}).get("max_size_mb", 5) * 1024 * 1024  # Tamaño máximo en bytes
+    backup_count = config.get("logging", {}).get("backup_count", 3)  # Número de archivos de respaldo
 
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
@@ -110,10 +113,7 @@ def configure_logging(config):
         datefmt="%Y-%m-%d %H:%M:%S",                                # Formato de la fecha y hora
     )
 
-    error_log_file = config["logging"]["error_log_file"]
-    max_log_size = config.get("logging", {}).get("max_size_mb", 5) * 1024 * 1024  # Tamaño máximo en bytes
-    backup_count = config.get("logging", {}).get("backup_count", 3)  # Número de archivos de respaldo
-
+    
     # Configuración del RotatingFileHandler
     handler = RotatingFileHandler(
         filename=log_file,

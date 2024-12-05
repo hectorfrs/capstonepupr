@@ -21,7 +21,7 @@ class AlertManager:
         """
         self.mqtt_client = mqtt_client
         self.alert_topic = alert_topic
-        self.local_log_path = local_log_path
+        self.local_log_path = local_log_path or config["logging"]["log_file"]
 
         # Crear directorio de logs si no existe
         log_dir = os.path.dirname(local_log_path)
@@ -101,3 +101,10 @@ class AlertManager:
             logging.info(f"Archivo de log de alertas rotado. Respaldo creado en {backup_path}.")
         except Exception as e:
             logging.error(f"Error rotando el archivo de log de alertas: {e}")
+
+    def validate_config(self):
+        required_logging_keys = ["log_file", "error_log_file"]
+        for key in required_logging_keys:
+            if key not in self.config.get("logging", {}):
+                logging.warning(f"Clave {key} faltante en la sección 'logging'. Usando valor predeterminado.")
+                self.config["logging"][key] = f"/home/raspberry-1/logs/default_{key}.log"

@@ -36,6 +36,9 @@ class RealTimeConfigManager:
                     self.config_data = yaml.safe_load(file)
                     self.last_modified_time = os.path.getmtime(self.config_path)
                     logging.info("Configuración cargada con éxito.")
+                    if "log_file" not in self.config_data.get("logging", {}):
+                        logging.warning("Clave 'log_file' no encontrada. Usando valor predeterminado.")
+                        self.config_data["logging"]["log_file"] = "/home/raspberry-1/logs/default.log"
             else:
                 logging.error(f"El archivo de configuración no existe: {self.config_path}")
         except Exception as e:
