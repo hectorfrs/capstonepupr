@@ -46,6 +46,8 @@ class MUXManager:
 
         :param channel: Número del canal a activar.
         """
+        if channel is not None and (channel < 0 or channel >= 8):
+            raise ValueError(f"Canal inválido: {channel}")
         try:
             self.mux.select_channel(channel)
             logging.info(f"Canal {channel} activado en el MUX.")
@@ -61,11 +63,12 @@ class MUXManager:
 
     def disable_all_channels(self):
         """
-        Desactiva todos los canales del MUX.
+        Desactiva todos los canales del MUX de manera explícita.
         """
         try:
-            for channel in range(8):  # Desactiva los 8 canales del MUX
-                self.mux.select_channel(None)  # Asegúrate de que `None` desactive los canales
+            for channel in range(8):  # Iterar sobre los 8 canales
+                self.mux.select_channel(channel)  # Activar canal
+                self.mux.select_channel(None)  # Desactivar canal
             logging.info("Todos los canales del MUX han sido desactivados.")
         except Exception as e:
             logging.error(f"Error desactivando todos los canales en el MUX: {e}")
@@ -74,7 +77,7 @@ class MUXManager:
                     level="WARNING",
                     message="Error desactivando todos los canales en el MUX.",
                     metadata={"error": str(e)}
-            )
+                )
 
     def get_status(self):
         """
