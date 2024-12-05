@@ -112,6 +112,32 @@ class MUXManager:
                     metadata={"channel": channel, "error": str(e)}
                 )
 
+    from smbus2 import SMBus  # Asegúrate de importar SMBus
+
+def detect_active_channels(mux_address):
+    """
+    Detecta los canales activos del MUX probando cada canal.
+
+    :param mux_address: Dirección I²C del MUX.
+    :return: Lista de canales con sensores conectados.
+    """
+    active_channels = []
+    with SMBus(1) as bus:  # Usa el bus I²C 1
+        for channel in range(8):  # Itera por los 8 canales del MUX
+            try:
+                # Activar el canal específico
+                bus.write_byte(mux_address, 1 << channel)
+                
+                # Intentar leer un byte para verificar si hay un dispositivo
+                bus.read_byte(mux_address)
+                
+                # Si no se lanza una excepción, el canal está activo
+                active_channels.append(channel)
+            except OSError:
+                # Si hay un error, significa que no hay dispositivos en el canal
+                continue
+    return active_channels
+
     def run_diagnostics(self):
         """
         Ejecuta diagnósticos básicos en el MUX.

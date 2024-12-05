@@ -263,27 +263,6 @@ def run_power_saving_mode(mux, sensors):
     mux.disable_all_channels()
     logging.info("Todos los canales del MUX han sido desactivados.")
 
-def detect_active_channels(mux_address):
-    """
-    Detecta los canales activos del MUX probando cada canal.
-
-    :param mux_address: Dirección I²C del MUX.
-    :return: Lista de canales con sensores conectados.
-    """
-    active_channels = []
-    with SMBus(1) as bus:
-        for channel in range(8):
-            # Activar canal
-            bus.write_byte(mux_address, 1 << channel)
-            try:
-                # Intentar leer un byte de algún dispositivo en este canal
-                bus.read_byte(mux_address)
-                active_channels.append(channel)
-            except OSError:
-                # No hay dispositivo conectado en este canal
-                pass
-    return active_channels
-        
 def main():
     """
     Función principal para manejar la lógica del Raspberry Pi 1.
@@ -345,8 +324,7 @@ def main():
 
         # Detectar y actualizar canales activos en config.yaml
         logging.info("Detectando canales activos en el MUX...")
-        mux_address = config['mux']['i2c_address']
-        active_channels = detect_active_channels(mux_address)
+        active_channels = mux_manager.detect_active_channels()
         config_manager.set_value('mux', 'active_channels', active_channels)
         logging.info(f"Canales activos detectados y actualizados: {active_channels}")
 
