@@ -45,29 +45,52 @@ class StreamToLogger:
 # Configuración de los logs
 def configure_logging(config):
     """
-    Configura el sistema de logging, con soporte para habilitar DEBUG detallado.
+    Configura el sistema de logging.
     """
-    log_file = os.path.expanduser(config['logging']['log_file'])
-    error_log_file = config['logging']['error_log_file']
-    max_size = config['logging']['max_size_mb'] * 1024 * 1024
-    backup_count = config['logging']['backup_count']
-    detailed_logging = config['system']['enable_detailed_logging']
+    log_file = os.path.expanduser(config['logging']['log_file'])    
+    log_dir = os.path.dirname(log_file)
+    error_log_file = config["logging"]["error_log_file"]
+    max_log_size = config.get("logging", {}).get("max_size_mb", 5) * 1024 * 1024                # Tamaño máximo en bytes
+    backup_count = config.get("logging", {}).get("backup_count", 3)                             # Número de archivos de respaldo
 
-    if not os.path.exists(os.path.dirname(log_file)):
-        os.makedirs(os.path.dirname(log_file))
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+    
+    # Configuración del formato de los logs con fecha y hora
+    LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
+    DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
     logging.basicConfig(
-        level=logging.DEBUG if detailed_logging else logging.INFO,
-        format="%(asctime)s - %(levelname)s - %(message)s",
-        handlers=[
-            RotatingFileHandler(log_file, maxBytes=max_size, backupCount=backup_count),
-            logging.StreamHandler(sys.stdout)
-        ]
+        filename=log_file,                                                                      # Archivo de log especificado en config.yaml
+        level=logging.DEBUG if config.get("enable_detailed_logging", False) else logging.INFO,  # Nivel de logging
+        format=LOG_FORMAT,                                                                      # Formato del log
+        datefmt=DATE_FORMAT                                                                     # Formato de fecha y hora
     )
+    
+    # Configuración del RotatingFileHandler
+    handler = RotatingFileHandler(
+        filename=log_file,
+        maxBytes=max_log_size,  # Tamaño máximo del archivo en bytes
+        backupCount=backup_count,  # Número de archivos de respaldo
+    )
+    handler.setFormatter(logging.Formatter(fmt=LOG_FORMAT, datefmt=DATE_FORMAT))
 
-    logging.getLogger().addHandler(logging.FileHandler(error_log_file, mode='a', level=logging.ERROR))
+    # Configuración del manejador para logs de errores
+    error_handler = logging.FileHandler(error_log_file)
+    error_handler.setLevel(logging.ERROR)
+    error_handler.setFormatter(logging.Formatter(fmt=LOG_FORMAT, datefmt=DATE_FORMAT))
+
+    # Agregar manejadores al logger
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG if config.get("enable_detailed_logging", False) else logging.INFO)
+    logger.addHandler(handler)
+    logger.addHandler(error_handler)
+
+    # Redirigir stdout y stderr al logger
     sys.stdout = StreamToLogger(logging.getLogger(), logging.INFO)
     sys.stderr = StreamToLogger(logging.getLogger(), logging.ERROR)
+
+    print(f"Logging configurado en {log_file}.")
 
 #Clasificacion y Deteccion de Plasticos
 def classify_plastic(spectral_data, thresholds):
