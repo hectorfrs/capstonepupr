@@ -11,7 +11,7 @@ system:
   enable_logging: true                # Logs habilitados
   enable_sensor_diagnostics: true     # Diagnósticos de sensores habilitados
   enable_mux_diagnostics: true        # Diagnósticos del MUX habilitados
-  enable_auto_restart: true           # Reinicio automático habilitado
+  enable_auto_restart: false           # Reinicio automático habilitado
   enable_network_monitoring: true     # Monitoreo de red habilitado
   enable_detailed_logging: true       # Nivel detallado de logs
   enable_power_saving: true           # Modo de ahorro de energía
