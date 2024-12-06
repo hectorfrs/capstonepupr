@@ -39,7 +39,7 @@ class MUXController:
         """
         Desactiva todos los canales del MUX.
         """
-        self.mux.disable_channels()
+        self.mux.disable_channels(0X00) # Desactiva todos los canales
         logging.info("Todos los canales desactivados en el MUX.")
 
 
@@ -93,8 +93,4 @@ class MUXController:
         if channel < 0 or channel > 7:
             raise ValueError("El canal debe estar entre 0 y 7.")
 
-        # Obtener el estado de los canales habilitados
-        enabled_channels = self.mux.get_channels_enabled()
-
-        # Verificar si el bit correspondiente al canal está habilitado
-        return bool(enabled_channels & (1 << channel))
+        return self.mux.is_channel_enabled(channel)
