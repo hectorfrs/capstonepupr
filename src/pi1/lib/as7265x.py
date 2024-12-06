@@ -162,6 +162,19 @@ class CustomAS7265x(Spectrometer):
         }
         logging.info(f"Espectro avanzado: {spectrum}")
         return spectrum
+    
+    def read_temperature(self):
+        """
+        Lee la temperatura del sensor.
+        """
+        try:
+            temperature = self.read_register(0x06)  # Registro según la documentación
+            print(f"Temperatura leída: {temperature} °C")
+            return temperature
+        except Exception as e:
+            print(f"Error leyendo la temperatura: {e}")
+            raise
+
 
 # # Ejemplo de Uso:
 

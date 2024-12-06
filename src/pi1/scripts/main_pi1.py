@@ -359,15 +359,29 @@ def main():
         if not sensors:
             raise RuntimeError("No se detectaron sensores conectados. Terminando el programa.")
         
+        
         # Diagnósticos de sensores
         if config['system'].get('enable_sensor_diagnostics', False):
             logging.info("Ejecutando diagnósticos de sensores...")
-            run_sensor_diagnostics(sensors, alert_manager)
+            for sensor in sensors:
+                try:
+                    temperature_c = sensor.read_temperature()
+                    temperature_f = (temperature_c * 9 / 5) + 32
+                    logging.info(f"Temperatura del sensor {sensor.name}: {temperature_c:.2f} °C / {temperature_f:.2f} °F")
+                except AttributeError:
+                    logging.error(f"El sensor {sensor.name} no soporta la lectura de temperatura.")
+                except Exception as e:
+                    logging.error(f"Error al diagnosticar el sensor {sensor.name}: {e}")
+                    alert_manager.send_alert(
+                        level="CRITICAL",
+                        message=f"Error al diagnosticar el sensor {sensor.name}: {e}",
+                        metadata={"sensor": sensor.name},
+                    )
 
         # Diagnósticos de MUX
         if config['system'].get('enable_mux_diagnostics', False):
             logging.info("Ejecutando diagnósticos del MUX...")
-            run_mux_diagnostics(mux, [ch['channel'] for ch in config['mux']['channels']], alert_manager)
+            run_mux_diagnostics(mux_manager, [ch['channel'] for ch in config['mux']['channels']], alert_manager)
 
         logging.info(f"{len(sensors)} sensores configurados con éxito.")
 
