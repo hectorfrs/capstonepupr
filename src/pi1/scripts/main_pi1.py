@@ -401,7 +401,7 @@ def main():
         )
         publish_thread.start()
 
-        mux_status = mux_manager.get_status()
+        mux_status = mux_manager.detect_active_channels()
         logging.info(f"Estado inicial del MUX: {mux_status}")
 
         logging.info("Sistema funcionando correctamente.")
@@ -421,7 +421,6 @@ def main():
                         sensor_name=sensor_config['sensor_name'],
                         thresholds=config['plastic_thresholds'],
                         data_queue=data_queue,
-                        alert_manager=alert_manager,
                     )
                     rocessing_time = (time.time() - start_time) * 1000  # Milisegundos
                     performance_tracker.add_reading(processing_time)
