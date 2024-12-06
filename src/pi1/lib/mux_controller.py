@@ -28,22 +28,20 @@ class MUXController:
         """
         Activa un canal específico en el MUX.
 
-        :param channel: Número del canal a activar (0-7) o None para desactivar todos.
+        :param channel: Número del canal a activar (0-7).
         """
-        if channel is None:
-            self.disable_all_channels()
-        elif 0 <= channel <= 7:
-            self.mux.enable_channels(1 << channel)
-            logging.info(f"Canal {channel} activado en el MUX.")
-        else:
+        if channel < 0 or channel > 7:
             raise ValueError("El canal debe estar entre 0 y 7.")
+        self.mux.enable_channels(1 << channel)  # Activa el canal
+        logging.info(f"Canal {channel} activado en el MUX.")
 
     def disable_all_channels(self):
         """
         Desactiva todos los canales del MUX.
         """
-        self.mux.enable_channels(0)  # Desactivar todos los canales
+        self.mux.disable_channels()
         logging.info("Todos los canales desactivados en el MUX.")
+
 
     def detect_active_channels(self):
         """
@@ -84,3 +82,14 @@ class MUXController:
         """
         if not self.mux.connected:
             raise ConnectionError(f"El MUX con dirección {hex(self.i2c_address)} ha perdido la conexión.")
+    
+    def is_channel_active(self, channel):
+        """
+        Verifica si un canal específico está activo en el MUX.
+
+        :param channel: Número del canal (0-7).
+        :return: True si el canal está activo, False en caso contrario.
+        """
+        if channel < 0 or channel > 7:
+            raise ValueError("El canal debe estar entre 0 y 7.")
+        return self.mux.is_channel_enabled(channel)

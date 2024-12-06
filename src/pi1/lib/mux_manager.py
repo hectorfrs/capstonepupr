@@ -80,7 +80,8 @@ class MUXManager:
         :return: Diccionario con el estado de cada canal.
         """
         try:
-            status = {channel: self.mux.is_channel_active(channel) for channel in range(8)}
+            channel_states = self.mux.get_channel_states()
+            status = {channel: bool(channel_states & (1 << channel)) for channel in range(8)}
             logging.info(f"Estado del MUX: {status}")
             return status
         except Exception as e:
@@ -119,17 +120,21 @@ class MUXManager:
         :return: Lista de canales con sensores conectados.
         """
         active_channels = []
-        try:
-            active_channels = self.mux.detect_active_channels()
-            logging.info(f"Canales activos detectados: {active_channels}")
-        except Exception as e:
-            logging.error(f"Error detectando canales activos: {e}")
+        for channel in range(8):
+            try:
+                self.select_channel(channel)
+                if self.mux.is_channel_enabled(channel):
+                    active_channels.append(channel)
+                    logging.info(f"Canal {channel} activo en el MUX.")
+            except Exception as e:
+                logging.warning(f"Error detectando canal {channel}: {e}")
             if self.alert_manager:
                 self.alert_manager.send_alert(
                     level="WARNING",
                     message="Error detectando canales activos.",
                     metadata={"error": str(e)}
                 )
+        self.disable_all_channels()
         return active_channels
 
     def run_diagnostics(self):
