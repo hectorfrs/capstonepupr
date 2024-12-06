@@ -26,8 +26,12 @@ from utils.real_time_config import RealTimeConfigManager
 from lib.sensor_diagnostics import run_sensor_diagnostics
 from lib.mux_diagnostics import run_mux_diagnostics
 
-# Clase Auxiliar para redirigir la salida
+# Configuración de constantes
+MAX_RETRIES = 3
+DIAGNOSTICS_INTERVAL = 300  # Intervalo de diagnóstico en segundos
+CONFIG_PATH = "/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml"
 
+# Clase Auxiliar para redirigir la salida
 class StreamToLogger:
     """
     Redirige stdout y stderr al logger.
@@ -93,15 +97,29 @@ def configure_logging(config):
 
     print(f"Logging configurado en {log_file}.")
 
+def validate_config(config):
+    """
+    Valida que las claves críticas estén presentes en la configuración.
+    """
+    required_keys = ['system', 'mqtt', 'sensors', 'mux']
+    for key in required_keys:
+        if key not in config:
+            raise KeyError(f"Clave de configuración faltante: {key}")
+    logging.info("Validación de configuración completada.")
+
 #Clasificacion y Deteccion de Plasticos
 def classify_plastic(spectral_data, thresholds):
     """
     Clasifica el tipo de plástico según los umbrales configurados.
     """
-    for plastic_type, ranges in thresholds.items():
-        if all(ranges[i][0] <= spectral_data[i] <= ranges[i][1] for i in range(len(ranges))):
-            return plastic_type
-    return "Otros"
+    try:
+        for plastic_type, ranges in thresholds.items():
+            if all(ranges[i][0] <= spectral_data[i] <= ranges[i][1] for i in range(len(ranges))):
+                return plastic_type
+        return "Otros"
+    except Exception as e:
+        logging.error(f"Error detectando material: {e}")
+        return "Error"
 
 # Publicación de Datos
 def publish_data(mqtt_client, greengrass_manager, topic, data_queue, alert_manager):
@@ -173,15 +191,59 @@ def restart_system(config):
     """
     Reinicia el sistema en caso de falla crítica si está habilitado en el config.yaml.
     """
-    if config['system'].get('enable_auto_restart', False):
-        logging.critical("Reiniciando sistema por error crítico según configuración...")
-        time.sleep(60)
-    try:
-        subprocess.run(["sudo", "reboot"], check=True)
-    except Exception as e:
-        logging.error(f"Error al intentar reiniciar el sistema: {e}")
-    else:
-        logging.error("Reinicio automático deshabilitado en configuración.")
+    MAX_RETRIES = 3
+    retries = 0
+    while retries < MAX_RETRIES:
+        try:
+            if config['system'].get('enable_auto_restart', False):
+                logging.critical("Reiniciando sistema por error crítico según configuración...")
+                time.sleep(60)
+            try:
+                subprocess.run(["sudo", "reboot"], check=True)
+            except Exception as e:
+                logging.error(f"Error al intentar reiniciar el sistema: {e}")
+            else:
+                logging.error("Reinicio automático deshabilitado en configuración.")
+                break
+        except Exception as e:
+            retries += 1
+            logging.critical(f"Reinicio {retries}/{MAX_RETRIES} debido a error crítico: {e}")
+        if retries >= MAX_RETRIES:
+            logging.critical("Se alcanzó el máximo de reinicios. Abortando.")
+            sys.exit(1)
+
+def initialize_mux(config, alert_manager):
+    """
+    Inicializa el MUX y verifica que esté conectado.
+    """
+    mux_manager = MUXManager(
+        i2c_bus=config['mux']['i2c_bus'],
+        i2c_address=config['mux']['i2c_address'],
+        alert_manager=alert_manager
+    )
+    if not mux_manager.is_mux_connected():
+        raise RuntimeError("MUX no conectado.")
+    return mux_manager
+
+def initialize_sensors(config, mux_manager):
+    sensors_config = config.get('mux', {}).get('channels', [])
+    if not sensors_config:
+        raise RuntimeError("No se encontraron configuraciones de sensores en 'mux/channels'.")
+
+    sensors = []
+    for channel_info in config['mux']['channels']:
+        channel = channel_info['channel']
+        sensor_name = channel_info['sensor_name']
+        sensor = CustomAS7265x(name=sensor_name)
+        if sensor.is_connected():
+            sensor.channel = channel
+            sensors.append(sensor)
+            logging.info(f"Sensor {sensor_name} conectado en canal {channel}.")
+        else:
+            logging.warning(f"Sensor {sensor_name} no conectado en canal {channel}.")
+    if not sensors:
+        raise RuntimeError("No se detectaron sensores conectados.")
+    return sensors
 
 def process_channels(mux_manager):
     try:
@@ -230,154 +292,157 @@ def main():
     alert_manager = None    # Inicialización temprana
     mux_manager = None      # Inicialización temprana
     sensors = []            # Inicialización temprana
-
-    try:
-        # Cargar configuración
-        config_path = "/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml"
-        config_manager = RealTimeConfigManager(config_path)
-        config_manager.start_monitoring()
-        config = config_manager.get_config()
-
-        # Configurar logging
-        configure_logging(config)
-        logging.info("Sistema iniciado en Raspberry Pi #1...")
-
-        # Inicializar Alert Manager
-        alert_manager = AlertManager(
-            mqtt_client=None,
-            alert_topic=config['mqtt']['topics']['alerts'],
-            local_log_path=config['logging']['log_file']
-        )
-
-        # Configurar red y monitoreo
-        logging.info("Iniciando monitoreo de red...")
-        network_manager = NetworkManager(config)
-        network_manager.start_monitoring()
-        logging.info("Monitoreo de red iniciado.")
-
-        # Enviar alerta de red
-        if not network_manager.is_connected():
-            alert_manager.send_alert(
-                level="CRITICAL",
-                message="No hay conexión a Internet.",
-                metadata={"ethernet_ip": config['network']['ethernet']['ip']}
-            )
-
-        # Inicializar MQTT
-        mqtt_client = MQTTPublisher(config_path)
-        mqtt_client.connect()
-
-        # Inicializar MUX Manager
-        logging.info("Inicializando MUX...")
-        mux_manager = MUXManager(
-            i2c_bus=config['sensors']['as7265x']['i2c_bus'],
-            i2c_address=config['mux']['i2c_address'],
-            alert_manager=alert_manager
-        )
-        if mux_manager is None:
-            logging.critical("MUXManager no se inicializó correctamente. Abortando.")
-            raise RuntimeError("MUXManager no inicializado")
-        sensors_config = config['mux']['channels']
-
-        logging.info("MUX inicializado correctamente.")
-        # Detectar y Actualizar Canales Activos
+    retries = 0
+    while retries < MAX_RETRIES:
         try:
-            active_channels = mux_manager.detect_active_channels()
-            config_manager.set_value('mux', 'active_channels', active_channels)
-            logging.info(f"Canales activos detectados y actualizados: {active_channels}")
-        except Exception as e:
-            logging.critical(f"Error detectando canales activos: {e}")
-            alert_manager.send_alert(
-                level="CRITICAL",
-                message="Error detectando canales activos",
-                metadata={"error": str(e)},
+            # Cargar configuración
+            config_path = "/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml"
+            config_manager = RealTimeConfigManager(config_path)
+            config_manager.start_monitoring()
+            config = config_manager.get_config()
+            validate_config(config)
+
+            # Configurar logging
+            configure_logging(config)
+            logging.info("Sistema iniciado en Raspberry Pi #1...")
+
+            # Inicializar Alert Manager
+            alert_manager = AlertManager(
+                mqtt_client=None,
+                alert_topic=config['mqtt']['topics']['alerts'],
+                local_log_path=config['logging']['log_file']
             )
-            raise RuntimeError("Error detectando canales activos")
 
-        # Inicializar Greengrass Manager
-        greengrass_manager = GreengrassManager(config_path=config_manager.config_path)
+            # Configurar red y monitoreo
+            logging.info("Iniciando monitoreo de red...")
+            network_manager = NetworkManager(config)
+            network_manager.start_monitoring()
+            logging.info("Monitoreo de red iniciado.")
 
-        # Configurar sensores
-        sensors_config = config.get('mux', {}).get('channels', [])
-        if not sensors_config:
-            raise RuntimeError("No se encontraron configuraciones de sensores en 'mux/channels'.")
+            # Enviar alerta de red
+            if not network_manager.is_connected():
+                alert_manager.send_alert(
+                    level="CRITICAL",
+                    message="No hay conexión a Internet.",
+                    metadata={"ethernet_ip": config['network']['ethernet']['ip']}
+                )
 
-        sensors = [
-            CustomAS7265x(config_path, name=ch['sensor_name'])
-            for ch in config['mux']['channels']
-        ]
-        for channel_info in sensors_config:
-            channel = channel_info['channel']
-            sensor_name = channel_info['sensor_name']
-            sensor = CustomAS7265x(config_path=config_manager.config_path, name=sensor_name)
+            # Inicializar MQTT
+            mqtt_client = MQTTPublisher(config_path)
+            mqtt_client.connect()
 
-            if sensor.is_connected():
-                sensor.channel = channel
-                sensors.append(sensor)
-                logging.info(f"Sensor {sensor_name} conectado en canal {channel}.")
-            else:
-                logging.warning(f"No se pudo conectar el sensor {sensor_name} en canal {channel}.")
-        
-            
-        if not sensors:
-            raise RuntimeError("No se detectaron sensores conectados. Terminando el programa.")
-        
-        # Diagnósticos
-        run_diagnostics(config, mux_manager, sensors, alert_manager)
+            # Inicialización del MUX
+            mux_manager = initialize_mux(config, alert_manager)
 
-        # Modo de ahorro de energía
-        run_power_saving_mode(mux_manager, sensors, config['system']['enable_power_saving'])
-
-        # Bucle principal
-        data_queue = Queue(maxsize=config['data_queue']['max_size'])
-        publish_thread = Thread(target=publish_data, args=(mqtt_client, None, config['mqtt']['topics']['sensor_data'], data_queue, alert_manager), daemon=True)
-        publish_thread.start()
-
-        while True:
-            for sensor in sensors:
-                try:
-                    spectral_data = sensor.read_advanced_spectrum()
-                    plastic_type = classify_plastic(spectral_data, config['plastic_thresholds'])
-                    data_queue.put({
-                        "timestamp": datetime.now().isoformat(),
-                        "sensor": sensor.name,
-                        "data": spectral_data,
-                        "plastic_type": plastic_type
-                    })
-                    logging.info(f"Clasificado como: {plastic_type}")
-                except Exception as e:
-                    logging.error(f"Error procesando sensor {sensor.name}: {e}")
-
-    except Exception as e:
-        logging.critical(f"Error crítico: {e}")
-        if config['system'].get('enable_auto_restart', False):
-            alert_manager.send_alert(
-                level="CRITICAL",
-                message="Error crítico en el sistema principal",
-                metadata={"error": str(e)}
-            )
-            # Llamar al reinicio automático si está habilitado
-            restart_system(config)
-        else:
-            logging.error("El sistema no se reiniciará automáticamente porque enable_auto_restart está desactivado.")
-    finally:
-        # Detener monitoreo de red
-        if network_manager:
-            network_manager.stop_monitoring()
-            logging.info("Monitoreo de red detenido.")
-        # Desconectar MQTT si está inicializado
-        if mqtt_client and hasattr(mqtt_client, 'disconnect'):
+            if mux_manager is None:
+                logging.critical("MUXManager no se inicializó correctamente. Abortando.")
+                raise RuntimeError("MUXManager no inicializado")
+            logging.info("MUX inicializado correctamente.")
+            # Detectar y Actualizar Canales Activos
             try:
-                mqtt_client.disconnect()
-                logging.info("Cliente MQTT desconectado.")
+                active_channels = mux_manager.detect_active_channels()
+                config_manager.set_value('mux', 'active_channels', active_channels)
+                logging.info(f"Canales activos detectados y actualizados: {active_channels}")
             except Exception as e:
-                logging.error(f"Error al desconectar MQTT: {e}")
-        else:
-            logging.warning("El cliente MQTT no tiene un método de desconexión.")
+                logging.critical(f"Error detectando canales activos: {e}")
+                alert_manager.send_alert(
+                    level="CRITICAL",
+                    message="Error detectando canales activos",
+                    metadata={"error": str(e)},
+                )
+                raise RuntimeError("Error detectando canales activos")
+
+            # Inicializar Greengrass Manager
+            greengrass_manager = GreengrassManager(config_path=config_manager.config_path)
+
+            # Inicializar sensores
+            sensors = initialize_sensors(config, mux_manager)
             
-        # Detener monitoreo de configuración en tiempo real
-        config_manager.stop_monitoring()
-        logging.info("Sistema apagado correctamente.")
+            # Diagnósticos iniciales
+            if config['system'].get('enable_sensor_diagnostics', False):
+                logging.info("Ejecutando diagnósticos de sensores...")
+                for sensor in sensors:
+                    try:
+                        temperature_c = sensor.read_temperature()
+                        logging.info(f"Temperatura del sensor {sensor.name}: {temperature_c:.2f} °C")
+                    except Exception as e:
+                        logging.warning(f"Error diagnosticando sensor {sensor.name}: {e}")
+
+            # Diagnósticos del MUX
+            if config['system'].get('enable_mux_diagnostics', False):
+                logging.info("Ejecutando diagnósticos del MUX...")
+                run_mux_diagnostics(mux_manager, [ch['channel'] for ch in config['mux']['channels']], alert_manager)
+
+
+            # Modo de ahorro de energía
+            run_power_saving_mode(mux_manager, sensors, config['system']['enable_power_saving'])
+
+            # Bucle principal
+            data_queue = Queue(maxsize=config['data_queue']['max_size'])
+            publish_thread = Thread(target=publish_data, args=(mqtt_client, None, config['mqtt']['topics']['sensor_data'], data_queue, alert_manager), daemon=True)
+            publish_thread.start()
+
+            # Loop principal
+            logging.info("Entrando en el loop principal.")
+            last_diagnostics_time = time.time()
+            while True:
+                for sensor in sensors:
+                    try:
+                        mux_manager.select_channel(sensor.channel)
+                        spectral_data = sensor.read_advanced_spectrum()
+                        plastic_type = classify_plastic(spectral_data, config['plastic_thresholds'])
+                        data_queue.put({
+                            "timestamp": datetime.now().isoformat(),
+                            "sensor": sensor.name,
+                            "data": spectral_data,
+                            "plastic_type": plastic_type
+                        })
+                        logging.info(f"Clasificado como: {plastic_type}")
+                    except Exception as e:
+                        logging.error(f"Error procesando sensor {sensor.name}: {e}")
+                    finally:
+                        mux_manager.disable_all_channels()
+                # Ejecutar diagnósticos periódicos
+                if time.time() - last_diagnostics_time > DIAGNOSTICS_INTERVAL:
+                    run_mux_diagnostics(mux_manager, [ch['channel'] for ch in config['mux']['channels']], alert_manager)
+                    last_diagnostics_time = time.time()
+
+        except Exception as e:
+            logging.critical(f"Error crítico en la ejecución: {e}")
+            retries += 1
+            if config['system'].get('enable_auto_restart', False) and retries < MAX_RETRIES:
+                logging.info("Reiniciando sistema por error crítico...")
+                continue
+                alert_manager.send_alert(
+                    level="CRITICAL",
+                    message="Error crítico en el sistema principal",
+                    metadata={"error": str(e)}
+                )
+                # Llamar al reinicio automático si está habilitado
+                #restart_system(config)
+            else:
+                logging.error("El sistema no se reiniciará automáticamente porque enable_auto_restart está desactivado.")
+                sys.exit(1)
+        finally:
+            # Detener procesos antes de salir
+            try:
+                if network_manager:
+                    network_manager.stop_monitoring()
+                    logging.info("Monitoreo de red detenido.")
+                    if mqtt_client and hasattr(mqtt_client, 'disconnect'):
+                        try:
+                            mqtt_client.disconnect()
+                            logging.info("Cliente MQTT desconectado.")
+                        except Exception as e:
+                            logging.error(f"Error al desconectar MQTT: {e}")
+                    else:
+                        logging.warning("El cliente MQTT no tiene un método de desconexión.")
+            except Exception as cleanup_error:
+                logging.error(f"Error en la limpieza de recursos: {cleanup_error}")
+                
+            # Detener monitoreo de configuración en tiempo real
+            config_manager.stop_monitoring()
+            logging.info("Sistema apagado correctamente.")
 
 if __name__ == "__main__":
     try:

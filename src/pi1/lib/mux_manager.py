@@ -16,8 +16,11 @@ class MUXManager:
         :param i2c_address: Dirección I2C del MUX.
         :param alert_manager: Instancia del AlertManager para manejar alertas (opcional).
         """
-        self.mux = MUXController(i2c_bus=i2c_bus, i2c_address=i2c_address)
+        self.mock = mock
+        if not mock:
+            self.mux = MUXController(i2c_bus=i2c_bus, i2c_address=i2c_address)
         self.alert_manager = alert_manager
+        self.status = {}
 
     def is_mux_connected(self):
         """
