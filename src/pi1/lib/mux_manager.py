@@ -128,11 +128,12 @@ class MUXManager:
                     logging.info(f"Canal {channel} activo en el MUX.")
             except Exception as e:
                 logging.error(f"Error detectando canal {channel}: {e}")
-                alert_manager.send_alert(
-                    level="WARNING",
-                    message=f"Error detectando canal {channel}",
-                    metadata={"channel": channel, "error": str(e)},
-                )
+                if self.alert_manager:
+                    self.alert_manager.send_alert(
+                        level="WARNING",
+                        message=f"Error detectando canal {channel}",
+                        metadata={"channel": channel, "error": str(e)},
+                    )
         self.disable_all_channels()
         return active_channels
 
