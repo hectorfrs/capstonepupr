@@ -1,7 +1,7 @@
 # mux_controller.py - Clase para controlar el MUX Qwiic TCA9548A.
 import logging
 import yaml
-from sparkfun_qwiic_tca9548a import QwiicTCA9548A
+import qwiic_tca9548a
 from smbus2 import SMBus
 
 class MUXController:

@@ -1,7 +1,6 @@
 AWSIoTPythonSDK 
 smbus2
 paho-mqtt
-sparkfun-qwiic-tca9548a
+sparkfun-qwiic
 pyyaml
 boto3
-
