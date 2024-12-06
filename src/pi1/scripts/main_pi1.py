@@ -159,7 +159,7 @@ def identify_plastic(spectral_data, thresholds):
     return None
 
 
-def process_sensor(mux_manager, sensor, channel, sensor_name, thresholds, data_queue):
+def process_sensor(mux_manager, sensor, channel, sensor_name, thresholds, data_queue, alert_manager):
     """
     Lee datos de un sensor específico y los encola para procesamiento.
 
@@ -204,11 +204,13 @@ def process_sensor(mux_manager, sensor, channel, sensor_name, thresholds, data_q
     except queue.Full:
         logging.error(f"La cola de datos está llena. Datos del sensor {sensor_name} descartados.")
     except Exception as e:
-        alert_manager.send_alert(
-            level="CRITICAL",
-            message=f"Error procesando el sensor {sensor_name} en el canal {channel}: {e}",
-            metadata={"sensor": {sensor_name}, "channel": {channel}},
-        )
+        logging.error(f"Error procesando el sensor {sensor_name}: {e}")
+        if alert_manager:
+            alert_manager.send_alert(
+                level="WARNING",
+                message=f"Error procesando el sensor {sensor_name}.",
+                metadata={"sensor": sensor_name, "error": str(e)}
+            )
     finally:
         # Limpieza o reinicio del MUX en caso de error
         mux_manager.reset_channel(channel)
@@ -421,6 +423,7 @@ def main():
                         sensor_name=sensor_config['sensor_name'],
                         thresholds=config['plastic_thresholds'],
                         data_queue=data_queue,
+                        alert_manager=alert_manager,
                     )
                     rocessing_time = (time.time() - start_time) * 1000  # Milisegundos
                     performance_tracker.add_reading(processing_time)
