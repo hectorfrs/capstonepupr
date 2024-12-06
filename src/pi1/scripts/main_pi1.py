@@ -361,7 +361,8 @@ def main():
             sensor = CustomAS7265x(config_path=config_manager.config_path, name=sensor_name)
 
             if sensor.is_connected():
-                sensors.append({"channel": channel, "sensor": sensor})  # Guarda el sensor y su canal
+                sensor.channel = channel
+                sensors.append(sensor)
                 logging.info(f"Sensor {sensor_name} conectado en canal {channel}.")
             else:
                 logging.warning(f"No se pudo conectar el sensor {sensor_name} en canal {channel}.")
@@ -431,9 +432,9 @@ def main():
                 sensor = sensor_entry['sensor']
                 
                 try:
-                    mux_manager.activate_channel(channel)  # Activa el canal correcto
+                    mux_manager.activate_channel(sensor.channel)  # Usa el atributo 'channel' del sensor
                     data = sensor.read_advanced_spectrum()  # Lee los datos del sensor
-                    logging.info(f"Datos del sensor {sensor.name} en canal {channel}: {data}")
+                    logging.info(f"Datos del sensor {sensor.name} en canal {sensor.channel}: {data}")
                 except Exception as e:
                     logging.error(f"Error procesando el sensor {sensor.name} en canal {channel}: {e}")
                 finally:

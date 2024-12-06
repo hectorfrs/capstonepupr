@@ -28,7 +28,7 @@ network:
     ip: "192.168.2.145"           # Dirección IP estática para Wi-Fi
     gateway: "192.168.2.1"        # Puerta de enlace para Wi-Fi
 
-mux:
+mux:                              # Configuración del MUX de SparkFun     
   i2c_address: 0x70               # Dirección I2C del MUX de SparkFun
   channels:                       # Canales asignados a los sensores AS7265x
     - channel: 0                  
