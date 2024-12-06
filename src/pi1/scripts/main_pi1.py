@@ -173,6 +173,7 @@ def restart_system(config):
     """
     if config['system'].get('enable_auto_restart', False):
         logging.critical("Reiniciando sistema por error crítico según configuración...")
+        time.sleep(15)
     try:
         subprocess.run(["sudo", "reboot"], check=True)
     except Exception as e:
@@ -262,6 +263,7 @@ def main():
         if mux_manager is None:
             logging.critical("MUXManager no se inicializó correctamente. Abortando.")
             raise RuntimeError("MUXManager no inicializado")
+        sensors_config = config['mux']['channels']
 
         logging.info("MUX inicializado correctamente.")
         # Detectar y Actualizar Canales Activos
@@ -334,13 +336,16 @@ def main():
 
     except Exception as e:
         logging.critical(f"Error crítico: {e}")
-        alert_manager.send_alert(
-            level="CRITICAL",
-            message="Error crítico en el sistema principal",
-            metadata={"error": str(e)}
-        )
-        # Llamar al reinicio automático si está habilitado
-        restart_system(config)
+        if config['system'].get('enable_auto_restart', False):
+            alert_manager.send_alert(
+                level="CRITICAL",
+                message="Error crítico en el sistema principal",
+                metadata={"error": str(e)}
+            )
+            # Llamar al reinicio automático si está habilitado
+            restart_system(config)
+        else:
+            logging.error("El sistema no se reiniciará automáticamente porque enable_auto_restart está desactivado.")
     finally:
         # Detener monitoreo de red
         if network_manager:
