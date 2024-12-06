@@ -19,7 +19,7 @@ class MUXController:
         self.bus = SMBus(i2c_bus)  # Inicializar el bus I2C
 
         # Inicializar el MUX
-        self.mux = QwiicTCA9548A(address=self.i2c_address)
+        self.mux = qwiic_tca9548a.QwiicTCA9548A(address=self.i2c_address)
         if not self.mux.connected:
             raise ConnectionError(f"El MUX con dirección {hex(self.i2c_address)} no está conectado.")
         logging.info(f"MUX conectado en la dirección {hex(self.i2c_address)}.")
