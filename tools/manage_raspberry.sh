@@ -1,8 +1,10 @@
 #!/bin/bash
-
-SERVICE_NAME="capstone_pi1.service"
-LOG_FILE="/home/raspberry-1/logs/capstone_pi1.log"
-ERROR_LOG_FILE="/home/raspberry-1/logs/capstone_pi1_error.log"
+PI="1"
+RASPBERRY="raspberry-$PI"
+CAPSTONE_PATH="/home/$RASPBERRY/capstone/src/pi$PI"
+SERVICE_NAME="capstone_pi$PI.service"
+LOG_FILE="/home/$RASPBERRY/logs/capstone_pi$PI.log"
+ERROR_LOG_FILE="/home/$RASPBERRY/logs/capstone_pi$PI_error.log"
 
 function start_service {
     echo "Iniciando $SERVICE_NAME..."

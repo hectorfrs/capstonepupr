@@ -5,7 +5,7 @@
 
 # Validar entrada
 if [ -z "$1" ]; then
-  echo "Uso: $0 [raspberry-1|raspberry-2|raspberry-3]"
+  echo "Uso: $0 [1|2|3]"
   exit 1
 fi
 
@@ -17,7 +17,7 @@ install_dependencies() {
   sudo apt-get update
   sudo apt-get install -y python3 python3-pip python3-venv i2c-tools git libcamera-apps python3-picamera2 python3-tk awscli
 
-  pip3 install --break-system-packages -r requirements.txt
+  pip3 install --break-system-packages -r /home/raspberry-$PI/capstonepupr/src/pi$PI/requirements.txt
 }
 
 # Función para clonar el repositorio específico
@@ -39,7 +39,7 @@ clone_repository() {
 
 # Función para configurar servicios
 setup_service() {
-  SERVICE_NAME="$1.service"
+  SERVICE_NAME="capstone-pi$PI.service"
   SERVICE_FILE="/etc/systemd/system/$SERVICE_NAME"
   echo "Configurando servicio para $SERVICE_NAME..."
 
@@ -55,34 +55,34 @@ setup_service() {
 
 # Configuración específica por dispositivo
 case $PI in
-  raspberry-1)
+  1)
     echo "Configurando Raspberry Pi #1..."
-    REPO_URL="https://github.com/hectorfrs/capstonepupr/tree/main/src/pi1"
-    DEST_DIR="/home/pi/src/pi1"
+    REPO_URL="https://github.com/hectorfrs/capstonepupr/tree/main/src/pi$PI"
+    DEST_DIR="/home/raspberry-$PI/capstonepupr/src/pi$PI"
     clone_repository "$REPO_URL" "$DEST_DIR"
     install_dependencies
-    setup_service "raspberry-1"
+    setup_service "raspberry-$PI"
     ;;
-  raspberry-2)
+  2)
     echo "Configurando Raspberry Pi #2..."
-    REPO_URL="https://github.com/hectorfrs/capstonepupr/tree/main/src/pi2"
-    DEST_DIR="/home/pi/src/pi2"
+    REPO_URL="https://github.com/hectorfrs/capstonepupr/tree/main/src/pi$PI"
+    DEST_DIR="/home/raspberry-$PI/capstonepupr/src/pi$PI"
     clone_repository "$REPO_URL" "$DEST_DIR"
     install_dependencies
-    setup_service "raspberry-2"
+    setup_service "raspberry-$pi"
     ;;
-  raspberry-3)
+  3)
     echo "Configurando Raspberry Pi #3..."
-    REPO_URL="https://github.com/hectorfrs/capstonepupr/tree/main/src/pi3"
-    DEST_DIR="/home/pi/src/pi3"
+    REPO_URL="https://github.com/hectorfrs/capstonepupr/tree/main/src/pi$PI"
+    DEST_DIR="/home/raspberry-$PI/capstonepupr/src/pi$PI"
     clone_repository "$REPO_URL" "$DEST_DIR"
     install_dependencies
-    setup_service "raspberry-3"
+    setup_service "raspberry-$PI"
     ;;
   *)
-    echo "Dispositivo no reconocido: $PI"
+    echo "Dispositivo no reconocido: raspberry-$PI"
     exit 1
     ;;
 esac
 
-echo "Configuración de $PI completada."
+echo "Configuración de raspberry-$PI completada."
