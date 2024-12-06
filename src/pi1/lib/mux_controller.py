@@ -85,12 +85,22 @@ class MUXController:
     
     def is_channel_active(self, channel):
         """
-        Verifica si un canal específico está activo en el MUX.
+        Verifica si un canal específico está activo en el MUX probando comunicación.
 
         :param channel: Número del canal (0-7).
         :return: True si el canal está activo, False en caso contrario.
         """
         if channel < 0 or channel > 7:
             raise ValueError("El canal debe estar entre 0 y 7.")
+        
+        try:
+            self.select_channel(channel)
+            # Prueba de lectura para verificar si el canal es funcional
+            self.bus.read_byte(self.i2c_address)
+            return True
+        except OSError:
+            # Canal no funcional
+            return False
+        finally:
+            self.disable_all_channels()
 
-        return self.mux.is_channel_enabled(channel)

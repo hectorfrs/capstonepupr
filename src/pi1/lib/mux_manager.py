@@ -122,8 +122,7 @@ class MUXManager:
         active_channels = []
         for channel in range(8):
             try:
-                self.select_channel(channel)
-                if self.is_channel_active(channel):  # Método de MUXController
+                if self.mux.is_channel_active(channel):
                     active_channels.append(channel)
                     logging.info(f"Canal {channel} activo en el MUX.")
             except Exception as e:
@@ -134,8 +133,9 @@ class MUXManager:
                         message=f"Error detectando canal {channel}",
                         metadata={"channel": channel, "error": str(e)},
                     )
-        self.disable_all_channels()
+        self.mux.disable_all_channels()
         return active_channels
+
 
     def run_diagnostics(self):
         """
