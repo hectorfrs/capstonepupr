@@ -92,4 +92,9 @@ class MUXController:
         """
         if channel < 0 or channel > 7:
             raise ValueError("El canal debe estar entre 0 y 7.")
-        return self.mux.is_channel_active(channel)
+
+        # Obtener el estado de los canales habilitados
+        enabled_channels = self.mux.get_channels_enabled()
+
+        # Verificar si el bit correspondiente al canal está habilitado
+        return bool(enabled_channels & (1 << channel))

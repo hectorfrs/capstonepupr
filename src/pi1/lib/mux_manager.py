@@ -156,3 +156,13 @@ class MUXManager:
                     metadata={"error": str(e)}
                 )
         return diagnostics
+
+    def is_channel_active(self, channel):
+        """
+        Verifica si un canal específico está activo en el MUX.
+
+        :param channel: Número del canal (0-7).
+        :return: True si el canal está activo, False en caso contrario.
+        """
+        return self.mux.is_channel_active(channel)
+
