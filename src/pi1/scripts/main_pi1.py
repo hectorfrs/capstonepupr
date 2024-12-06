@@ -3,6 +3,7 @@
 # Encabezado
 import sys
 import os
+import subprocess
 import yaml
 import time
 import logging
@@ -61,10 +62,10 @@ def configure_logging(config):
     DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
     logging.basicConfig(
-    filename=log_file,
-    level=logging.DEBUG if config.get("system", {}).get("enable_detailed_logging", False) else logging.INFO,
-    format=LOG_FORMAT,
-    datefmt=DATE_FORMAT,
+        filename=log_file,                                                                                          # Archivo de logs
+        level=logging.DEBUG if config.get("system", {}).get("enable_detailed_logging", False) else logging.INFO,    # Nivel de logs
+        format=LOG_FORMAT,                                                                                          # Formato del log                                         
+        datefmt=DATE_FORMAT,                                                                                        # Formato de la fecha                                     
 )
     
     # Configuración del RotatingFileHandler
@@ -172,9 +173,13 @@ def restart_system(config):
     """
     if config['system'].get('enable_auto_restart', False):
         logging.critical("Reiniciando sistema por error crítico según configuración...")
-        subprocess.run(["sudo", "reboot"])
+    try:
+        subprocess.run(["sudo", "reboot"], check=True)
+    except Exception as e:
+        logging.error(f"Error al intentar reiniciar el sistema: {e}")
     else:
-        logging.critical("El reinicio automático está deshabilitado. Requiere intervención manual.")
+        logging.error("Reinicio automático deshabilitado en configuración.")
+
 
 def process_sensor(sensor, channel, mux_manager, alert_manager):
     """
@@ -277,6 +282,10 @@ def main():
         greengrass_manager = GreengrassManager(config_path=config_manager.config_path)
 
         # Configurar sensores
+        sensors_config = config.get('mux', {}).get('channels', [])
+        if not sensors_config:
+            raise RuntimeError("No se encontraron configuraciones de sensores en 'mux/channels'.")
+
         sensors = [
             CustomAS7265x(config_path, name=ch['sensor_name'])
             for ch in config['mux']['channels']
