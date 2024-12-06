@@ -150,6 +150,7 @@ def restart_system(config):
 
 # Funcion Principal
 def main():
+    print("Iniciando Sistema...")
     mqtt_client, alert_manager, mux_manager, sensors = None, None, None, []
 
     try:
