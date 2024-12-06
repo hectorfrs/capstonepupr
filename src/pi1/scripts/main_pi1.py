@@ -255,7 +255,7 @@ def run_power_saving_mode(mux_manager, sensors):
     """
     logging.info("Entrando en modo de ahorro de energía...")
     for sensor in sensors:
-        if not sensor.is_critical():
+        if not sensor.is_critical():  # Usamos el nuevo método aquí
             sensor.power_off()
             logging.info(f"Sensor {sensor.name} apagado para ahorrar energía.")
     mux_manager.disable_all_channels()
@@ -423,56 +423,59 @@ def main():
         while True:
             for sensor_idx, sensor_config in enumerate(sensors_config):
                 if sensor_idx < len(sensors):
-                    try:
-                        start_time = time.time()
-                        process_sensor(
-                            mux_manager,
-                            sensor=sensors[sensor_idx],
-                            channel=sensor_config['channel'],
-                            sensor_name=sensor_config['sensor_name'],
-                            thresholds=config['plastic_thresholds'],
-                            data_queue=data_queue,
-                            alert_manager=alert_manager,
-                        )
-                        processing_time = (time.time() - start_time) * 1000  # # Convertir a milisegundos
-                        performance_tracker.add_reading(processing_time) # Agregar lectura al PerformanceTracker
-                        logging.info(f"Tiempo de procesamiento: {processing_time:.2f} ms")
-                    except Exception as e:
-                        processing_time = 0
-                        logging.error(f"Error procesando el sensor {sensor_config['sensor_name']}: {e}")
-                        alert_manager.send_alert(
-                            level="CRITICAL",
-                            message=f"Error procesando el sensor {sensor_config['sensor_name']}",
-                            metadata={"sensor": sensor_config['sensor_name'], "error": str(e)},
-                        )
-                    time.sleep(config['sensors']['read_interval'])
-                else:
-                    logging.error(f"No se encontró un sensor para el indice {sensor_idx}.")
-                
-            # Publicar métricas periódicamente
-            if time.time() - last_metrics_publish_time > METRICS_INTERVAL:
-                average_time = performance_tracker.get_average_time()
-                if average_time:
-                    metrics_payload = {
-                        "average_processing_time_ms": average_time.total_seconds() * 1000,
-                        "total_readings": performance_tracker.num_readings
-                    }
-                    mqtt_client.publish("raspberry-1/performance_metrics", json.dumps(metrics_payload))
-                    logging.info(f"Métricas publicadas: {metrics_payload}")
-                last_metrics_publish_time = time.time()
+                    if sensor.is_critical():
+                        logging.warning(f"Sensor {sensor.name} en estado crítico. Saltando procesamiento.")
+                        continue
+                        try:
+                            start_time = time.time()
+                            process_sensor(
+                                mux_manager,
+                                sensor=sensors[sensor_idx],
+                                channel=sensor_config['channel'],
+                                sensor_name=sensor_config['sensor_name'],
+                                thresholds=config['plastic_thresholds'],
+                                data_queue=data_queue,
+                                alert_manager=alert_manager,
+                            )
+                            processing_time = (time.time() - start_time) * 1000  # # Convertir a milisegundos
+                            performance_tracker.add_reading(processing_time) # Agregar lectura al PerformanceTracker
+                            logging.info(f"Tiempo de procesamiento: {processing_time:.2f} ms")
+                        except Exception as e:
+                            processing_time = 0
+                            logging.error(f"Error procesando el sensor {sensor_config['sensor_name']}: {e}")
+                            alert_manager.send_alert(
+                                level="CRITICAL",
+                                message=f"Error procesando el sensor {sensor_config['sensor_name']}",
+                                metadata={"sensor": sensor_config['sensor_name'], "error": str(e)},
+                            )
+                        time.sleep(config['sensors']['read_interval'])
+                    else:
+                        logging.error(f"No se encontró un sensor para el indice {sensor_idx}.")
+                    
+                # Publicar métricas periódicamente
+                if time.time() - last_metrics_publish_time > METRICS_INTERVAL:
+                    average_time = performance_tracker.get_average_time()
+                    if average_time:
+                        metrics_payload = {
+                            "average_processing_time_ms": average_time.total_seconds() * 1000,
+                            "total_readings": performance_tracker.num_readings
+                        }
+                        mqtt_client.publish("raspberry-1/performance_metrics", json.dumps(metrics_payload))
+                        logging.info(f"Métricas publicadas: {metrics_payload}")
+                    last_metrics_publish_time = time.time()
 
-                # Ahorro de energía
-            run_power_saving_mode(mux_manager, sensors)
-                
+                    # Ahorro de energía
+                    run_power_saving_mode(mux_manager, sensors)
+                    
     except Exception as e:
         error_message = f"Error en el loop principal: {e}"
         logging.critical(f"Error crítico: {e}")
         if alert_manager:
             alert_manager.send_alert(
-            level="CRITICAL",
-            message="Error en el loop principal",
-            metadata={"error": str(e)}
-        )
+                level="CRITICAL",
+                message="Error en el loop principal",
+                metadata={"error": str(e)}
+            )
         
     except KeyboardInterrupt:
         logging.info("Programa detenido por el usuario.")
