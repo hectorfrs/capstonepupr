@@ -328,7 +328,6 @@ def main():
 
         # Detectar y Actualizar Canales Activos
         try:
-            logging.info("Detectando canales activos en el MUX...")
             active_channels = mux_manager.detect_active_channels()
             config_manager.set_value('mux', 'active_channels', active_channels)
             logging.info(f"Canales activos detectados y actualizados: {active_channels}")
@@ -337,7 +336,7 @@ def main():
             alert_manager.send_alert(
                 level="CRITICAL",
                 message="Error detectando canales activos",
-                metadata={"error": str(e)}
+                metadata={"error": str(e)},
             )
             raise RuntimeError("Error detectando canales activos")
 

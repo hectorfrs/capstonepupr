@@ -117,22 +117,21 @@ class MUXManager:
         """
         Detecta los canales activos del MUX probando cada canal.
 
-        :return: Lista de canales con sensores conectados.
+        :return: Lista de canales activos.
         """
         active_channels = []
         for channel in range(8):
             try:
                 self.select_channel(channel)
-                if self.mux.is_channel_enabled(channel):
+                if self.is_channel_active(channel):  # Método de MUXController
                     active_channels.append(channel)
                     logging.info(f"Canal {channel} activo en el MUX.")
             except Exception as e:
-                logging.warning(f"Error detectando canal {channel}: {e}")
-            if self.alert_manager:
-                self.alert_manager.send_alert(
+                logging.error(f"Error detectando canal {channel}: {e}")
+                alert_manager.send_alert(
                     level="WARNING",
-                    message="Error detectando canales activos.",
-                    metadata={"error": str(e)}
+                    message=f"Error detectando canal {channel}",
+                    metadata={"channel": channel, "error": str(e)},
                 )
         self.disable_all_channels()
         return active_channels
