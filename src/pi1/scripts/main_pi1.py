@@ -352,15 +352,16 @@ def main():
         
 
         # Inicializar Sensores
+        sensors = [] 
         sensors_config = config['mux']['channels']
         for idx, sensor_config in enumerate(sensors_config):
-            sensor_name = f"AS7265x_{idx + 1}"  # Asignar un nombre único basado en el índice
+            sensor_name = sensor_config.get('sensor_name', f"AS7265x_{idx + 1}")
             sensor = CustomAS7265x(config_path=config_manager.config_path, name=sensor_name)
             if sensor.is_connected():
-               sensors.append(sensor)
-               logging.info(f"Sensor {sensor_config['sensor_name']} conectado correctamente.")
+               sensors.append(sensor) # Solo añadir sensores conectados
+               logging.info(f"Sensor {sensor_name} conectado correctamente.")
             else:
-                logging.warning(f"Sensor {sensor_config['sensor_name']} no conectado.") 
+                logging.warning(f"Sensor {sensor_name} no conectado. Canal: {sensor_config['channel']}") 
             
         if not sensors:
             raise RuntimeError("No se detectaron sensores conectados. Terminando el programa.")
@@ -424,8 +425,13 @@ def main():
             for sensor_idx, sensor_config in enumerate(sensors_config):
                 if sensor_idx < len(sensors):
                     if sensor.is_critical():
+                        logging.error(f"No se encontró un sensor para el índice {sensor_idx}. Saltando procesamiento.")
+                        continue
+                    sensor = sensors[sensor_idx]  # Obtener el sensor correspondiente
+                    if sensor.is_critical():
                         logging.warning(f"Sensor {sensor.name} en estado crítico. Saltando procesamiento.")
                         continue
+                        
                         try:
                             start_time = time.time()
                             process_sensor(

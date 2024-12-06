@@ -25,7 +25,7 @@ network:
   wifi:
     ssid: "Capstone"              # Nombre de la red Wi-Fi
     password: "Elefante"          # Contraseña de la red Wi-Fi
-    ip: "192.168.2.145"            # Dirección IP estática para Wi-Fi
+    ip: "192.168.2.145"           # Dirección IP estática para Wi-Fi
     gateway: "192.168.2.1"        # Puerta de enlace para Wi-Fi
 
 mux:
