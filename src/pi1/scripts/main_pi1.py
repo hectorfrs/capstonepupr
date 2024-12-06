@@ -224,4 +224,26 @@ def main():
         # Llamar al reinicio automático si está habilitado
         restart_system(config)
     finally:
+        # Detener monitoreo de red
+        if network_manager:
+            network_manager.stop_monitoring()
+            logging.info("Monitoreo de red detenido.")
+        # Desconectar MQTT si está inicializado
+        if mqtt_client and hasattr(mqtt_client, 'disconnect'):
+            try:
+                mqtt_client.disconnect()
+                logging.info("Cliente MQTT desconectado.")
+            except Exception as e:
+                logging.error(f"Error al desconectar MQTT: {e}")
+        else:
+            logging.warning("El cliente MQTT no tiene un método de desconexión.")
+            
+        # Detener monitoreo de configuración en tiempo real
+        config_manager.stop_monitoring()
         logging.info("Sistema apagado correctamente.")
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as e:
+        print(f"Error crítico en la ejecución: {e}")
