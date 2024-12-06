@@ -158,7 +158,7 @@ def identify_plastic(spectral_data, thresholds):
     return None
 
 
-def process_sensor(mux, sensor, channel, sensor_name, thresholds, data_queue):
+def process_sensor(mux_manager, sensor, channel, sensor_name, thresholds, data_queue):
     """
     Lee datos de un sensor específico y los encola para procesamiento.
 
@@ -210,9 +210,9 @@ def process_sensor(mux, sensor, channel, sensor_name, thresholds, data_queue):
         )
     finally:
         # Limpieza o reinicio del MUX en caso de error
-        mux.reset_channel(channel)
+        mux_manager.reset_channel(channel)
         try:
-            mux.disable_all_channels()
+            mux_manager.disable_all_channels()
         except Exception as e:
             logging.warning(f"Error limpiando el canal {channel}: {e}")
 
@@ -242,7 +242,7 @@ def publish_data(mqtt_client, greengrass_manager, topic, data_queue):
                 metadata={"topic": {topic}},
             )
 
-def run_power_saving_mode(mux, sensors):
+def run_power_saving_mode(mux_manager, sensors):
     """
     Habilita el modo de ahorro de energía apagando sensores y canales no críticos.
     """
@@ -251,7 +251,7 @@ def run_power_saving_mode(mux, sensors):
         if not sensor.is_critical():
             sensor.power_off()
             logging.info(f"Sensor {sensor.name} apagado para ahorrar energía.")
-    mux.disable_all_channels()
+    mux_manager.disable_all_channels()
     logging.info("Todos los canales del MUX han sido desactivados.")
 
 def main():
@@ -347,7 +347,7 @@ def main():
 
         # Inicializar Sensores
         sensors_config = config['mux']['channels']
-        for sensor_config in sensors_config:
+        for idx, sensor_config in enumerate(sensors_config):
             sensor_name = f"AS7265x_{idx + 1}"  # Asignar un nombre único basado en el índice
             sensor = CustomAS7265x(config_path=config_manager.config_path, name=sensor_name)
             if sensor.is_connected():
@@ -372,7 +372,8 @@ def main():
         logging.info(f"{len(sensors)} sensores configurados con éxito.")
 
         # Inicializar Traker de Performance
-        performance_tracker = PerformanceTracker(log_interval=config['system'].get('metrics_log_interval', 60))
+        Log_interval = config['system'].get('metrics_log_interval', 60)  # Valor predeterminado
+        performance_tracker = PerformanceTracker(log_interval=log_interval)
 
         # Configurar Buffer de Datos
         data_queue = Queue(maxsize=config['data_queue']['max_size'])
@@ -392,12 +393,15 @@ def main():
         logging.info("Sistema funcionando correctamente.")
 
         # Loop Principal
+        last_metrics_publish_time = time.time()
+        METRICS_INTERVAL = log_interval  # Usar el intervalo configurado
+
         while True:
             for sensor_idx, sensor_config in enumerate(sensors_config):
                 if sensor_idx < len(sensors):
                     start_time = time.time()
                     process_sensor(
-                        mux=mux,
+                        mux_manager,
                         sensor=sensors[sensor_idx],
                         channel=sensor_config['channel'],
                         sensor_name=sensor_config['sensor_name'],
@@ -405,16 +409,13 @@ def main():
                         data_queue=data_queue,
                         alert_manager=alert_manager,
                     )
-                    time.sleep(config['sensors']['read_interval'])
+                    rocessing_time = (time.time() - start_time) * 1000  # Milisegundos
+                    performance_tracker.add_reading(processing_time)
+                    logging.info(f"Tiempo de procesamiento: {processing_time:.2f} ms")
                 else:
                     logging.error(f"No se encontró un sensor para el indice {sensor_idx}.")
-            try:
-                processing_time = (time.time() - start_time) * 1000  # Milisegundos
-                performance_tracker.add_reading(processing_time)
-                logging.info(f"Tiempo de procesamiento: {processing_time:.2f} ms")
-            except Exception as e:
-                logging.error(f"Error durante el procesamiento: {e}")
-
+                time.sleep(config['sensors']['read_interval'])
+            
             # Publicar métricas periódicamente
             if time.time() - last_metrics_publish_time > METRICS_INTERVAL:
                 average_time = performance_tracker.get_average_time()
@@ -428,7 +429,7 @@ def main():
                 last_metrics_publish_time = time.time()
 
                 # Ahorro de energía
-            run_power_saving_mode(config, mux, sensors)
+            run_power_saving_mode(config, mux_manager, sensors)
                 
     except Exception as e:
         error_message = f"Error en el loop principal: {e}"

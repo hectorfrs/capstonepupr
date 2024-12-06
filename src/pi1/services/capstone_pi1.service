@@ -7,11 +7,12 @@ Type=simple
 User=raspberry-1
 Group=raspberry-1
 WorkingDirectory=/home/raspberry-1/capstonepupr/src/pi1/scripts
-ExecStart=/usr/bin/python3 main_pi1.py
+ExecStart=/home/raspberry-1/venv/bin/python3 /home/raspberry-1/capstonepupr/src/pi1/scripts/main_pi1.py
 Environment=PYTHONPATH=/home/raspberry-1/capstonepupr/src/pi1
+Environment=PATH=/home/raspberry-1/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 Restart=on-failure
-StandardOutput=null
-StandardError=null
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
