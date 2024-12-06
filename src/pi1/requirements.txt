@@ -4,3 +4,4 @@ paho-mqtt
 sparkfun-qwiic
 pyyaml
 boto3
+m2r2
