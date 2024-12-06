@@ -1,8 +1,8 @@
-# mux_diagnostics.py
+# mux_diagnostics.py - Funciones para ejecutar diagnósticos en los canales del MUX.
 import logging
 from utils.alert_manager import AlertManager
 
-def run_mux_diagnostics(mux, channels, alert_manager):
+def run_mux_diagnostics(mux_manager, channels, alert_manager):
     """
     Ejecuta diagnósticos en los canales especificados del MUX.
 
@@ -12,8 +12,8 @@ def run_mux_diagnostics(mux, channels, alert_manager):
     """
     for channel in channels:
         try:
-            mux.select_channel(channel)
-            if mux.is_channel_active(channel):
+            mux_manager.select_channel(channel)
+            if mux_manager.is_channel_active(channel):
                 logging.info(f"Canal {channel} del MUX operativo.")
             else:
                 logging.warning(f"Canal {channel} del MUX no responde.")

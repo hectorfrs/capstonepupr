@@ -4,6 +4,7 @@ import os
 import yaml
 import time
 import logging
+import json
 
 from threading import Thread
 from queue import Queue
@@ -178,7 +179,7 @@ def process_sensor(mux_manager, sensor, channel, sensor_name, thresholds, data_q
         mux_manager.reset_channel(channel)
 
         # Seleccionar canal en el MUX
-        mux.select_channel(channel)
+        mux_manager.select_channel(channel)
         logging.info(f"Canal {channel} activado para el sensor {sensor_name}.")
         
         # Leer datos espectrales del sensor
@@ -201,11 +202,13 @@ def process_sensor(mux_manager, sensor, channel, sensor_name, thresholds, data_q
         data_queue.put(payload, timeout=1)
         logging.info(f"Datos encolados para publicación: {payload}")
 
-        if data_queue.Full:
+        if data_queue.full():
             logging.error(f"La cola de datos está llena. Datos del sensor {sensor_name} descartados.")
         else:
             data_queue.put(payload)
             logging.info(f"Datos encolados para publicación: {payload}")
+    except Exception as e:
+        logging.error(f"Error procesando el sensor {sensor_name}: {e}")
         if alert_manager:
             alert_manager.send_alert(
                 level="WARNING",
@@ -384,7 +387,11 @@ def main():
         # Diagnósticos de MUX
         if config['system'].get('enable_mux_diagnostics', False):
             logging.info("Ejecutando diagnósticos del MUX...")
-            run_mux_diagnostics(mux_manager, [ch['channel'] for ch in config['mux']['channels']], alert_manager)
+            run_mux_diagnostics(
+                mux_manager=mux_manager,
+                channels=[ch['channel'] for ch in config['mux']['channels']],
+                alert_manager=alert_manager
+            )
 
         logging.info(f"{len(sensors)} sensores configurados con éxito.")
 
@@ -446,7 +453,7 @@ def main():
                 last_metrics_publish_time = time.time()
 
                 # Ahorro de energía
-            run_power_saving_mode(config, mux_manager, sensors)
+            run_power_saving_mode(mux_manager, sensors)
                 
     except Exception as e:
         error_message = f"Error en el loop principal: {e}"
@@ -460,6 +467,10 @@ def main():
         
     except KeyboardInterrupt:
         logging.info("Programa detenido por el usuario.")
+    except RuntimeError as e:
+        logging.error(f"Error crítico en el sistema: {e}")
+    except Exception as e:
+        logging.critical(f"Error desconocido: {e}")
     finally:
         # Detener monitoreo de red
         if network_manager:
