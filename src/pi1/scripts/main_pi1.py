@@ -61,11 +61,11 @@ def configure_logging(config):
     DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
     logging.basicConfig(
-        filename=log_file,                                                                      # Archivo de log especificado en config.yaml
-        level=logging.DEBUG if config.get("enable_detailed_logging", False) else logging.INFO,  # Nivel de logging
-        format=LOG_FORMAT,                                                                      # Formato del log
-        datefmt=DATE_FORMAT                                                                     # Formato de fecha y hora
-    )
+    filename=log_file,
+    level=logging.DEBUG if config.get("system", {}).get("enable_detailed_logging", False) else logging.INFO,
+    format=LOG_FORMAT,
+    datefmt=DATE_FORMAT,
+)
     
     # Configuración del RotatingFileHandler
     handler = RotatingFileHandler(
