@@ -189,11 +189,11 @@ class CustomAS7265x(Spectrometer):
                 return True
             
             # Verificar errores de lectura
-            read_error_register = 0x07  # Registro de error según la documentación
-            error_status = self.read_register(read_error_register)
-            if error_status != 0:  # Cualquier valor diferente de 0 indica un error
-                logging.critical(f"Error de lectura detectado en {self.name}: {error_status}")
-                return True
+            #read_error_register = 0x07  # Registro de error según la documentación
+            #error_status = self.read_register(read_error_register)
+            #if error_status != 0:  # Cualquier valor diferente de 0 indica un error
+                #logging.critical(f"Error de lectura detectado en {self.name}: {error_status}")
+                #return True
             
             # (Opcional) Agregar verificaciones adicionales según sea necesario
 
