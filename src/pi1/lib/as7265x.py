@@ -2,6 +2,7 @@
 from smbus2 import SMBus
 from lib.spectrometer import Spectrometer
 import yaml
+import logging
 
 
 class CustomAS7265x(Spectrometer):
@@ -10,13 +11,14 @@ class CustomAS7265x(Spectrometer):
     Combina configuraciones avanzadas y funciones simplificadas para lecturas espectroscópicas.
     """
 
-    def __init__(self, config_path="config/pi1_config.yaml"):
+    def __init__(self, config_path="config/pi1_config.yaml", name=None):
         """
         Inicializa el sensor AS7265x usando valores de configuración YAML.
 
         :param config_path: Ruta al archivo de configuración YAML.
         """
         # Cargar configuración desde YAML
+        self.name = name # Guardar el nombre del sensor
         self.config = self.load_config(config_path)
 
         # Extraer parámetros del sensor
@@ -68,17 +70,17 @@ class CustomAS7265x(Spectrometer):
         Configura el sensor AS7265x con el tiempo de integración y ganancia especificados.
         """
         if not self.is_connected():
-            print(f"Sensor no detectado en {hex(self.i2c_address)}. Saltando configuración.")
+            logging.error(f"Sensor no detectado en {hex(self.i2c_address)}. Saltando configuración.")
             return
 
         try:
-            print(f"Configurando el sensor AS7265x en la dirección {hex(self.i2c_address)}...")
+            logging.info(f"Configurando el sensor AS7265x en la dirección {hex(self.i2c_address)}...")
             self.set_integration_time(self.integration_time)
-            print(f"Tiempo de integración configurado: {self.integration_time}")
+            logging.info(f"Tiempo de integración configurado: {self.integration_time}")
             self.set_gain(self.gain)
-            print("Configuración del sensor completada.")
+            logging.info("Configuración del sensor completada.")
         except Exception as e:
-            print(f"Error configurando el sensor: {e}")
+            logging.error(f"Error configurando el sensor: {e}")
             raise
 
 
@@ -87,7 +89,7 @@ class CustomAS7265x(Spectrometer):
         Simula la lectura de datos del sensor.
         """
         if not self.is_connected():
-            print("El sensor no está conectado. No se pueden leer datos.")
+            logging.error("El sensor no está conectado. No se pueden leer datos.")
             return {}
 
     def set_integration_time(self, time_ms):
@@ -98,7 +100,7 @@ class CustomAS7265x(Spectrometer):
         """
         register_value = int(time_ms / 2.8)  # Conversión según la documentación
         self.write_register(0x04, register_value)
-        print(f"Tiempo de integración configurado: {time_ms} ms.")
+        logging.info(f"Tiempo de integración configurado: {time_ms} ms.")
 
     def set_gain(self, gain_level):
         """
@@ -109,7 +111,7 @@ class CustomAS7265x(Spectrometer):
         if gain_level < 0 or gain_level > 3:
             raise ValueError("El nivel de ganancia debe estar entre 0 y 3.")
         self.write_register(0x05, gain_level)
-        print(f"Ganancia configurada: {gain_level}x.")
+        logging.info(f"Ganancia configurada: {gain_level}x.")
 
     def write_register(self, register, value):
         """
@@ -119,7 +121,7 @@ class CustomAS7265x(Spectrometer):
         :param value: Valor a escribir.
         """
         self.bus.write_byte_data(self.i2c_address, register, value)
-        print(f"Escribiendo {value} en el registro {hex(register)}.")
+        logging.info(f"Escribiendo {value} en el registro {hex(register)}.")
 
     def read_register(self, register):
         """
@@ -129,7 +131,7 @@ class CustomAS7265x(Spectrometer):
         :return: Valor leído.
         """
         value = self.bus.read_byte_data(self.i2c_address, register)
-        print(f"Valor leído del registro {hex(register)}: {value}")
+        logging.info(f"Valor leído del registro {hex(register)}: {value}")
         return value
 
     def read_calibrated_spectrum(self):
@@ -138,9 +140,9 @@ class CustomAS7265x(Spectrometer):
 
         :return: Diccionario con valores espectrales calibrados.
         """
-        print("Leyendo datos calibrados del espectro...")
+        logging.info("Leyendo datos calibrados del espectro...")
         calibrated_values = super().get_calibrated_values()
-        print(f"Espectro calibrado: {calibrated_values}")
+        logging.info(f"Espectro calibrado: {calibrated_values}")
         return calibrated_values
 
     def read_advanced_spectrum(self):
@@ -149,7 +151,7 @@ class CustomAS7265x(Spectrometer):
 
         :return: Diccionario con valores espectrales.
         """
-        print("Leyendo datos espectrales avanzados...")
+        logging.info("Leyendo datos espectrales avanzados...")
         spectrum = {
             "violet": self.read_register(0x08),
             "blue": self.read_register(0x0A),
@@ -158,7 +160,7 @@ class CustomAS7265x(Spectrometer):
             "orange": self.read_register(0x10),
             "red": self.read_register(0x12),
         }
-        print(f"Espectro avanzado: {spectrum}")
+        logging.info(f"Espectro avanzado: {spectrum}")
         return spectrum
 
 # # Ejemplo de Uso:
