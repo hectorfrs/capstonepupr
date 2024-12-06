@@ -122,20 +122,25 @@ def publish_data(mqtt_client, greengrass_manager, topic, data_queue, alert_manag
             )
 
 # Ahorro de energia
-def run_power_saving_mode(mux_manager, sensors, enabled):
+def run_power_saving_mode(sensors, mux_manager, enabled):
     """
-    Ejecuta el modo de ahorro de energía si está habilitado.
+    Activa el modo de ahorro de energía si está habilitado.
     """
     if not enabled:
-        logging.info("Modo de ahorro de energía deshabilitado.")
+        logging.info("Modo de ahorro de energía deshabilitado en config.yaml.")
         return
 
     logging.info("Habilitando modo de ahorro de energía...")
     for sensor in sensors:
-        sensor.power_off()
-        logging.info(f"Sensor {sensor.name} apagado.")
+        try:
+            if not sensor.is_critical():  # Sensores no críticos se apagan
+                sensor.power_off()
+                logging.info(f"Sensor {sensor.name} apagado.")
+        except Exception as e:
+            logging.warning(f"Error al apagar el sensor {sensor.name}: {e}")
     mux_manager.disable_all_channels()
-    logging.info("Todos los canales desactivados.")
+    logging.info("Todos los canales del MUX han sido desactivados.")
+
 
 # Diagnostico de Componentes
 def run_diagnostics(config, mux_manager, sensors, alert_manager):
@@ -171,10 +176,40 @@ def restart_system(config):
     else:
         logging.critical("El reinicio automático está deshabilitado. Requiere intervención manual.")
 
+def process_sensor(sensor, channel, mux_manager, alert_manager):
+    """
+    Procesa un sensor específico, validando su estado antes de realizar operaciones.
+    """
+    try:
+        if not sensor.is_connected():
+            raise RuntimeError(f"Sensor {sensor.name} no conectado.")
+        
+        if sensor.is_powered_off():
+            raise RuntimeError(f"Sensor {sensor.name} está apagado. No se puede leer datos.")
+
+        mux_manager.activate_channel(channel)
+        data = sensor.read_advanced_spectrum()
+        logging.info(f"Datos del sensor {sensor.name}: {data}")
+
+    except Exception as e:
+        logging.error(f"Error procesando el sensor {sensor.name}: {e}")
+        alert_manager.send_alert(
+            level="WARNING",
+            message=f"Error procesando sensor {sensor.name}",
+            metadata={"channel": channel, "error": str(e)},
+        )
+    finally:
+        mux_manager.deactivate_all_channels()
+
 # Funcion Principal
 def main():
     print("Iniciando Sistema...")
-    mqtt_client, alert_manager, mux_manager, sensors = None, None, None, []
+    config_manager = None   # Inicialización temprana
+    mqtt_client = None      # Inicialización temprana
+    network_manager = None  # Inicialización temprana
+    alert_manager = None    # Inicialización temprana
+    mux_manager = None      # Inicialización temprana
+    sensors = []            # Inicialización temprana
 
     try:
         # Cargar configuración
@@ -194,23 +229,74 @@ def main():
             local_log_path=config['logging']['log_file']
         )
 
+        # Configurar red y monitoreo
+        logging.info("Iniciando monitoreo de red...")
+        network_manager = NetworkManager(config)
+        network_manager.start_monitoring()
+        logging.info("Monitoreo de red iniciado.")
+
+        # Enviar alerta de red
+        if not network_manager.is_connected():
+            alert_manager.send_alert(
+                level="CRITICAL",
+                message="No hay conexión a Internet.",
+                metadata={"ethernet_ip": config['network']['ethernet']['ip']}
+            )
+
         # Inicializar MQTT
         mqtt_client = MQTTPublisher(config_path)
         mqtt_client.connect()
 
         # Inicializar MUX Manager
+        logging.info("Inicializando MUX...")
         mux_manager = MUXManager(
             i2c_bus=config['sensors']['as7265x']['i2c_bus'],
             i2c_address=config['mux']['i2c_address'],
             alert_manager=alert_manager
         )
+        if mux_manager is None:
+            logging.critical("MUXManager no se inicializó correctamente. Abortando.")
+            raise RuntimeError("MUXManager no inicializado")
+
+        logging.info("MUX inicializado correctamente.")
+        # Detectar y Actualizar Canales Activos
+        try:
+            active_channels = mux_manager.detect_active_channels()
+            config_manager.set_value('mux', 'active_channels', active_channels)
+            logging.info(f"Canales activos detectados y actualizados: {active_channels}")
+        except Exception as e:
+            logging.critical(f"Error detectando canales activos: {e}")
+            alert_manager.send_alert(
+                level="CRITICAL",
+                message="Error detectando canales activos",
+                metadata={"error": str(e)},
+            )
+            raise RuntimeError("Error detectando canales activos")
+
+        # Inicializar Greengrass Manager
+        greengrass_manager = GreengrassManager(config_path=config_manager.config_path)
 
         # Configurar sensores
         sensors = [
             CustomAS7265x(config_path, name=ch['sensor_name'])
             for ch in config['mux']['channels']
         ]
+        for channel_info in sensors_config:
+            channel = channel_info['channel']
+            sensor_name = channel_info['sensor_name']
+            sensor = CustomAS7265x(config_path=config_manager.config_path, name=sensor_name)
 
+            if sensor.is_connected():
+                sensor.channel = channel
+                sensors.append(sensor)
+                logging.info(f"Sensor {sensor_name} conectado en canal {channel}.")
+            else:
+                logging.warning(f"No se pudo conectar el sensor {sensor_name} en canal {channel}.")
+        
+            
+        if not sensors:
+            raise RuntimeError("No se detectaron sensores conectados. Terminando el programa.")
+        
         # Diagnósticos
         run_diagnostics(config, mux_manager, sensors, alert_manager)
 
