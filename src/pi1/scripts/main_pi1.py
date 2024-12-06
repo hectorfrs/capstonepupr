@@ -173,7 +173,7 @@ def restart_system(config):
     """
     if config['system'].get('enable_auto_restart', False):
         logging.critical("Reiniciando sistema por error crítico según configuración...")
-        time.sleep(15)
+        time.sleep(60)
     try:
         subprocess.run(["sudo", "reboot"], check=True)
     except Exception as e:
