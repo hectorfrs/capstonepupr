@@ -132,15 +132,17 @@ def run_power_saving_mode(sensors, mux_manager, enabled):
         return
 
     logging.info("Habilitando modo de ahorro de energía...")
-    for sensor in sensors:
-        try:
-            if not sensor.is_critical():  # Sensores no críticos se apagan
+    try:
+        for sensor in sensors:
+            if hasattr(sensor, "power_off"):
                 sensor.power_off()
-                logging.info(f"Sensor {sensor.name} apagado.")
-        except Exception as e:
-            logging.warning(f"Error al apagar el sensor {sensor.name}: {e}")
-    mux_manager.disable_all_channels()
-    logging.info("Todos los canales del MUX han sido desactivados.")
+                logging.info(f"Sensor {sensor.name} apagado para ahorro de energía.")
+            else:
+                logging.warning(f"El sensor {sensor.name} no tiene un método 'power_off'.")
+        mux_manager.disable_all_channels()
+        logging.info("Todos los canales del MUX han sido desactivados.")
+    except Exception as e:
+        logging.error(f"Error en el modo de ahorro de energía: {e}")
 
 
 # Diagnostico de Componentes
@@ -181,6 +183,18 @@ def restart_system(config):
     else:
         logging.error("Reinicio automático deshabilitado en configuración.")
 
+def process_channels(mux_manager):
+    try:
+        active_channels = mux_manager.detect_active_channels()
+        for channel in active_channels:
+            try:
+                mux_manager.activate_channel(channel)
+                logging.info(f"Canal {channel} activado.")
+                # Otras operaciones aquí
+            finally:
+                mux_manager.deactivate_channel(channel)
+    except Exception as e:
+        logging.error(f"Error procesando canales del MUX: {e}")
 
 def process_sensor(sensor, channel, mux_manager, alert_manager):
     """
