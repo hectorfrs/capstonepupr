@@ -201,10 +201,11 @@ def process_sensor(mux_manager, sensor, channel, sensor_name, thresholds, data_q
         data_queue.put(payload, timeout=1)
         logging.info(f"Datos encolados para publicación: {payload}")
 
-    except data_queue.Full:
-        logging.error(f"La cola de datos está llena. Datos del sensor {sensor_name} descartados.")
-    except Exception as e:
-        logging.error(f"Error procesando el sensor {sensor_name}: {e}")
+        if data_queue.Full:
+            logging.error(f"La cola de datos está llena. Datos del sensor {sensor_name} descartados.")
+        else:
+            data_queue.put(payload)
+            logging.info(f"Datos encolados para publicación: {payload}")
         if alert_manager:
             alert_manager.send_alert(
                 level="WARNING",
