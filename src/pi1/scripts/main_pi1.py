@@ -386,7 +386,7 @@ def main():
         logging.info(f"{len(sensors)} sensores configurados con éxito.")
 
         # Inicializar Traker de Performance
-        Log_interval = config['system'].get('metrics_interval', 60)  # Valor predeterminado
+        log_interval = config.get('system', {}).get('metrics_interval', 60)  # 60 es el valor por defecto
         performance_tracker = PerformanceTracker(log_interval=log_interval)
 
         # Configurar Buffer de Datos
