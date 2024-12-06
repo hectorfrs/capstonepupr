@@ -351,17 +351,21 @@ def main():
 
         
 
-        # Inicializar Sensores
-        sensors = [] 
-        sensors_config = config['mux']['channels']
-        for idx, sensor_config in enumerate(sensors_config):
-            sensor_name = sensor_config.get('sensor_name', f"AS7265x_{idx + 1}")
+        # Inicialización de sensores
+        sensors = []  # Reinicia la lista de sensores
+        sensors_config = config['mux']['channels']  # Carga la configuración de canales
+
+        for channel_info in sensors_config:
+            channel = channel_info['channel']
+            sensor_name = channel_info['sensor_name']
             sensor = CustomAS7265x(config_path=config_manager.config_path, name=sensor_name)
+
             if sensor.is_connected():
-               sensors.append(sensor) # Solo añadir sensores conectados
-               logging.info(f"Sensor {sensor_name} conectado correctamente.")
+                sensors.append({"channel": channel, "sensor": sensor})  # Guarda el sensor y su canal
+                logging.info(f"Sensor {sensor_name} conectado en canal {channel}.")
             else:
-                logging.warning(f"Sensor {sensor_name} no conectado. Canal: {sensor_config['channel']}") 
+                logging.warning(f"No se pudo conectar el sensor {sensor_name} en canal {channel}.")
+        
             
         if not sensors:
             raise RuntimeError("No se detectaron sensores conectados. Terminando el programa.")
@@ -422,6 +426,18 @@ def main():
         METRICS_INTERVAL = log_interval  # Usar el intervalo configurado
 
         while True:
+            for sensor_entry in sensors:
+                channel = sensor_entry['channel']
+                sensor = sensor_entry['sensor']
+                
+                try:
+                    mux_manager.activate_channel(channel)  # Activa el canal correcto
+                    data = sensor.read_advanced_spectrum()  # Lee los datos del sensor
+                    logging.info(f"Datos del sensor {sensor.name} en canal {channel}: {data}")
+                except Exception as e:
+                    logging.error(f"Error procesando el sensor {sensor.name} en canal {channel}: {e}")
+                finally:
+                    mux_manager.deactivate_all_channels()  # Desactiva los canales para evitar conflictos
             for sensor_idx, sensor_config in enumerate(sensors_config):
                 if sensor_idx < len(sensors):
                     if sensor.is_critical():
