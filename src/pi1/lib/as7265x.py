@@ -1,3 +1,4 @@
+# as7265x.py -  Clase extendida para interactuar con el sensor AS7265x.
 from smbus2 import SMBus
 from lib.spectrometer import Spectrometer
 import yaml
@@ -32,6 +33,8 @@ class CustomAS7265x(Spectrometer):
         # Llama al constructor de la clase base con el número de bus I2C
         super().__init__(i2c_bus=self.config['sensors']['as7265x']['i2c_bus'])
 
+        # Establecer el nombre del sensor
+        self.name = name if name else f"AS7265x_{hex(self.i2c_address)}"
 
         # Configurar el sensor
         self.configure_sensor()

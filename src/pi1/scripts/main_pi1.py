@@ -348,7 +348,8 @@ def main():
         # Inicializar Sensores
         sensors_config = config['mux']['channels']
         for sensor_config in sensors_config:
-            sensor = CustomAS7265x(config_path=config_manager.config_path)
+            sensor_name = f"AS7265x_{idx + 1}"  # Asignar un nombre único basado en el índice
+            sensor = CustomAS7265x(config_path=config_manager.config_path, name=sensor_name)
             if sensor.is_connected():
                sensors.append(sensor)
                logging.info(f"Sensor {sensor_config['sensor_name']} conectado correctamente.")
