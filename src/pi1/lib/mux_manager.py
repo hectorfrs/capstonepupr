@@ -214,13 +214,14 @@ class MUXManager:
         :return: True si el sensor está conectado, False en caso contrario.
         """
         try:
-            self.select_channel(channel)  # Activar canal
-            # Leer un registro básico del sensor para verificar la conexión
-            sensor_response = self.mux.read_register(0x00)  # Cambia el registro según la documentación
+            self.select_channel(channel)
+            # Verifica un registro específico del sensor que confirme la conexión
+            sensor_response = self.mux.read_register(0x00)  # Cambia 0x00 por un registro válido
             return sensor_response is not None
         except Exception as e:
             logging.error(f"Error verificando sensor en canal {channel}: {e}")
             return False
         finally:
             self.disable_all_channels()
+
 
