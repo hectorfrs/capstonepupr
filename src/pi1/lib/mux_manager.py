@@ -118,16 +118,24 @@ class MUXManager:
 
     def detect_active_channels(self):
         """
-        Detecta los canales activos del MUX probando cada canal.
+        Detecta los canales activos del MUX probando cada canal y verificando sensores.
 
-        :return: Lista de canales activos.
+        :return: Lista de canales activos con sensores válidos.
         """
         active_channels = []
-        for channel in range(8):
+        for channel in range(8):  # Iterar sobre los 8 canales posibles
             try:
+                self.select_channel(channel)
                 if self.mux.is_channel_active(channel):
-                    active_channels.append(channel)
-                    logging.info(f"Canal {channel} activo en el MUX.")
+                    # Aquí puedes agregar lógica para verificar si un sensor responde en este canal
+                    sensor_response = self.verify_sensor_on_channel(channel)  # Nueva función
+                    if sensor_response:
+                        active_channels.append(channel)
+                        logging.info(f"Canal {channel} activo y sensor detectado en el MUX.")
+                    else:
+                        logging.warning(f"Canal {channel} activo, pero sin sensor detectado.")
+                else:
+                    logging.info(f"Canal {channel} no activo en el MUX.")
             except Exception as e:
                 logging.error(f"Error detectando canal {channel}: {e}")
                 if self.alert_manager:
@@ -136,8 +144,25 @@ class MUXManager:
                         message=f"Error detectando canal {channel}",
                         metadata={"channel": channel, "error": str(e)},
                     )
-        self.mux.disable_all_channels()
+        self.disable_all_channels()
         return active_channels
+
+    def verify_sensor_on_channel(self, channel):
+        """
+        Verifica si hay un sensor funcional en el canal activo.
+
+        :param channel: Canal a verificar.
+        :return: True si el sensor responde, False en caso contrario.
+        """
+        try:
+            # Implementar aquí la lógica para verificar la conexión del sensor
+            # Por ejemplo, enviar un comando al sensor y validar la respuesta
+            sensor_response = self.mux.test_sensor_response(channel)
+            return sensor_response
+        except Exception as e:
+            logging.error(f"Error verificando sensor en canal {channel}: {e}")
+            return False
+
 
 
     def run_diagnostics(self):

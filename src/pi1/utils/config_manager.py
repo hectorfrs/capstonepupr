@@ -116,9 +116,14 @@ class ConfigManager:
         :param key_path: Ruta de la clave (por ejemplo, "system.enable_sensors").
         :param value: Valor a establecer.
         """
+        if section == 'mux' and key == 'i2c_address':
+            logging.warning("Intento de modificar `i2c_address` bloqueado. Este valor no debe ser cambiado.")
+        return
+
         keys = key_path.split(".")
         config_section = self.config
         for key in keys[:-1]:
             config_section = config_section.setdefault(key, {})
         config_section[keys[-1]] = value
         self.save_config()
+        logging.info(f"Configuración actualizada: [{section}][{key}] = {value}")

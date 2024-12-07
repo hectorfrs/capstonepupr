@@ -99,13 +99,27 @@ def configure_logging(config):
 
 def validate_config(config):
     """
-    Valida que las claves críticas estén presentes en la configuración.
+    Valida que todas las claves necesarias estén presentes en la configuración
+    y que no se hayan alterado valores críticos.
+
+    :param config: Diccionario de configuración.
     """
-    required_keys = ['system', 'mqtt', 'sensors', 'mux']
-    for key in required_keys:
-        if key not in config:
-            raise KeyError(f"Clave de configuración faltante: {key}")
+    required_keys = {
+        'mux': ['i2c_address', 'i2c_bus', 'channels'],
+        'sensors': ['as7265x', 'read_interval'],
+    }
+    for section, keys in required_keys.items():
+        if section not in config:
+            raise KeyError(f"Sección faltante en configuración: {section}")
+        for key in keys:
+            if key not in config[section]:
+                raise KeyError(f"Clave faltante en configuración [{section}]: {key}")
+
+    # Validar que el `i2c_address` sea fijo
+    if config['mux']['i2c_address'] != 0x70:
+        raise ValueError("El valor de `i2c_address` no es válido. Debe ser 0x70.")
     logging.info("Validación de configuración completada.")
+
 
 #Clasificacion y Deteccion de Plasticos
 def classify_plastic(spectral_data, thresholds):
@@ -341,8 +355,9 @@ def main():
             # Detectar y Actualizar Canales Activos
             try:
                 active_channels = mux_manager.detect_active_channels()
-                config_manager.set_value('mux', 'active_channels', active_channels)
-                logging.info(f"Canales activos detectados y actualizados: {active_channels}")
+                valid_channels = [ch for ch in active_channels if mux_manager.verify_sensor_on_channel(ch)]
+                config_manager.set_value('mux', 'active_channels', valid_channels)
+                logging.info(f"Canales activos detectados y actualizados: {valid_channels}")
             except Exception as e:
                 logging.critical(f"Error detectando canales activos: {e}")
                 alert_manager.send_alert(
