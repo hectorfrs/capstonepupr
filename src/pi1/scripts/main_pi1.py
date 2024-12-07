@@ -248,20 +248,20 @@ def initialize_mux(config, alert_manager):
             i2c_address=config['mux']['i2c_address'],
             alert_manager=alert_manager
         )
-        logging.info(f"Inicializando MUX en I2C Bus: {config['mux']['i2c_bus']}, Dirección: {config['mux']['i2c_address']}")
-        if not mux_manager.mux.is_mux_connected():
+        logging.info(f"Inicializando MUX en I2C Bus: {config['mux']['i2c_bus']}, Dirección: {hex(config['mux']['i2c_address'])}")
+        if not mux_manager.is_mux_connected():
             raise RuntimeError("El MUX no está conectado o accesible.")
-        logging.info("MUX inicializado correctamente.")
+        logging.info(f"MUX inicializado en I2C Bus: {config['mux']['i2c_bus']}, Dirección: {hex(config['mux']['i2c_address'])}")
         return mux_manager
     except Exception as e:
         logging.critical(f"Error inicializando el MUX: {e}")
-        if alert_manager:
-            alert_manager.send_alert(
-                level="CRITICAL",
-                message="Error inicializando el MUX.",
-                metadata={"error critico": str(e)}
-            )
-        raise RuntimeError("MUXManager no pudo inicializar el MUX.") from e
+        alert_manager.send_alert(
+            level="CRITICAL",
+            message="Error inicializando el MUX.",
+            metadata={"error": str(e)}
+        )
+        raise
+
 
 
 def initialize_sensors(config, mux_manager):
