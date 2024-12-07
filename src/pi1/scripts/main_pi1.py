@@ -365,9 +365,8 @@ def main():
             # Detectar y Actualizar Canales Activos
             try:
                 active_channels = mux_manager.detect_active_channels()
-                valid_channels = [ch for ch in active_channels if mux_manager.verify_sensor_on_channel(ch)]
-                config_manager.set_value('mux', 'active_channels', valid_channels)
-                logging.info(f"Canales activos detectados y actualizados: {valid_channels}")
+                config_manager.set_value('mux', 'active_channels', active_channels)
+                logging.info(f"Canales activos detectados y actualizados: {active_channels}")
             except Exception as e:
                 logging.critical(f"Error detectando canales activos: {e}")
                 alert_manager.send_alert(
