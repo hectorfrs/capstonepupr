@@ -37,7 +37,7 @@ sys.path.append("/usr/local/lib/python3.11/dist-packages")
 # Configuración de constantes
 MAX_RETRIES = 3
 DIAGNOSTICS_INTERVAL = 300  # Intervalo de diagnóstico en segundos
-CONFIG_PATH = "/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml"
+config_path = "/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml"
 
 # Clase Auxiliar para redirigir la salida
 class StreamToLogger:
@@ -336,7 +336,7 @@ def main():
     while retries < MAX_RETRIES:
         try:
             # Cargar configuración
-            config_manager = RealTimeConfigManager(CONFIG_PATH)
+            config_manager = RealTimeConfigManager(config_path)
             config_manager.start_monitoring()
             config = config_manager.get_config()
             validate_config(config)
