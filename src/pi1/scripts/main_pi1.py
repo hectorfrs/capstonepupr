@@ -27,11 +27,11 @@ from lib.sensor_diagnostics import run_sensor_diagnostics
 from lib.mux_diagnostics import run_mux_diagnostics
 
 # Agregar la ruta del proyecto al PYTHONPATH
-#print(sys.path)
+print(sys.path)
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-#sys.path.append("/usr/local/lib/python3.11/dist-packages")
+sys.path.append("/usr/local/lib/python3.11/dist-packages")
 
 # Configuración de constantes
 MAX_RETRIES = 3
