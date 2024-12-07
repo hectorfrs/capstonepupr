@@ -155,15 +155,23 @@ class MUXManager:
         :return: True si el sensor responde, False en caso contrario.
         """
         try:
-            # Implementar aquí la lógica para verificar la conexión del sensor
-            # Por ejemplo, enviar un comando al sensor y validar la respuesta
-            sensor_response = self.mux.test_sensor_response(channel)
-            return sensor_response
+            # Seleccionar canal en el MUX
+            self.select_channel(channel)
+
+            # Leer el registro HW_VERSION del sensor AS7265x
+            hw_version = self.mux.read_register(0x3F)
+            if hw_version:  # Verifica que el valor no sea nulo o inválido
+                logging.info(f"Sensor detectado en canal {channel}. Versión HW: {hw_version}")
+                return True
+            else:
+                logging.warning(f"No se detectó respuesta del sensor en canal {channel}.")
+                return False
         except Exception as e:
             logging.error(f"Error verificando sensor en canal {channel}: {e}")
             return False
-
-
+        finally:
+        # Desactivar el canal para evitar conflictos
+            self.disable_all_channels()
 
     def run_diagnostics(self):
         """
