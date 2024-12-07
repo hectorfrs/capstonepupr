@@ -1,9 +1,29 @@
-# alert_manager.py - Clase para manejar alertas críticas del sistema.
 import logging
 import json
 import os
 from datetime import datetime
+from dataclasses import dataclass, field
+from typing import Any, Dict
 from utils.mqtt_publisher import MQTTPublisher
+
+# Configurar el formato del logger
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+
+@dataclass
+class Alert:
+    level: str
+    message: str
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
+
+    def __post_init__(self):
+        valid_levels = {"INFO", "WARNING", "CRITICAL"}
+        if self.level not in valid_levels:
+            raise ValueError(f"Nivel de alerta inválido: {self.level}")
 
 class AlertManager:
     """
@@ -11,7 +31,7 @@ class AlertManager:
     """
     ALLOWED_LEVELS = {"INFO", "WARNING", "CRITICAL"}
 
-    def __init__(self, mqtt_client=None, alert_topic="raspberry-1/alerts", local_log_path="/home/raspberry-1/logs/alerts.json"):
+    def __init__(self, mqtt_client=None, alert_topic="raspberry-1/alerts", local_log_path="~/logs/alerts.json"):
         """
         Inicializa el manejador de alertas.
 
@@ -21,10 +41,10 @@ class AlertManager:
         """
         self.mqtt_client = mqtt_client
         self.alert_topic = alert_topic
-        self.local_log_path = local_log_path or config["logging"]["log_file"]
+        self.local_log_path = os.path.expanduser(local_log_path)
 
         # Crear directorio de logs si no existe
-        log_dir = os.path.dirname(local_log_path)
+        log_dir = os.path.dirname(self.local_log_path)
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
             logging.info(f"Directorio creado para logs locales de alertas: {log_dir}")
@@ -45,20 +65,15 @@ class AlertManager:
             logging.error("El parámetro 'metadata' debe ser un diccionario.")
             return
 
-        alert = {
-            "level": level,
-            "message": message,
-            "metadata": metadata or {},
-            "timestamp": datetime.now().isoformat()
-        }
-        
+        alert = Alert(level=level, message=message, metadata=metadata or {})
+
         # Registrar alerta en el log
         self._log_alert(alert)
 
         # Enviar alerta por MQTT si está habilitado
         if self.mqtt_client:
             try:
-                self.mqtt_client.publish(self.alert_topic, json.dumps(alert))
+                self.mqtt_client.publish(self.alert_topic, json.dumps(alert.__dict__))
                 logging.info(f"Alerta enviada a MQTT: {alert}")
             except Exception as e:
                 logging.error(f"Error enviando alerta a MQTT: {e}")
@@ -67,15 +82,15 @@ class AlertManager:
         """
         Registra la alerta en el archivo local y en el sistema de logs.
 
-        :param alert: Diccionario con los datos de la alerta.
+        :param alert: Instancia de la clase Alert.
         """
-        log_level = alert["level"].upper()
+        log_level = alert.level.upper()
         if log_level == "CRITICAL":
-            logging.critical(alert["message"])
+            logging.critical(alert.message)
         elif log_level == "WARNING":
-            logging.warning(alert["message"])
+            logging.warning(alert.message)
         else:
-            logging.info(alert["message"])
+            logging.info(alert.message)
 
         # Guardar en archivo JSON
         try:
@@ -83,7 +98,7 @@ class AlertManager:
                 self._rotate_log()
 
             with open(self.local_log_path, "a") as log_file:
-                json.dump(alert, log_file)
+                json.dump(alert.__dict__, log_file)
                 log_file.write("\n")
         except Exception as e:
             logging.error(f"Error guardando alerta localmente: {e}")
@@ -108,3 +123,14 @@ class AlertManager:
             if key not in self.config.get("logging", {}):
                 logging.warning(f"Clave {key} faltante en la sección 'logging'. Usando valor predeterminado.")
                 self.config["logging"][key] = f"/home/raspberry-1/logs/default_{key}.log"
+
+# # Ejemplo de uso
+# if __name__ == "__main__":
+#     # Configuración del cliente MQTT (esto es solo un ejemplo, ajusta según tu configuración)
+#     mqtt_client = MQTTPublisher(client_id="raspberry-1", broker="mqtt.example.com", port=1883)
+
+#     # Crear una instancia de AlertManager
+#     alert_manager = AlertManager(mqtt_client=mqtt_client)
+
+#     # Enviar una alerta
+#     alert_manager.send_alert(level="CRITICAL", message="Temperatura del sistema demasiado alta", metadata={"sensor": "CPU", "value": "95°C"})
