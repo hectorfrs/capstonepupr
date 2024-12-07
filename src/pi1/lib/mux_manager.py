@@ -11,10 +11,14 @@ class MUXManager:
         :param i2c_bus: Bus I2C del MUX.
         :param i2c_address: Dirección I2C del MUX.
         :param alert_manager: Instancia del AlertManager para manejar alertas (opcional)
+        
         """
+        self.i2c_bus = i2c_bus
+        self.i2c_address = i2c_address
+        self.alert_manager = alert_manager
+        self.bus = SMBus(i2c_bus)
+        self.status = {}
         try:
-            self.mux = MUXController(i2c_bus=i2c_bus, i2c_address=i2c_address)
-            self.alert_manager = alert_manager
             logging.info("MUX inicializado correctamente.")
         except Exception as e:
             logging.critical(f"Error inicializando el MUX: {e}")
@@ -52,44 +56,56 @@ class MUXManager:
         """
         Verifica si el MUX está accesible.
         """
-        if self.mux.is_mux_connected():
-            logging.info("El MUX está conectado y accesible.")
+        try:
+            self.bus.read_byte(self.i2c_address)
+            logging.info(f"MUX conectado en I2C Bus: {self.i2c_bus}, Dirección: {hex(self.i2c_address)}.")
             return True
-        else:
-            logging.critical("El MUX no está conectado o accesible.")
+        except Exception as e:
+            logging.error(f"Error verificando conexión del MUX: {e}")
             if self.alert_manager:
                 self.alert_manager.send_alert(
                     level="CRITICAL",
                     message="MUX no accesible.",
-                    metadata={"i2c_address": self.mux.i2c_address}
+                    metadata={"error": str(e)},
                 )
             return False
 
     def select_channel(self, channel):
         """
         Selecciona un canal en el MUX.
+        :param channel: Número del canal (0-7).
         """
         try:
-            self.mux.select_channel(channel)
+            if not (0 <= channel <= 7):
+                raise ValueError(f"Canal {channel} fuera de rango (0-7).")
+            self.bus.write_byte(self.i2c_address, 1 << channel)
+            self.status[channel] = True
+            logging.info(f"Canal {channel} activado en el MUX.")
         except Exception as e:
-            logging.error(f"Error seleccionando el canal {channel}: {e}")
+            logging.error(f"Error activando canal {channel}: {e}")
             if self.alert_manager:
                 self.alert_manager.send_alert(
-                    level="ERROR",
-                    message=f"Error seleccionando canal {channel}",
-                    metadata={"channel": channel, "error": str(e)}
-                )
-            raise                            
+                    level="CRITICAL",
+                    message=f"Error activando canal {channel}",
+                    metadata={"channel": channel, "error": str(e)},
+                )                           
 
     def disable_all_channels(self):
         """
-        Desactiva todos los canales.
+        Desactiva todos los canales del MUX.
         """
         try:
-            self.mux.disable_all_channels()
-            logging.info("Todos los canales del MUX han sido desactivados.")
+            self.bus.write_byte(self.i2c_address, 0x00)
+            self.status = {channel: False for channel in range(8)}
+            logging.info("Todos los canales del MUX desactivados.")
         except Exception as e:
             logging.error(f"Error desactivando todos los canales: {e}")
+            if self.alert_manager:
+                self.alert_manager.send_alert(
+                    level="WARNING",
+                    message="Error desactivando todos los canales del MUX.",
+                    metadata={"error": str(e)},
+                )
 
     def get_status(self):
         """
@@ -133,27 +149,18 @@ class MUXManager:
 
     def detect_active_channels(self):
         """
-        Detecta canales activos verificando sensores.
+        Detecta canales activos con sensores.
         """
         active_channels = []
-        for channel in range(8):  # Iterar sobre 8 canales
+        for channel in range(8):
             try:
-                self.mux.select_channel(channel)
-                if self.mux.verify_sensor_connection():
+                self.select_channel(channel)
+                if self.verify_sensor_on_channel(channel):
                     active_channels.append(channel)
-                    logging.info(f"Sensor detectado en el canal {channel}.")
-                else:
-                    logging.warning(f"No se detectó sensor en el canal {channel}.")
+                    logging.info(f"Canal {channel} activo con sensor.")
             except Exception as e:
-                logging.error(f"Error verificando el canal {channel}: {e}")
-                if self.alert_manager:
-                    self.alert_manager.send_alert(
-                        level="WARNING",
-                        message=f"Error verificando canal {channel}",
-                        metadata={"channel": channel, "error": str(e)}
-                    )
-            finally:
-                self.mux.disable_all_channels()
+                logging.error(f"Error detectando canal {channel}: {e}")
+        self.disable_all_channels()
         return active_channels
 
     def run_diagnostics(self):
@@ -184,4 +191,19 @@ class MUXManager:
         :return: True si el canal está activo, False en caso contrario.
         """
         return self.mux.is_channel_active(channel)
-
+        
+    def verify_sensor_on_channel(self, channel):
+        """
+        Verifica si un sensor responde en un canal.
+        :param channel: Canal del MUX.
+        :return: True si el sensor responde, False en caso contrario.
+        """
+        try:
+            self.select_channel(channel)
+            # Implementar lógica de verificación
+            return True
+        except Exception as e:
+            logging.error(f"Error verificando sensor en canal {channel}: {e}")
+            return False
+        finally:
+            self.disable_all_channels()

@@ -127,18 +127,44 @@ def validate_config(config):
 
 
 #Clasificacion y Deteccion de Plasticos
-def classify_plastic(spectral_data, thresholds):
+def classify_material(spectral_data, thresholds):
     """
-    Clasifica el tipo de plástico según los umbrales configurados.
+    Clasifica el material según los umbrales definidos en el archivo config.yaml.
+
+    :param spectral_data: Datos espectrales del sensor.
+    :param thresholds: Umbrales definidos en config.yaml.
+    :return: Tipo de material detectado.
     """
     try:
-        for plastic_type, ranges in thresholds.items():
+        for material, ranges in thresholds.items():
             if all(ranges[i][0] <= spectral_data[i] <= ranges[i][1] for i in range(len(ranges))):
-                return plastic_type
+                return material
         return "Otros"
     except Exception as e:
         logging.error(f"Error detectando material: {e}")
         return "Error"
+
+# Activar Válvula
+def activate_valve(material, mqtt_client):
+    """
+    Envía un comando al Raspberry Pi 2 para activar la válvula correspondiente.
+
+    :param material: Tipo de material detectado.
+    :param mqtt_client: Cliente MQTT para publicar comandos.
+    """
+    valve_mapping = {
+        "PET": 1,
+        "HDPE": 2
+    }
+
+    if material in valve_mapping:
+        payload = {
+            "material": material,
+            "valve": valve_mapping[material],
+            "timestamp": datetime.now().isoformat()
+        }
+        mqtt_client.publish(VALVE_CONTROL_TOPIC, json.dumps(payload))
+        logging.info(f"Comando enviado para activar válvula {valve_mapping[material]} para material {material}.")
 
 # Publicación de Datos
 def publish_data(mqtt_client, greengrass_manager, topic, data_queue, alert_manager):
@@ -165,7 +191,7 @@ def run_power_saving_mode(sensors, mux_manager, enabled):
     Activa el modo de ahorro de energía si está habilitado.
     """
     if not enabled:
-        logging.info("Modo de ahorro de energía deshabilitado en config.yaml.")
+        logging.info("Modo de ahorro de energía deshabilitado.")
         return
 
     logging.info("Habilitando modo de ahorro de energía...")
@@ -232,19 +258,15 @@ def restart_system(config):
             sys.exit(1)
 
 def initialize_mux(config, alert_manager):
-    """
-    Inicializa y configura el MUX.
-    """
     try:
         mux_manager = MUXManager(
             i2c_bus=config['mux']['i2c_bus'],
             i2c_address=config['mux']['i2c_address'],
             alert_manager=alert_manager
         )
-        logging.info(f"Inicializando MUX en I2C Bus: {config['mux']['i2c_bus']}, Dirección: {hex(config['mux']['i2c_address'])}")
         if not mux_manager.is_mux_connected():
-            raise RuntimeError("El MUX no está conectado o accesible.")
-        logging.info(f"MUX inicializado en I2C Bus: {config['mux']['i2c_bus']}, Dirección: {hex(config['mux']['i2c_address'])}")
+            raise RuntimeError("MUX no conectado o no accesible.")
+        logging.info("MUX inicializado correctamente.")
         return mux_manager
     except Exception as e:
         logging.critical(f"Error inicializando el MUX: {e}")
@@ -257,25 +279,16 @@ def initialize_mux(config, alert_manager):
 
 
 
+# Inicialización de Sensores
 def initialize_sensors(config, mux_manager):
-    sensors_config = config.get('mux', {}).get('channels', [])
-    if not sensors_config:
-        raise RuntimeError("No se encontraron configuraciones de sensores en 'mux/channels'.")
+    try:
+        sensor_manager = SensorManager(config)
+        sensor_manager.initialize_sensors(mux_manager)
+        return sensor_manager.sensors
+    except Exception as e:
+        logging.critical(f"Error inicializando sensores: {e}")
+        raise
 
-    sensors = []
-    for channel_info in config['mux']['channels']:
-        channel = channel_info['channel']
-        sensor_name = channel_info['sensor_name']
-        sensor = CustomAS7265x(name=sensor_name)
-        if sensor.is_connected():
-            sensor.channel = channel
-            sensors.append(sensor)
-            logging.info(f"Sensor {sensor_name} conectado en canal {channel}.")
-        else:
-            logging.warning(f"Sensor {sensor_name} no conectado en canal {channel}.")
-    if not sensors:
-        raise RuntimeError("No se detectaron sensores conectados.")
-    return sensors
 
 def process_channels(mux_manager):
     try:
@@ -393,51 +406,49 @@ def main():
 
             # Inicializar sensores
             logging.info("Inicializando sensores...")
-            sensor_manager = SensorManager(config, mux_manager, alert_manager)
-            sensor_manager.initialize_sensors(active_channels)
-            
+            sensors = initialize_sensors(config, mux_manager)
+
             # Diagnósticos iniciales
-            if config['system'].get('enable_sensor_diagnostics', False):
-                logging.info("Ejecutando diagnósticos de sensores...")
-                for sensor in sensors:
-                    try:
-                        temperature_c = sensor.read_temperature()
-                        logging.info(f"Temperatura del sensor {sensor.name}: {temperature_c:.2f} °C")
-                    except Exception as e:
-                        logging.warning(f"Error diagnosticando sensor {sensor.name}: {e}")
-
-            # Diagnósticos del MUX
-            if config['system'].get('enable_mux_diagnostics', False):
-                logging.info("Ejecutando diagnósticos del MUX...")
-                run_mux_diagnostics(mux_manager, [ch['channel'] for ch in config['mux']['channels']], alert_manager)
-
-
+            run_diagnostics(config, mux_manager, sensors, alert_manager)
+            
             # Modo de ahorro de energía
             run_power_saving_mode(mux_manager, sensors, config['system']['enable_power_saving'])
 
-            # Bucle principal
+            # Configurar hilo de publicación de datos
             data_queue = Queue(maxsize=config['data_queue']['max_size'])
-            publish_thread = Thread(target=publish_data, args=(mqtt_client, None, config['mqtt']['topics']['sensor_data'], data_queue, alert_manager), daemon=True)
+            publish_thread = Thread(
+                target=publish_data,
+                args=(mqtt_client, data_queue, config['mqtt']['topics']['sensor_data'], alert_manager),
+                daemon=True
+            )
             publish_thread.start()
 
             # Loop principal
-            logging.info("Entrando en el loop principal.")
+            logging.info("Detectando y Procesando Datos.")
             last_diagnostics_time = time.time()
             while True:
-                for channel, sensor in sensor_manager.sensors.items():
+                for sensor in sensors:
                     try:
-                        data = sensor_manager.read_sensor_data(channel)
+                        mux_manager.select_channel(sensor.channel)
+                        spectral_data = sensor.read_advanced_spectrum()
                         if data:
-                            plastic_type = classify_plastic(data, config['plastic_thresholds'])
+                            material = classify_material(spectral_data, config['plastic_thresholds'])
                             data_queue.put({
                                 "timestamp": datetime.now().isoformat(),
                                 "channel": channel,
                                 "data": data,
-                                "plastic_type": plastic_type,
+                                "material": material,
                             })
-                            logging.info(f"Canal {channel} clasificado como: {plastic_type}")
+                            logging.info(f"Canal {channel} clasificado como: {material}")
+                            if material in ["PET", "HDPE"]:
+                                activate_valve(material, mqtt_client)
+
+                            logging.info(f"Material detectado: {material}.")
+
                     except Exception as e:
-                        logging.error(f"Error procesando canal {channel}: {e}")
+                        logging.error(f"Error procesando datos del sensor {sensor.name} en canal {channel}: {e}")
+                    finally:
+                        mux_manager.disable_all_channels()
 
                 # Diagnósticos periódicos
                 if time.time() % DIAGNOSTICS_INTERVAL == 0:
@@ -461,7 +472,7 @@ def main():
                 logging.info("Monitoreo de red detenido.")
             if config_manager:
                 config_manager.stop_monitoring()
-                logging.info("Monitoreo de configuración detenido.")
+                logging.info("Sistema apagado correctamente.")
 
 if __name__ == "__main__":
     try:
