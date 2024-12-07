@@ -268,7 +268,8 @@ def initialize_mux(config, alert_manager):
         mux_manager = MUXManager(
             i2c_bus=config['mux']['i2c_bus'],
             i2c_address=config['mux']['i2c_address'],
-            alert_manager=alert_manager
+            alert_manager=alert_manager,
+            config=config
         )
         if not mux_manager.is_mux_connected():
             raise RuntimeError("MUX no conectado o no accesible.")

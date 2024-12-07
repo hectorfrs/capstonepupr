@@ -19,7 +19,7 @@ class MUXManager:
         self.i2c_address = i2c_address
         self.alert_manager = alert_manager
         self.bus = SMBus(i2c_bus)
-        self.status = {}
+        self.config = config
         self.mux = MUXController(i2c_bus=self.i2c_bus, i2c_address=self.i2c_address)
         logging.info(f"MUX conectado en I2C Bus: {self.i2c_bus}, Dirección: {hex(self.i2c_address)}.")
         try:
