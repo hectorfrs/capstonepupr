@@ -20,6 +20,8 @@ class MUXManager:
         self.alert_manager = alert_manager
         self.bus = SMBus(i2c_bus)
         self.status = {}
+        self.mux = MUXController(i2c_bus=self.i2c_bus, i2c_address=self.i2c_address)
+        logging.info(f"MUX conectado en I2C Bus: {self.i2c_bus}, Dirección: {hex(self.i2c_address)}.")
         try:
             logging.info("MUX inicializado correctamente.")
         except Exception as e:
@@ -151,30 +153,22 @@ class MUXManager:
 
     def detect_active_channels(self):
         """
-        Detecta los canales activos del MUX probando cada canal y verificando sensores.
-
-        :return: Lista de canales activos con sensores válidos.
+        Detecta los canales activos en el MUX probando solo los configurados en `config.yaml`.
         """
         active_channels = []
-        for channel in range(8):  # Iterar sobre los 8 canales posibles
+        for channel in self.config.get("mux", {}).get("channels", []):
             try:
-                self.select_channel(channel)
-                if self.verify_sensor_on_channel(channel):  # Verificar sensor en el canal
-                    active_channels.append(channel)
-                    logging.info(f"Canal {channel} activo con sensor.")
+                self.select_channel(channel["channel"])
+                if self.verify_sensor_on_channel(channel["channel"]):
+                    active_channels.append(channel["channel"])
+                    logging.info(f"Canal {channel['channel']} activo con sensor.")
                 else:
-                    logging.info(f"Canal {channel} activo, pero sin sensor.")
+                    logging.warning(f"Canal {channel['channel']} no tiene sensor.")
             except Exception as e:
-                logging.error(f"Error detectando canal {channel}: {e}")
-                if self.alert_manager:
-                    self.alert_manager.send_alert(
-                        level="WARNING",
-                        message=f"Error detectando canal {channel}",
-                        metadata={"channel": channel, "error": str(e)},
-                    )
-            finally:
-                self.disable_all_channels()
+                logging.error(f"Error verificando canal {channel['channel']}: {e}")
+        self.disable_all_channels()
         return active_channels
+
 
 
     def run_diagnostics(self):
