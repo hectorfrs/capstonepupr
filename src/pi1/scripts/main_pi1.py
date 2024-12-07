@@ -27,7 +27,7 @@ from lib.sensor_diagnostics import run_sensor_diagnostics
 from lib.mux_diagnostics import run_mux_diagnostics
 
 # Agregar la ruta del proyecto al PYTHONPATH
-print(sys.path)
+#print(sys.path)
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -245,7 +245,7 @@ def initialize_mux(config, alert_manager):
     """
     try:
         mux_manager = MUXManager(
-            i2c_bus=config['sensors']['as7265x']['i2c_bus'],
+            i2c_bus=config['mux']['i2c_bus'],
             i2c_address=config['mux']['i2c_address'],
             alert_manager=alert_manager
         )
