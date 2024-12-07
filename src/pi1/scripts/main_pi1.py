@@ -174,9 +174,15 @@ def publish_data(mqtt_client, greengrass_manager, topic, data_queue, alert_manag
     while True:
         try:
             data = data_queue.get(timeout=5)
+
+            # Publicar datos en MQTT Localmente
             mqtt_client.publish(topic, data)
+            logging.info(f"Datos publicados en MQTT: {data}")
+            
+            # Publicar datos en AWS IoT Core
             response = greengrass_manager.invoke_function(data)
             logging.info(f"Datos publicados en MQTT y procesados por Greengrass: {data} | Respuesta: {response}")
+            
         except Exception as e:
             logging.error(f"Error publicando datos: {e}")
             alert_manager.send_alert(
@@ -418,7 +424,7 @@ def main():
             data_queue = Queue(maxsize=config['data_queue']['max_size'])
             publish_thread = Thread(
                 target=publish_data,
-                args=(mqtt_client, data_queue, config['mqtt']['topics']['sensor_data'], alert_manager),
+                args=(mqtt_client, greengrass_manager, data_queue, config['mqtt']['topics']['sensor_data'], alert_manager),
                 daemon=True
             )
             publish_thread.start()
