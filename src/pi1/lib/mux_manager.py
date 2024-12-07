@@ -2,6 +2,8 @@
 import logging
 from lib.mux_controller import MUXController
 from utils.alert_manager import AlertManager
+from unittest.mock import Mock
+
 
 
 class MUXManager:
@@ -17,10 +19,13 @@ class MUXManager:
         :param alert_manager: Instancia del AlertManager para manejar alertas (opcional).
         """
         self.mock = mock
-        if not mock:
+        if mock:
+            self.mux = Mock()  # Simula la instancia del MUXController para pruebas
+            logging.info("Inicializando MUX en modo simulación (mock).")
+        else:
             self.mux = MUXController(i2c_bus=i2c_bus, i2c_address=i2c_address)
-        self.alert_manager = alert_manager
-        self.status = {}
+            self.alert_manager = alert_manager
+            self.status = {}
 
     def is_mux_connected(self):
         """
