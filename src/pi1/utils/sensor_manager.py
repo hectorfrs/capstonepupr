@@ -1,7 +1,6 @@
 # sensor_manager.py - Clase para manejar múltiples sensores AS7265x conectados al MUX.
 import logging
 from lib.as7265x import CustomAS7265x
-from lib.mux_manager import MUXManager
 
 class SensorManager:
     """
@@ -16,28 +15,34 @@ class SensorManager:
         :param mux_manager: Instancia de MUXManager para manejar los canales.
         :param alert_manager: Instancia opcional de AlertManager para manejar alertas.
         """
-        self.sensor_config = sensor_config
-        self.mux_manager = mux_manager
-        self.alert_manager = alert_manager
-        self.sensors = {}  # Diccionario para almacenar sensores por canal
+        self.config = config                # Configuración de los sensores.
+        self.mux_manager = mux_manager      # Instancia de MUXManager.
+        self.alert_manager = alert_manager  # Instancia de AlertManager.
+        self.sensors = []                   # Lista de sensores inicializados.
 
     def initialize_sensors(self, mux_manager):
         """
         Inicializa sensores según configuración.
         """
-        for channel_config in self.config['mux']['channels']:
+        channels = self.config['mux']['channels']
+        for channel_info in channels:
             try:
-                sensor = CustomAS7265x(
-                    config_path=self.config,
-                    name=channel_config['sensor_name']
-                )
+                sensor_name = channel_info['sensor_name']
+                channel = channel_info['channel']
+                sensor = CustomAS7265x(name=sensor_name)
+
                 if sensor.is_connected():
+                    sensor.channel = channel
                     self.sensors.append(sensor)
-                    logging.info(f"Sensor {sensor.name} conectado en canal {channel_config['channel']}.")
+                    logging.info(f"Sensor {sensor_name} conectado en canal {channel}.")
                 else:
-                    logging.warning(f"Sensor {sensor.name} no responde en canal {channel_config['channel']}.")
+                    logging.warning(f"Sensor {sensor_name} no responde en canal {channel}.")
             except Exception as e:
-                logging.error(f"Error inicializando sensor en canal {channel_config['channel']}: {e}")
+                logging.error(f"Error inicializando sensor en canal {channel}: {e}")
+    
+    def update_config_with_active_channels(self, active_channels):
+        self.config['mux']['active_channels'] = active_channels
+        self.save_config()
 
     def read_all_sensors(self):
         """
