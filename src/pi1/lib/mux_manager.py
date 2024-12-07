@@ -18,14 +18,20 @@ class MUXManager:
         :param i2c_address: Dirección I2C del MUX.
         :param alert_manager: Instancia del AlertManager para manejar alertas (opcional).
         """
-        #self.mock = mock
-        #if mock:
-            #self.mux = Mock()  # Simula la instancia del MUXController para pruebas
-            #logging.info("Inicializando MUX en modo simulación (mock).")
-        #else:
-        self.mux = MUXController(i2c_bus=i2c_bus, i2c_address=i2c_address)
+        try:
+            self.mux = MUXController(i2c_bus=i2c_bus, i2c_address=i2c_address)
+            logging.info("MUXManager inicializado correctamente.")
+        except Exception as e:
+            logging.critical(f"Error inicializando el MUXManager: {e}")
+            if alert_manager:
+                alert_manager.send_alert(
+                    level="CRITICAL",
+                    message="Error inicializando el MUXManager.",
+                    metadata={"error": str(e)}
+                )
+            raise
+
         self.alert_manager = alert_manager
-        self.status = {}
 
     def is_mux_connected(self):
         """
@@ -130,36 +136,26 @@ class MUXManager:
         active_channels = []
         for channel in range(8):  # Iterar sobre los 8 canales posibles
             try:
-                self.select_channel(channel)
-                if self.verify_sensor_on_channel(channel):
+                self.mux.select_channel(channel)
+                if self.mux.verify_sensor_connection():
                     active_channels.append(channel)
-                    logging.info(f"Canal {channel} activo y sensor detectado en el MUX.")
+                    logging.info(f"Canal {channel} activo con sensor detectado.")
                 else:
-                    logging.info(f"Canal {channel} no activo en el MUX.")
+                    logging.warning(f"No se detecta sensor en el canal {channel}.")
             except Exception as e:
-                logging.error(f"Error detectando canal {channel}: {e}")
+                logging.error(f"Error verificando canal {channel}: {e}")
                 if self.alert_manager:
                     self.alert_manager.send_alert(
                         level="WARNING",
-                        message=f"Error detectando canal {channel}",
+                        message=f"Error verificando canal {channel}.",
                         metadata={"channel": channel, "error": str(e)},
                     )
             finally:
-                self.disable_all_channels()
-        return active_channels
+                self.mux.disable_all_channels()
 
-    def verify_sensor_on_channel(self, channel):
-        try:
-            self.select_channel(channel)
-            if not self.mux.verify_sensor_connection():
-                raise RuntimeError(f"No se detecta sensor en el canal {channel}")
-            logging.info(f"Sensor detectado en el canal {channel}")
-        except Exception as e:
-            logging.error(f"Error verificando sensor en canal {channel}: {e}")
-            return False
-        finally:
-            self.disable_all_channels()
-        return True
+        if not active_channels:
+            logging.warning("No se detectaron canales activos con sensores conectados.")
+        return active_channels
 
     def run_diagnostics(self):
         """

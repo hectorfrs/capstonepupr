@@ -15,33 +15,43 @@ class MUXController:
         :param i2c_bus: Bus I2C donde está conectado el MUX.
         :param i2c_address: Dirección I2C del MUX.
         """
+        self.i2c_bus = i2c_bus
         self.i2c_address = i2c_address
-        self.bus = SMBus(i2c_bus)  # Inicializar el bus I2C
-
-        # Inicializar el MUX
-        self.mux = qwiic_tca9548a.QwiicTCA9548A(address=self.i2c_address)
-        if not self.mux.connected:
-            raise ConnectionError(f"El MUX con dirección {hex(self.i2c_address)} no está conectado.")
-        logging.info(f"MUX conectado en la dirección {hex(self.i2c_address)}.")
+        try:
+            self.i2c = smbus.SMBus(self.i2c_bus)
+            logging.info(f"Bus I2C {self.i2c_bus} inicializado correctamente.")
+        except Exception as e:
+            logging.error(f"Error inicializando el bus I2C: {e}")
+            raise
 
     def select_channel(self, channel):
         """
-        Activa un canal específico en el MUX.
+        Selecciona un canal en el MUX.
 
-        :param channel: Número del canal a activar (0-7).
+        :param channel: Canal a activar (0-7).
         """
-        if channel < 0 or channel > 7:
-            raise ValueError("El canal debe estar entre 0 y 7.")
-        self.mux.enable_channels(1 << channel)  # Activa el canal
-        logging.info(f"Canal {channel} activado en el MUX.")
+        try:
+            if channel is None:
+                self.disable_all_channels()
+            elif 0 <= channel <= 7:
+                self.i2c.write_byte_data(self.i2c_address, 0x00, 1 << channel)
+                logging.info(f"Canal {channel} activado en el MUX.")
+            else:
+                raise ValueError("Canal fuera del rango permitido (0-7)")
+        except Exception as e:
+            logging.error(f"Error activando el canal {channel} en el MUX: {e}")
+            raise
 
     def disable_all_channels(self):
         """
         Desactiva todos los canales del MUX.
         """
-        self.mux.disable_channels(0X00) # Desactiva todos los canales
-        logging.info("Todos los canales desactivados en el MUX.")
-
+        try:
+            self.i2c.write_byte_data(self.i2c_address, 0x00, 0x00)
+            logging.info("Todos los canales desactivados en el MUX.")
+        except Exception as e:
+            logging.error(f"Error desactivando todos los canales en el MUX: {e}")
+            raise
 
     def detect_active_channels(self):
         """
@@ -103,4 +113,21 @@ class MUXController:
             return False
         finally:
             self.disable_all_channels()
+
+    def verify_sensor_connection(self):
+        """
+        Verifica si un sensor está conectado en el canal activo del MUX.
+
+        :return: True si el sensor responde, False si no.
+        """
+        SENSOR_I2C_ADDRESS = 0x49  # Dirección estándar del sensor AS7265x
+        HW_VERSION_REGISTER = 0x00  # Registro que contiene la versión de hardware
+
+        try:
+            hw_version = self.i2c.read_byte_data(SENSOR_I2C_ADDRESS, HW_VERSION_REGISTER)
+            logging.info(f"Conexión al sensor detectada, versión de hardware: {hw_version}")
+            return hw_version is not None
+        except Exception as e:
+            logging.error(f"No se detecta sensor en el canal activo: {e}")
+            return False
 
