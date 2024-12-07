@@ -111,14 +111,11 @@ def configure_logging(config):
 
 def validate_config(config):
     """
-    Valida que todas las claves necesarias estén presentes en la configuración
-    y que no se hayan alterado valores críticos.
-
-    :param config: Diccionario de configuración.
+    Valida la configuración para asegurar que todas las claves necesarias estén presentes.
     """
     required_keys = {
         'mux': ['i2c_address', 'i2c_bus', 'channels'],
-        'sensors': ['as7265x', 'read_interval'],
+        'sensors': ['as7265x', 'read_interval']
     }
     for section, keys in required_keys.items():
         if section not in config:
@@ -126,10 +123,6 @@ def validate_config(config):
         for key in keys:
             if key not in config[section]:
                 raise KeyError(f"Clave faltante en configuración [{section}]: {key}")
-
-    # Validar que el `i2c_address` sea fijo
-    if config['mux']['i2c_address'] != 0x70:
-        raise ValueError("El valor de `i2c_address` no es válido. Debe ser 0x70.")
     logging.info("Validación de configuración completada.")
 
 
@@ -324,6 +317,9 @@ def process_sensor(sensor, channel, mux_manager, alert_manager):
 
 # Funcion Principal
 def main():
+    """
+    Función principal del sistema.
+    """
     print("Iniciando Sistema...")
     retries = 0
     config_manager = None   # Inicialización temprana
@@ -365,11 +361,12 @@ def main():
                     metadata={"ethernet_ip": config['network']['ethernet']['ip']}
                 )
 
-            # Inicializar MQTT
+            # Inicializar MQTT Client
             mqtt_client = MQTTPublisher(config_path)
             mqtt_client.connect()
 
             # Inicialización del MUX
+            logging.info("Inicializando MUX...")
             mux_manager = initialize_mux(config, alert_manager)
 
             if mux_manager is None:
@@ -391,9 +388,11 @@ def main():
                 raise RuntimeError("Error detectando canales activos")
 
             # Inicializar Greengrass Manager
+            logging.info("Inicializando Greengrass Manager...")
             greengrass_manager = GreengrassManager(config_path=config_manager.config_path)
 
             # Inicializar sensores
+            logging.info("Inicializando sensores...")
             sensor_manager = SensorManager(config, mux_manager, alert_manager)
             sensor_manager.initialize_sensors(active_channels)
             

@@ -38,31 +38,29 @@ class MUXController:
 
     def is_mux_connected(self):
         """
-        Verifica si el MUX está conectado intentando habilitar un canal.
+        Verifica si el MUX responde en la dirección I2C configurada.
         """
         try:
-            self.select_channel(0)  # Intenta habilitar el canal 0 como prueba.
+            # Intentar leer un byte del MUX (registro 0x00 no es crítico).
+            self.bus.read_byte(self.i2c_address)
             logging.info("Conexión al MUX verificada.")
             return True
         except Exception as e:
-            logging.error(f"Error verificando conexión al MUX: {e}")
+            logging.error(f"Error verificando conexión del MUX: {e}")
             return False
 
 
     def select_channel(self, channel):
         """
-        Selecciona un canal en el MUX.
+        Activa un canal específico en el MUX.
 
-        :param channel: Canal a activar (0-7).
+        :param channel: Número del canal (0-7).
         """
+        if channel < 0 or channel > 7:
+            raise ValueError("El número de canal debe estar entre 0 y 7.")
         try:
-            if channel is None:
-                self.disable_all_channels()
-            elif 0 <= channel <= 7:
-                self.i2c.write_byte_data(self.i2c_address, 0x00, 1 << channel)
-                logging.info(f"Canal {channel} activado en el MUX.")
-            else:
-                raise ValueError("Canal fuera del rango permitido (0-7)")
+            self.bus.write_byte(self.i2c_address, 1 << channel)
+            logging.info(f"Canal {channel} activado en el MUX.")
         except Exception as e:
             logging.error(f"Error activando el canal {channel} en el MUX: {e}")
             raise
@@ -72,8 +70,8 @@ class MUXController:
         Desactiva todos los canales del MUX.
         """
         try:
-            self.i2c.write_byte_data(self.i2c_address, 0x00, 0x00)
-            logging.info("Todos los canales desactivados en el MUX.")
+            self.bus.write_byte(self.i2c_address, 0x00)
+            logging.info("Todos los canales del MUX desactivados.")
         except Exception as e:
             logging.error(f"Error desactivando todos los canales en el MUX: {e}")
             raise

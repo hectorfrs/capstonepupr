@@ -7,6 +7,10 @@ class MUXManager:
     def __init__(self, i2c_bus, i2c_address, alert_manager=None):
         """
         Inicializa el MUXManager con la configuración del MUX.
+
+        :param i2c_bus: Bus I2C del MUX.
+        :param i2c_address: Dirección I2C del MUX.
+        :param alert_manager: Instancia del AlertManager para manejar alertas (opcional)
         """
         try:
             self.mux = MUXController(i2c_bus=i2c_bus, i2c_address=i2c_address)
@@ -47,19 +51,17 @@ class MUXManager:
     def is_mux_connected(self):
         """
         Verifica si el MUX está accesible.
-        :return: True si el MUX responde, False en caso contrario.
         """
-        try:
-            self.mux.validate_connection()
-            logging.info("MUX está accesible.")
+        if self.mux.is_mux_connected():
+            logging.info("El MUX está conectado y accesible.")
             return True
-        except Exception as e:
-            logging.error(f"Error verificando conexión del MUX: {e}")
+        else:
+            logging.critical("El MUX no está conectado o accesible.")
             if self.alert_manager:
                 self.alert_manager.send_alert(
                     level="CRITICAL",
                     message="MUX no accesible.",
-                    metadata={"error": str(e)}
+                    metadata={"i2c_address": self.mux.i2c_address}
                 )
             return False
 
