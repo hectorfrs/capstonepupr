@@ -36,7 +36,7 @@ sys.path.append("/usr/local/lib/python3.11/dist-packages")
 # Configuración de constantes
 MAX_RETRIES = 3
 DIAGNOSTICS_INTERVAL = 300  # Intervalo de diagnóstico en segundos
-#CONFIG_PATH = "/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml"
+CONFIG_PATH = "/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml"
 
 # Clase Auxiliar para redirigir la salida
 class StreamToLogger:
@@ -67,6 +67,9 @@ def configure_logging(config):
 
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
+
+    if len(logging.getLogger().handlers):
+        return  # Evitar múltiples configuraciones
     
     # Configuración del formato de los logs con fecha y hora
     LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
