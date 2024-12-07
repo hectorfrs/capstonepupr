@@ -241,9 +241,6 @@ def restart_system(config):
 def initialize_mux(config, alert_manager):
     """
     Inicializa y configura el MUX.
-    :param config: Configuración de YAML.
-    :param alert_manager: Instancia de AlertManager.
-    :return: Instancia de MUXManager.
     """
     try:
         mux_manager = MUXManager(
@@ -251,7 +248,8 @@ def initialize_mux(config, alert_manager):
             i2c_address=config['mux']['i2c_address'],
             alert_manager=alert_manager
         )
-        if not mux_manager.is_connected():
+        logging.info(f"Inicializando MUX en I2C Bus: {config['mux']['i2c_bus']}, Dirección: {config['mux']['i2c_address']}")
+        if not mux_manager.mux.is_mux_connected():
             raise RuntimeError("El MUX no está conectado o accesible.")
         logging.info("MUX inicializado correctamente.")
         return mux_manager
@@ -261,9 +259,10 @@ def initialize_mux(config, alert_manager):
             alert_manager.send_alert(
                 level="CRITICAL",
                 message="Error inicializando el MUX.",
-                metadata={"error": str(e)}
+                metadata={"error critico": str(e)}
             )
-        raise
+        raise RuntimeError("MUXManager no pudo inicializar el MUX.") from e
+
 
 def initialize_sensors(config, mux_manager):
     sensors_config = config.get('mux', {}).get('channels', [])

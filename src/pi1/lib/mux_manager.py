@@ -4,24 +4,23 @@ from lib.mux_controller import MUXController
 from utils.alert_manager import AlertManager
 
 class MUXManager:
-    """
-    Clase para manejar dinámicamente el estado y la configuración del MUX.
-    """
     def __init__(self, i2c_bus, i2c_address, alert_manager=None):
         """
-        Inicializa el manejador del MUX.
-
-        :param i2c_bus: Bus I2C del MUX.
-        :param i2c_address: Dirección I2C del MUX.
-        :param alert_manager: Instancia del AlertManager para manejar alertas (opcional).
+        Inicializa el MUXManager con la configuración del MUX.
         """
         try:
             self.mux = MUXController(i2c_bus=i2c_bus, i2c_address=i2c_address)
             self.alert_manager = alert_manager
-            self.validate_connection()  # Validar conexión al inicializar
+            logging.info("MUX inicializado correctamente.")
         except Exception as e:
             logging.critical(f"Error inicializando el MUX: {e}")
-            raise RuntimeError("MUXManager no pudo inicializar el MUX.")
+            if alert_manager:
+                alert_manager.send_alert(
+                    level="CRITICAL",
+                    message="Error inicializando el MUX.",
+                    metadata={"error": str(e)}
+                )
+            raise
     
     def validate_connection(self):
         """

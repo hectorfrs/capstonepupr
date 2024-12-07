@@ -24,6 +24,17 @@ class MUXController:
             logging.error(f"Error inicializando el bus I2C: {e}")
             raise
 
+    def is_mux_connected(self):
+        # Lógica para verificar la conexión al MUX.
+        try:
+            # Ejemplo: Intenta leer un registro específico del MUX.
+            self.read_register(0x00)
+            logging.info("Conexión al MUX verificada.")
+            return True
+        except Exception as e:
+            logging.error(f"Error verificando conexión al MUX: {e}")
+            return False
+
     def select_channel(self, channel):
         """
         Selecciona un canal en el MUX.
