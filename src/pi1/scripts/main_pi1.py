@@ -283,8 +283,7 @@ def initialize_mux(config, alert_manager):
         mux_manager = MUXManager(
             i2c_bus=config['mux']['i2c_bus'],
             i2c_address=i2c_address,
-            alert_manager=alert_manager,
-            config_path=config_path
+            alert_manager=alert_manager
         )
 
         mux_manager.initialize_channels(channels)
