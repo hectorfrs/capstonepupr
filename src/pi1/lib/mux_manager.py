@@ -9,7 +9,7 @@ from utils.alert_manager import AlertManager
 @dataclass
 class MUXConfig:
     i2c_bus: int
-    i2c_address = int(config['mux']['i2c_address'], 16) if isinstance(config['mux']['i2c_address'], str) else config['mux']['i2c_address']
+    i2c_address: int
     channels: List[Dict[str, int]] = field(default_factory=list)
 
 class MUXManager:

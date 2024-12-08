@@ -55,6 +55,10 @@ class ConfigManager:
             if os.path.exists(self.config_path):
                 with open(self.config_path, "r") as file:
                     self.config = yaml.safe_load(file)
+                    # Convertir la dirección I2C si está en formato hexadecimal como string
+                    if 'mux' in self.config and 'i2c_address' in self.config['mux']:
+                        self.config['mux']['i2c_address'] = int(self.config['mux']['i2c_address'], 16) \
+                            if isinstance(self.config['mux']['i2c_address'], str) else self.config['mux']['i2c_address']
                     logging.info(f"Configuración cargada desde {self.config_path}")
             else:
                 logging.warning(f"El archivo de configuración no existe: {self.config_path}. Usando configuración predeterminada.")
