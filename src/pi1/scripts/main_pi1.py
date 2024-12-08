@@ -36,8 +36,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 sys.path.append("/usr/local/lib/python3.11/dist-packages")
 
 # Configuración de constantes
-MAX_RETRIES = 3
-DIAGNOSTICS_INTERVAL = 300  # Intervalo de diagnóstico en segundos
+MAX_RETRIES = config["system"]["max_retries"]
+DIAGNOSTICS_INTERVAL = config["system"]["diagnostics_interval"]
 config_path = "/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml"
 
 # Clase Auxiliar para redirigir la salida
@@ -242,6 +242,15 @@ def run_diagnostics(config, mux_manager, sensors, alert_manager):
         logging.info("Ejecutando diagnósticos del MUX...")
         run_mux_diagnostics(mux_manager, [ch['channel'] for ch in config['mux']['channels']], alert_manager)
 
+def diagnostics_loop(config, mux_manager, sensors, alert_manager):
+    while True:
+        try:
+            run_diagnostics(config, mux_manager, sensors, alert_manager)
+            time.sleep(config["system"]["diagnostics_interval"])
+        except Exception as e:
+            logging.error(f"Error en el loop de diagnósticos: {e}")
+            break
+        
 # Reinicio Automatico
 def restart_system(config):
     """
@@ -270,15 +279,19 @@ def restart_system(config):
 
 def initialize_mux(config, alert_manager):
     try:
+        channels = [ch["channel"] for ch in config["mux"]["channels"]]
         mux_config = MUXConfig(**config['mux'])
         i2c_address = int(config['mux']['i2c_address'], 16) if isinstance(config['mux']['i2c_address'], str) else config['mux']['i2c_address']
         mux_manager = MUXManager(i2c_bus=config['mux']['i2c_bus'], i2c_address=i2c_address, alert_manager=alert_manager)
+        mux_manager.initialize_channels(channels)
+        logging.info(f"MUX inicializado con canales: {channels}")
+
         if not mux_manager.is_mux_connected():
             raise RuntimeError("MUX no conectado o no accesible.")
         logging.info("MUX inicializado correctamente.")
         return mux_manager
     except Exception as e:
-        logging.critical(f"Error inicializando el MUX: {e}")
+        logging.critical(f"Error inicializando el MUX: {e}", exc_info=True)
         alert_manager.send_alert(
             level="CRITICAL",
             message="Error inicializando el MUX.",
@@ -399,7 +412,9 @@ def main():
 
             # Detectar y Actualizar Canales Activos
             try:
-                active_channels = mux_manager.detect_active_channels()
+                channels = [ch["channel"] for ch in config["mux"]["channels"]]
+                mux_manager.initialize_channels(channels)
+
                 #config_manager.set_value('mux', 'active_channels', active_channels)
                 logging.info(f"Canales activos detectados y actualizados: {active_channels}")
             except Exception as e:

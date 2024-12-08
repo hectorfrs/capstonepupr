@@ -12,7 +12,6 @@ class MUXConfig:
     i2c_bus: int
     i2c_address: int
     channels: List[Dict[str, int]] = field(default_factory=list)
-    #active_channels: List[int] = field(default_factory=list)
 class MUXManager:
     def __init__(self, i2c_bus: int, i2c_address: int, alert_manager: Optional[AlertManager] = None, config: Optional[Dict] = None):
         """
@@ -214,27 +213,28 @@ class MUXManager:
                 )
         return diagnostics
     
-    def initialize_channels(self, channels):
-            """
-            Inicializa los canales especificados en el MUX.
+    def initialize_mux(config, alert_manager):
+        try:
+            # Elimina "active_channels" si está presente
+            mux_config_data = {k: v for k, v in config['mux'].items() if k != 'active_channels'}
+            mux_config = MUXConfig(**mux_config_data)
 
-            :param channels: Lista de números de canal a inicializar.
-            """
-            for channel in channels:
-                if not (0 <= channel <= 7):  # Rango válido para canales
-                    raise ValueError(f"Canal {channel} fuera de rango.")
-                try:
-                    self.select_channel(channel)  # Activar el canal en el MUX
-                    self.status[channel] = True  # Registrar el estado como activo
-                    logging.info(f"Canal {channel} inicializado correctamente.")
-                except Exception as e:
-                    logging.error(f"Error inicializando canal {channel}: {e}")
-                    if self.alert_manager:
-                        self.alert_manager.send_alert(
-                            level="ERROR",
-                            message=f"Error inicializando canal {channel}",
-                            metadata={"channel": channel, "error": str(e)}
-                        )
+            i2c_address = int(config['mux']['i2c_address'], 16) if isinstance(config['mux']['i2c_address'], str) else config['mux']['i2c_address']
+            mux_manager = MUXManager(i2c_bus=mux_config.i2c_bus, i2c_address=i2c_address, alert_manager=alert_manager)
+
+            if not mux_manager.is_mux_connected():
+                raise RuntimeError("MUX no conectado o no accesible.")
+
+            logging.info("MUX inicializado correctamente.")
+            return mux_manager
+        except Exception as e:
+            logging.critical(f"Error inicializando el MUX: {e}", exc_info=True)
+            alert_manager.send_alert(
+                level="CRITICAL",
+                message="Error inicializando el MUX.",
+                metadata={"error": str(e)}
+            )
+            raise
 
 
     def is_channel_active(self, channel: int):
