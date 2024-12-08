@@ -213,6 +213,29 @@ class MUXManager:
                     metadata={"error": str(e)}
                 )
         return diagnostics
+    
+    def initialize_channels(self, channels):
+            """
+            Inicializa los canales especificados en el MUX.
+
+            :param channels: Lista de números de canal a inicializar.
+            """
+            for channel in channels:
+                if not (0 <= channel <= 7):  # Rango válido para canales
+                    raise ValueError(f"Canal {channel} fuera de rango.")
+                try:
+                    self.select_channel(channel)  # Activar el canal en el MUX
+                    self.status[channel] = True  # Registrar el estado como activo
+                    logging.info(f"Canal {channel} inicializado correctamente.")
+                except Exception as e:
+                    logging.error(f"Error inicializando canal {channel}: {e}")
+                    if self.alert_manager:
+                        self.alert_manager.send_alert(
+                            level="ERROR",
+                            message=f"Error inicializando canal {channel}",
+                            metadata={"channel": channel, "error": str(e)}
+                        )
+
 
     def is_channel_active(self, channel: int):
         """

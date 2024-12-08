@@ -17,6 +17,8 @@ system:
   enable_power_saving: true           # Modo de ahorro de energía
   metrics_interval: 60                # Intervalo de métricas en segundos
   processing_time_alert_ms: 500       # Tiempo máximo de procesamiento en milisegundos
+  diagnostics_interval: 300           # Intervalo de diagnósticos en segundos
+  max_retries: 3                      # Número máximo de reintentos
 
 network:
   ethernet:
