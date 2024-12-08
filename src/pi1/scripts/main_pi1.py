@@ -36,8 +36,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 sys.path.append("/usr/local/lib/python3.11/dist-packages")
 
 # Configuración de constantes
-# MAX_RETRIES = 3
-# DIAGNOSTICS_INTERVAL = 300
+MAX_RETRIES = 3
+DIAGNOSTICS_INTERVAL = 300
 config_path = "/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml"
 
 # Clase Auxiliar para redirigir la salida
@@ -361,21 +361,23 @@ def main():
     mux_manager = None
     sensors = []
     last_diagnostics_time = time.time()
-
+    config_path = "/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml"
+    
     while retries < MAX_RETRIES:
         try:
             # Cargar configuración
+            config_path = "/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml"
             config_manager = RealTimeConfigManager(config_path)
             config_manager.start_monitoring()
             config = config_manager.get_config()
             validate_config(config)
 
-             # Usa la configuración cargada
-            MAX_RETRIES = config["system"]["max_retries"]
-            DIAGNOSTICS_INTERVAL = config["system"]["diagnostics_interval"]
+            #  # Usa la configuración cargada
+            # MAX_RETRIES = config["system"]["max_retries"]
+            # DIAGNOSTICS_INTERVAL = config["system"]["diagnostics_interval"]
 
-            # Resto de tu inicialización y lógica principal...
-            logging.info(f"MAX_RETRIES: {MAX_RETRIES}, DIAGNOSTICS_INTERVAL: {DIAGNOSTICS_INTERVAL}")
+            # # Resto de tu inicialización y lógica principal...
+            # logging.info(f"MAX_RETRIES: {MAX_RETRIES}, DIAGNOSTICS_INTERVAL: {DIAGNOSTICS_INTERVAL}")
 
             # Configurar logging
             configure_logging(config)
