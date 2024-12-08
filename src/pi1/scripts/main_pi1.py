@@ -14,7 +14,7 @@ from datetime import datetime
 from logging.handlers import RotatingFileHandler
 
 # Importar módulos personalizados
-from lib.mux_manager import MUXManager
+from lib.mux_manager import MUXManager, MUXConfig
 from utils.sensor_manager import SensorManager
 from lib.as7265x import CustomAS7265x
 from utils.mqtt_publisher import MQTTPublisher
