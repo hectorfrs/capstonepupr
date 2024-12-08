@@ -13,7 +13,7 @@ class MUXConfig:
     i2c_address: int
     channels: List[Dict[str, int]] = field(default_factory=list)
 class MUXManager:
-    def __init__(self, i2c_bus: int, i2c_address: int, alert_manager: Optional[AlertManager] = None, config: Optional[Dict] = None):
+    def __init__(self, i2c_bus: int, i2c_address: int, alert_manager: Optional[AlertManager] = None, config: Optional[Dict] = None, config_path=None):
         """
         Inicializa el MUXManager con la configuración del MUX.
 
