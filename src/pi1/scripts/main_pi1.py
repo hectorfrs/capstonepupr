@@ -284,7 +284,7 @@ def initialize_mux(config, alert_manager):
             i2c_bus=config['mux']['i2c_bus'],
             i2c_address=i2c_address,
             alert_manager=alert_manager,
-            config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml"
+            config_path=config_path
         )
 
         mux_manager.initialize_channels(channels)
