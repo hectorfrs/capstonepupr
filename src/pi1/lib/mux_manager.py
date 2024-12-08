@@ -11,6 +11,7 @@ class MUXConfig:
     i2c_bus: int
     i2c_address: int
     channels: List[Dict[str, int]] = field(default_factory=list)
+    active_channels: List[int] = field(default_factory=list)
 class MUXManager:
     def __init__(self, i2c_bus: int, i2c_address: int, alert_manager: Optional[AlertManager] = None, config: Optional[Dict] = None):
         """
@@ -22,14 +23,20 @@ class MUXManager:
         :param config: Configuración del MUX (opcional)
         """
         print("Clase MUXManager cargada con soporte para 'config'")
+        self.config = MUXConfig(
+        i2c_bus=self.i2c_bus,
+        i2c_address=self.i2c_address,
+        channels=config.get("channels", []),
+        active_channels=config.get("active_channels", []),
+        )
         self.i2c_bus = i2c_bus
         self.i2c_address = i2c_address
         self.alert_manager = alert_manager
         self.bus = SMBus(i2c_bus)
         self.status = {}
         if isinstance(config, dict):
-            config_mux = config.get('mux', {})
-            config_mux.pop('active_channels', None)  # Elimina active_channels si existe
+            #config_mux = config.get('mux', {})
+            #config_mux.pop('active_channels', None)  # Elimina active_channels si existe
             self.config = MUXConfig(**config)
         else:
             self.config = config if config else MUXConfig(i2c_bus=i2c_bus, i2c_address=i2c_address)
