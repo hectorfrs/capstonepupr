@@ -36,8 +36,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 sys.path.append("/usr/local/lib/python3.11/dist-packages")
 
 # Configuración de constantes
-MAX_RETRIES = 3
-DIAGNOSTICS_INTERVAL = 300
+# MAX_RETRIES = 3
+# DIAGNOSTICS_INTERVAL = 300
 config_path = "/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml"
 
 # Clase Auxiliar para redirigir la salida
@@ -256,8 +256,6 @@ def restart_system(config):
     """
     Reinicia el sistema en caso de falla crítica si está habilitado en el config.yaml.
     """
-    MAX_RETRIES = 3
-    retries = 0
     while retries < MAX_RETRIES:
         try:
             if config['system'].get('enable_auto_restart', False):
@@ -375,6 +373,9 @@ def main():
              # Usa la configuración cargada
             MAX_RETRIES = config["system"]["max_retries"]
             DIAGNOSTICS_INTERVAL = config["system"]["diagnostics_interval"]
+
+            # Resto de tu inicialización y lógica principal...
+            logging.info(f"MAX_RETRIES: {MAX_RETRIES}, DIAGNOSTICS_INTERVAL: {DIAGNOSTICS_INTERVAL}")
 
             # Configurar logging
             configure_logging(config)
