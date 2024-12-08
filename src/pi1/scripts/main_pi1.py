@@ -36,8 +36,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 sys.path.append("/usr/local/lib/python3.11/dist-packages")
 
 # Configuración de constantes
-MAX_RETRIES = config["system"]["max_retries"]
-DIAGNOSTICS_INTERVAL = config["system"]["diagnostics_interval"]
+MAX_RETRIES = 3
+DIAGNOSTICS_INTERVAL = 300
 config_path = "/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml"
 
 # Clase Auxiliar para redirigir la salida
@@ -250,7 +250,7 @@ def diagnostics_loop(config, mux_manager, sensors, alert_manager):
         except Exception as e:
             logging.error(f"Error en el loop de diagnósticos: {e}")
             break
-        
+
 # Reinicio Automatico
 def restart_system(config):
     """
@@ -371,6 +371,10 @@ def main():
             config_manager.start_monitoring()
             config = config_manager.get_config()
             validate_config(config)
+
+             # Usa la configuración cargada
+            MAX_RETRIES = config["system"]["max_retries"]
+            DIAGNOSTICS_INTERVAL = config["system"]["diagnostics_interval"]
 
             # Configurar logging
             configure_logging(config)
