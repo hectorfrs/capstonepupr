@@ -5,6 +5,7 @@ import logging
 from smbus2 import SMBus
 from lib.mux_controller import MUXController
 from utils.alert_manager import AlertManager
+from utils.config_manager import ConfigManager
 
 @dataclass
 class MUXConfig:
@@ -22,18 +23,16 @@ class MUXManager:
         :param alert_manager: Instancia del AlertManager para manejar alertas (opcional)
         :param config: Configuración del MUX (opcional)
         """
-        print("Clase MUXManager cargada con soporte para 'config'")
-        self.config = MUXConfig(
-        i2c_bus=self.i2c_bus,
-        i2c_address=self.i2c_address,
-        channels=config.get("channels", []),
-        #active_channels=config.get("active_channels", []),
-        )
+        self.config_manager = ConfigManager()
+        self.config = self.config_manager.config
+        self.channels = self.config_manager.get_mux_channels()
         self.i2c_bus = i2c_bus
         self.i2c_address = i2c_address
         self.alert_manager = alert_manager
         self.bus = SMBus(i2c_bus)
+        self.mux = MUXController(i2c_bus=self.i2c_bus, i2c_address=self.i2c_address)
         self.status = {}
+        logging.info(f"MUX conectado en I2C Bus: {self.i2c_bus}, Dirección: {hex(self.i2c_address)}.")
         if isinstance(config, dict):
             #config_mux = config.get('mux', {})
             #config_mux.pop('active_channels', None)  # Elimina active_channels si existe
@@ -180,22 +179,19 @@ class MUXManager:
                 )
 
     def detect_active_channels(self):
-        """
-        Detecta los canales definidos en el archivo de configuración.
-        """
-        #active_channels = []
-        for channel in self.config.channels:
+        detected_channels = []
+        for channel in self.channels:
             try:
                 self.select_channel(channel["channel"])
                 if self.verify_sensor_on_channel(channel["channel"]):
-                    active_channels.append(channel["channel"])
+                    detected_channels.append(channel["channel"])
                     logging.info(f"Canal {channel['channel']} activo con sensor {channel['sensor_name']}.")
                 else:
                     logging.warning(f"Canal {channel['channel']} no tiene sensor.")
             except Exception as e:
                 logging.error(f"Error verificando canal {channel['channel']}: {e}")
         self.disable_all_channels()
-        return active_channels
+        return detected_channels
 
 
     def run_diagnostics(self):

@@ -38,7 +38,6 @@ mux:                              # Configuración del MUX de SparkFun
       sensor_name: "AS7265x_2"    
     - channel: 7
       sensor_name: "AS7265x_3"
-  active_channels: [0, 4, 7]      # Inclúyelo solo si es relevante para tu configuración
 
 sensors:
   as7265x:

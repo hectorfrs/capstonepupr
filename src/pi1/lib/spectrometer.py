@@ -1,3 +1,4 @@
+# spectrometer.py - Clase para interactuar con el SparkFun Triad Spectroscopy Sensor.
 import time
 from smbus2 import SMBus
 

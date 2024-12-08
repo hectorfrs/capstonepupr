@@ -26,6 +26,7 @@ from utils.performance_tracker import PerformanceTracker
 from utils.real_time_config import RealTimeConfigManager
 from lib.sensor_diagnostics import run_sensor_diagnostics
 from lib.mux_diagnostics import run_mux_diagnostics
+from utils.config_manager import ConfigManager
 
 # Agregar la ruta del proyecto al PYTHONPATH
 #print(sys.path)
