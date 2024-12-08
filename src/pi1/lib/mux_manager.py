@@ -1,10 +1,10 @@
 # mux_manager.py - Clase para manejar dinámicamente el estado y la configuración del MUX.
+from dataclasses import dataclass, field
+from typing import List, Dict, Optional
 import logging
 from smbus2 import SMBus
 from lib.mux_controller import MUXController
 from utils.alert_manager import AlertManager
-from dataclasses import dataclass, field
-from typing import List, Dict, Optional
 
 @dataclass
 class MUXConfig:

@@ -393,11 +393,6 @@ def main():
 
             # Inicialización del MUX
             logging.info("Inicializando MUX...")
-            # Convertir el diccionario de configuración a una instancia de MUXConfig
-            mux_config = MUXConfig(**config_dict.get('mux', {}))
-
-            # Crear una instancia de MUXManager con la configuración correcta
-            mux_manager = MUXManager(i2c_bus=mux_config.i2c_bus, i2c_address=mux_config.i2c_address, config=mux_config)
             mux_manager = initialize_mux(config, alert_manager)
 
             if mux_manager is None:
