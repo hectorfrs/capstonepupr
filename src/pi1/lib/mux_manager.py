@@ -47,6 +47,31 @@ class MUXManager:
                     metadata={"error": str(e)}
                 )
             raise
+        
+    def initialize_channels(self, channels: List[int]):
+        """
+        Inicializa los canales especificados para el MUX.
+
+        :param channels: Lista de números de canal a inicializar.
+        """
+        try:
+            for channel in channels:
+                if not (0 <= channel <= 7):  # Verificar que el canal esté en el rango permitido
+                    raise ValueError(f"Canal {channel} fuera de rango (0-7).")
+                # Registrar el estado del canal
+                self.select_channel(channel)
+                logging.info(f"Canal {channel} inicializado correctamente.")
+            # Desactivar todos los canales después de la inicialización
+            self.disable_all_channels()
+        except Exception as e:
+            logging.error(f"Error inicializando canales: {e}")
+            if self.alert_manager:
+                self.alert_manager.send_alert(
+                    level="CRITICAL",
+                    message="Error inicializando canales del MUX.",
+                    metadata={"error": str(e)},
+                )
+            raise
 
     def validate_connection(self):
         """
@@ -173,22 +198,6 @@ class MUXManager:
                     metadata={"channel": channel, "error": str(e)}
                 )
 
-    def detect_active_channels(self):
-        detected_channels = []
-        for channel in self.channels:
-            try:
-                self.select_channel(channel["channel"])
-                if self.verify_sensor_on_channel(channel["channel"]):
-                    detected_channels.append(channel["channel"])
-                    logging.info(f"Canal {channel['channel']} activo con sensor {channel['sensor_name']}.")
-                else:
-                    logging.warning(f"Canal {channel['channel']} no tiene sensor.")
-            except Exception as e:
-                logging.error(f"Error verificando canal {channel['channel']}: {e}")
-        self.disable_all_channels()
-        return detected_channels
-
-
     def run_diagnostics(self):
         """
         Ejecuta diagnósticos básicos en el MUX.
@@ -209,30 +218,6 @@ class MUXManager:
                 )
         return diagnostics
     
-    def initialize_mux(config, alert_manager):
-        try:
-            # Elimina "active_channels" si está presente
-            mux_config_data = {k: v for k, v in config['mux'].items() if k != 'active_channels'}
-            mux_config = MUXConfig(**mux_config_data)
-
-            i2c_address = int(config['mux']['i2c_address'], 16) if isinstance(config['mux']['i2c_address'], str) else config['mux']['i2c_address']
-            mux_manager = MUXManager(i2c_bus=mux_config.i2c_bus, i2c_address=i2c_address, alert_manager=alert_manager)
-
-            if not mux_manager.is_mux_connected():
-                raise RuntimeError("MUX no conectado o no accesible.")
-
-            logging.info("MUX inicializado correctamente.")
-            return mux_manager
-        except Exception as e:
-            logging.critical(f"Error inicializando el MUX: {e}", exc_info=True)
-            alert_manager.send_alert(
-                level="CRITICAL",
-                message="Error inicializando el MUX.",
-                metadata={"error": str(e)}
-            )
-            raise
-
-
     def is_channel_active(self, channel: int):
         """
         Verifica si un canal específico está activo en el MUX.
