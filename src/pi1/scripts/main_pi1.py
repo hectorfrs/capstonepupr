@@ -307,7 +307,7 @@ def initialize_mux(config, alert_manager):
 # Inicialización de Sensores
 def initialize_sensors(config, mux_manager):
     try:
-        sensor_manager = SensorManager(config=config['sensor'], mux_manager=mux_manager)
+        sensor_manager = SensorManager(config=config['sensors'], mux_manager=mux_manager)
         sensor_manager.initialize_sensors(mux_manager)
         return sensor_manager.sensors
     except Exception as e:
@@ -339,7 +339,7 @@ def process_sensor(sensor, channel, mux_manager, alert_manager):
         if sensor.is_powered_off():
             raise RuntimeError(f"Sensor {sensor.name} está apagado. No se puede leer datos.")
 
-        mux_manager.activate_channel(channel)
+        mux_manager.select_channel(channel)
         data = sensor.read_advanced_spectrum()
         logging.info(f"Datos del sensor {sensor.name}: {data}")
 
@@ -396,11 +396,9 @@ def main():
             )
 
             # Configurar red y monitoreo
-            logging.info("Iniciando monitoreo de red...")
             network_manager = NetworkManager(config)
             network_manager.start_monitoring()
-            logging.info("Monitoreo de red iniciado.")
-
+            
             # Enviar alerta de red
             if not network_manager.is_connected():
                 alert_manager.send_alert(
@@ -420,7 +418,6 @@ def main():
             if mux_manager is None:
                 logging.critical("MUXManager no se inicializó correctamente. Abortando.")
                 raise RuntimeError("MUXManager no inicializado")
-            logging.info("MUX inicializado correctamente.")
 
             # Detectar y Actualizar Canales Activos
             try:

@@ -20,7 +20,7 @@ class MUXController:
         self.bus = SMBus(i2c_bus)
         try:
             self.i2c = SMBus(self.i2c_bus)
-            logging.info(f"Bus I2C {self.i2c_bus} inicializado correctamente.")
+            logging.info(f"Bus I2C {self.i2c_bus} Inicializando...")
         except Exception as e:
             logging.error(f"Error inicializando el bus I2C: {e}")
             raise

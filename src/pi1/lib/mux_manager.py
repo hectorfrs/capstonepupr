@@ -27,15 +27,14 @@ class MUXManager:
         self.bus = SMBus(i2c_bus)
         self.mux = MUXController(i2c_bus=self.i2c_bus, i2c_address=self.i2c_address)
         self.status = {}
-        logging.info(f"MUX conectado en I2C Bus: {self.i2c_bus}, Dirección: {hex(self.i2c_address)}.")
+        logging.info(f"MUX se encuentra en I2C Bus: {self.i2c_bus}, Dirección: {hex(self.i2c_address)}.")
         if isinstance(config, dict):
             #config_mux = config.get('mux', {})
             #config_mux.pop('active_channels', None)  # Elimina active_channels si existe
             self.config = MUXConfig(**config['mux'])
         else:
             self.config = config if config else MUXConfig(i2c_bus=i2c_bus, i2c_address=i2c_address)
-        self.mux = MUXController(i2c_bus=self.i2c_bus, i2c_address=self.i2c_address)
-        logging.info(f"MUX conectado en I2C Bus: {self.i2c_bus}, Dirección: {hex(self.i2c_address)}.")
+            self.mux = MUXController(i2c_bus=self.i2c_bus, i2c_address=self.i2c_address)
         try:
             logging.info("MUX inicializado correctamente.")
         except Exception as e:
@@ -123,7 +122,7 @@ class MUXManager:
                 raise ValueError(f"Canal {channel} fuera de rango (0-7).")
             self.bus.write_byte(self.i2c_address, 1 << channel)
             self.status[channel] = True
-            logging.info(f"Canal {channel} activado en el MUX.")
+            logging.info(f"Canal {channel} seleccionado en el MUX.")
         except ValueError as ve:
             logging.error(f"Error de valor: {ve}")
             if self.alert_manager:
