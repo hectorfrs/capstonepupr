@@ -290,7 +290,7 @@ def initialize_mux(config, alert_manager):
 # Inicialización de Sensores
 def initialize_sensors(config, mux_manager):
     try:
-        sensor_manager = SensorManager(config=config, mux_manager=mux_manager)
+        sensor_manager = SensorManager(config=config['sensor'], mux_manager=mux_manager)
         sensor_manager.initialize_sensors(mux_manager)
         return sensor_manager.sensors
     except Exception as e:
