@@ -23,7 +23,7 @@ class MUXManager:
         :param config: Configuración del MUX (opcional)
         """
         self.config_manager = ConfigManager(config_path)
-        self.config = self.config_manager.get_config
+        self.config = self.config_manager.config
         self.channels = self.config_manager.get_mux_channels()
         self.i2c_bus = i2c_bus
         self.i2c_address = i2c_address
