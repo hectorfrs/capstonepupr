@@ -214,7 +214,6 @@ def run_power_saving_mode(sensors, mux_manager, enabled):
             else:
                 logging.warning(f"El sensor {sensor.name} no tiene un método 'power_off'.")
         mux_manager.disable_all_channels()
-        logging.info("Todos los canales del MUX han sido desactivados.")
     except Exception as e:
         logging.error(f"Error en el modo de ahorro de energía: {e}")
 
@@ -317,18 +316,18 @@ def initialize_sensors(config, mux_manager):
         raise
 
 
-def process_channels(mux_manager):
-    try:
-        active_channels = mux_manager.detect_active_channels()
-        for channel in active_channels:
-            try:
-                mux_manager.activate_channel(channel)
-                logging.info(f"Canal {channel} activado.")
-                # Otras operaciones aquí
-            finally:
-                mux_manager.deactivate_channel(channel)
-    except Exception as e:
-        logging.error(f"Error procesando canales del MUX: {e}")
+# def process_channels(mux_manager):
+#     try:
+#         active_channels = mux_manager.detect_active_channels()
+#         for channel in active_channels:
+#             try:
+#                 mux_manager.activate_channel(channel)
+#                 logging.info(f"Canal {channel} activado.")
+#                 # Otras operaciones aquí
+#             finally:
+#                 mux_manager.deactivate_channel(channel)
+#     except Exception as e:
+#         logging.error(f"Error procesando canales del MUX: {e}")
 
 def process_sensor(sensor, channel, mux_manager, alert_manager):
     """
@@ -430,7 +429,7 @@ def main():
                 mux_manager.initialize_channels(channels)
 
                 #config_manager.set_value('mux', 'active_channels', active_channels)
-                logging.info(f"Canales activos detectados y actualizados: {active_channels}")
+                #logging.info(f"Canales activos detectados y actualizados: {active_channels}")
             except Exception as e:
                 logging.critical(f"Error detectando canales activos: {e}")
                 alert_manager.send_alert(

@@ -47,7 +47,7 @@ class MUXManager:
                     metadata={"error": str(e)}
                 )
             raise
-        
+
     def initialize_channels(self, channels: List[int]):
         """
         Inicializa los canales especificados para el MUX.
@@ -159,25 +159,12 @@ class MUXManager:
                 )
 
     def get_status(self):
-        """
-        Obtiene el estado actual de los canales del MUX.
-
-        :return: Diccionario con el estado de cada canal.
-        """
         try:
-            channel_states = self.mux.get_channel_states()
-            status = {channel: bool(channel_states & (1 << channel)) for channel in range(8)}
-            logging.info(f"Estado del MUX: {status}")
-            return status
+            logging.info("Estado del MUX consultado, pero omitido debido a diseño actual.")
+            return {}
         except Exception as e:
             logging.error(f"Error obteniendo estado del MUX: {e}")
-            if self.alert_manager:
-                self.alert_manager.send_alert(
-                    level="ERROR",
-                    message="Error obteniendo estado del MUX.",
-                    metadata={"error": str(e)}
-                )
-            return {}
+
 
     def reset_channel(self, channel: int):
         """
