@@ -269,11 +269,12 @@ def restart_system(config):
 
 def initialize_mux(config, alert_manager):
     try:
+        mux_config = MUXConfig(**config['mux'])
         mux_manager = MUXManager(
-            i2c_bus=config['mux']['i2c_bus'],
-            i2c_address=config['mux']['i2c_address'],
+            i2c_bus=mux_config.i2c_bus,
+            i2c_address=mux_config.i2c_address,
             alert_manager=alert_manager,
-            config=config
+            config=mux_config
         )
         if not mux_manager.is_mux_connected():
             raise RuntimeError("MUX no conectado o no accesible.")
@@ -392,6 +393,11 @@ def main():
 
             # Inicialización del MUX
             logging.info("Inicializando MUX...")
+            # Convertir el diccionario de configuración a una instancia de MUXConfig
+            mux_config = MUXConfig(**config_dict.get('mux', {}))
+
+            # Crear una instancia de MUXManager con la configuración correcta
+            mux_manager = MUXManager(i2c_bus=mux_config.i2c_bus, i2c_address=mux_config.i2c_address, config=mux_config)
             mux_manager = initialize_mux(config, alert_manager)
 
             if mux_manager is None:

@@ -8,10 +8,12 @@ from typing import List, Dict, Optional
 
 @dataclass
 class MUXConfig:
+    i2c_bus: int
+    i2c_address: int
     channels: List[Dict[str, int]] = field(default_factory=list)
 
 class MUXManager:
-    def __init__(self, i2c_bus: int, i2c_address: int, alert_manager: Optional[AlertManager] = None, config: Optional[MUXConfig] = None):
+    def __init__(self, i2c_bus: int, i2c_address: int, alert_manager: Optional[AlertManager] = None, config: Optional[Dict] = None):
         """
         Inicializa el MUXManager con la configuración del MUX.
 
@@ -25,7 +27,10 @@ class MUXManager:
         self.i2c_address = i2c_address
         self.alert_manager = alert_manager
         self.bus = SMBus(i2c_bus)
-        self.config = config if config else MUXConfig()
+        if isinstance(config, dict):
+            self.config = MUXConfig(**config)
+        else:
+            self.config = config if config else MUXConfig(i2c_bus=i2c_bus, i2c_address=i2c_address)
         self.mux = MUXController(i2c_bus=self.i2c_bus, i2c_address=self.i2c_address)
         logging.info(f"MUX conectado en I2C Bus: {self.i2c_bus}, Dirección: {hex(self.i2c_address)}.")
         try:
