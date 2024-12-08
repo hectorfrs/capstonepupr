@@ -11,7 +11,7 @@ class MUXConfig:
     i2c_bus: int
     i2c_address: int
     channels: List[Dict[str, int]] = field(default_factory=list)
-
+    active_channels: List[int] = field(default_factory=list) 
 class MUXManager:
     def __init__(self, i2c_bus: int, i2c_address: int, alert_manager: Optional[AlertManager] = None, config: Optional[Dict] = None):
         """
@@ -29,6 +29,8 @@ class MUXManager:
         self.bus = SMBus(i2c_bus)
         self.status = {}
         if isinstance(config, dict):
+            #config_mux = config.get('mux', {})
+            #config_mux.pop('active_channels', None)  # Elimina active_channels si existe
             self.config = MUXConfig(**config)
         else:
             self.config = config if config else MUXConfig(i2c_bus=i2c_bus, i2c_address=i2c_address)
