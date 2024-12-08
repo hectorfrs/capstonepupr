@@ -115,7 +115,11 @@ def validate_config(config):
     """
     required_keys = {
         'mux': ['i2c_address', 'i2c_bus', 'channels'],
-        'sensors': ['as7265x', 'read_interval']
+        'sensors': ['as7265x', 'read_interval'],
+        'mqtt': ['topics'],
+        'logging': ['log_file', 'error_log_file'],
+        'network': ['ethernet'],
+        'system': ['enable_detailed_logging', 'enable_auto_restart', 'enable_power_saving']
     }
     for section, keys in required_keys.items():
         if section not in config:
@@ -335,19 +339,20 @@ def process_sensor(sensor, channel, mux_manager, alert_manager):
     finally:
         mux_manager.deactivate_all_channels()
 
-# Funcion Principal
 def main():
     """
     Función principal del sistema.
     """
     print("Iniciando Sistema...")
     retries = 0
-    config_manager = None   # Inicialización temprana
-    mqtt_client = None      # Inicialización temprana
-    network_manager = None  # Inicialización temprana
-    alert_manager = None    # Inicialización temprana
-    mux_manager = None      # Inicialización temprana
-    sensors = []            # Inicialización temprana
+    config_manager = None
+    mqtt_client = None
+    network_manager = None
+    alert_manager = None
+    mux_manager = None
+    sensors = []
+    last_diagnostics_time = time.time()
+
     while retries < MAX_RETRIES:
         try:
             # Cargar configuración
@@ -393,6 +398,7 @@ def main():
                 logging.critical("MUXManager no se inicializó correctamente. Abortando.")
                 raise RuntimeError("MUXManager no inicializado")
             logging.info("MUX inicializado correctamente.")
+
             # Detectar y Actualizar Canales Activos
             try:
                 active_channels = mux_manager.detect_active_channels()
@@ -432,34 +438,35 @@ def main():
 
             # Loop principal
             logging.info("Detectando y Procesando Datos.")
-            last_diagnostics_time = time.time()
             while True:
+                current_time = time.time()
                 for sensor in sensors:
                     try:
                         mux_manager.select_channel(sensor.channel)
                         spectral_data = sensor.read_advanced_spectrum()
-                        if data:
+                        if spectral_data:
                             material = classify_material(spectral_data, config['plastic_thresholds'])
                             data_queue.put({
                                 "timestamp": datetime.now().isoformat(),
-                                "channel": channel,
-                                "data": data,
+                                "channel": sensor.channel,
+                                "data": spectral_data,
                                 "material": material,
                             })
-                            logging.info(f"Canal {channel} clasificado como: {material}")
+                            logging.info(f"Canal {sensor.channel} clasificado como: {material}")
                             if material in ["PET", "HDPE"]:
                                 activate_valve(material, mqtt_client)
 
                             logging.info(f"Material detectado: {material}.")
 
                     except Exception as e:
-                        logging.error(f"Error procesando datos del sensor {sensor.name} en canal {channel}: {e}")
+                        logging.error(f"Error procesando datos del sensor {sensor.name} en canal {sensor.channel}: {e}")
                     finally:
                         mux_manager.disable_all_channels()
 
                 # Diagnósticos periódicos
-                if time.time() % DIAGNOSTICS_INTERVAL == 0:
-                    sensor_manager.perform_diagnostics()
+                if current_time - last_diagnostics_time >= DIAGNOSTICS_INTERVAL:
+                    run_diagnostics(config, mux_manager, sensors, alert_manager)
+                    last_diagnostics_time = current_time
 
         except Exception as e:
             logging.critical(f"Error crítico en el sistema: {e}")
