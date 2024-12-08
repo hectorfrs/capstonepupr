@@ -160,7 +160,7 @@ class MUXManager:
 
     def get_status(self):
         try:
-            logging.info("Estado del MUX consultado, pero omitido debido a diseño actual.")
+            logging.info("Estado del MUX consultado, pero omitido por diseño.")
             return {}
         except Exception as e:
             logging.error(f"Error obteniendo estado del MUX: {e}")

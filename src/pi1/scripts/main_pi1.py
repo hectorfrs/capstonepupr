@@ -292,7 +292,6 @@ def initialize_mux(config, alert_manager):
             raise RuntimeError("MUX no conectado o no accesible.")
         logging.info("MUX inicializado correctamente.")
         mux_status = mux_manager.get_status()
-        logging.info(f"Estado del MUX después de la inicialización: {mux_status}")
         return mux_manager
     except Exception as e:
         logging.critical(f"Error inicializando el MUX: {e}", exc_info=True)
