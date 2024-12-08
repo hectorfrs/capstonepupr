@@ -5,7 +5,6 @@ class Spectrometer:
     """
     Clase para interactuar con el SparkFun Triad Spectroscopy Sensor.
     """
-    # Constantes de dirección y registros
     I2C_ADDR = 0x49
     STATUS_REG = 0x00
     WRITE_REG = 0x01
@@ -19,38 +18,29 @@ class Spectrometer:
         Inicializa el espectrómetro en el bus I2C especificado.
         """
         self.i2c = SMBus(i2c_bus)
-        # Inicialización del bus I2C
 
     def read_reg(self, addr):
         """
         Lee un registro del espectrómetro.
         """
-        # Verificar si hay datos disponibles para leer
-        try:
+        status = self.i2c.read_byte_data(self.I2C_ADDR, self.STATUS_REG)
+        if status & self.RX_VALID:
+            self.i2c.read_byte_data(self.I2C_ADDR, self.READ_REG)
+
+        while True:
+            status = self.i2c.read_byte_data(self.I2C_ADDR, self.STATUS_REG)
+            if not (status & self.TX_VALID):
+                break
+            time.sleep(self.POLLING_DELAY)
+
+        self.i2c.write_byte_data(self.I2C_ADDR, self.WRITE_REG, addr)
+        while True:
             status = self.i2c.read_byte_data(self.I2C_ADDR, self.STATUS_REG)
             if status & self.RX_VALID:
-                self.i2c.read_byte_data(self.I2C_ADDR, self.READ_REG)
+                break
+            time.sleep(self.POLLING_DELAY)
 
-            # Esperar hasta que el registro de escritura esté listo
-            while True:
-                status = self.i2c.read_byte_data(self.I2C_ADDR, self.STATUS_REG)
-                if not (status & self.TX_VALID):
-                    break
-                time.sleep(self.POLLING_DELAY)
-
-            # Escribir la dirección del registro que queremos leer
-            self.i2c.write_byte_data(self.I2C_ADDR, self.WRITE_REG, addr)
-            while True:
-                status = self.i2c.read_byte_data(self.I2C_ADDR, self.STATUS_REG)
-                if status & self.RX_VALID:
-                    break
-                time.sleep(self.POLLING_DELAY)
-
-            # Leer el valor del registro
-            return self.i2c.read_byte_data(self.I2C_ADDR, self.READ_REG)
-        except Exception as e:
-            print(f"Error leyendo el registro {addr}: {e}")
-        raise
+        return self.i2c.read_byte_data(self.I2C_ADDR, self.READ_REG)
 
     def write_reg(self, addr, data):
         """
@@ -75,9 +65,6 @@ class Spectrometer:
         """
         Configura el tiempo de integración.
         """
-        if not (1 <= time <= 255):
-            raise ValueError("El tiempo de integración debe estar entre 1 y 255.")
-        
         devices = ["AS72651", "AS72652", "AS72653"]
         for device in devices:
             self.set_devsel(device)
@@ -136,13 +123,6 @@ class Spectrometer:
         if device not in devsel_bits:
             raise ValueError("Dispositivo no válido.")
         self.write_reg(0x4f, devsel_bits[device])
-
-    def set_device_and_write(self, device, addr, data):
-        """
-        Selecciona el dispositivo y escribe en un registro.
-        """
-        self.set_devsel(device)
-        self.write_reg(addr, data)
 
     def ieee754_to_float(self, val_array):
         """

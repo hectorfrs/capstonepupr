@@ -11,7 +11,7 @@ class MUXConfig:
     i2c_bus: int
     i2c_address: int
     channels: List[Dict[str, int]] = field(default_factory=list)
-    active_channels: List[int] = field(default_factory=list)
+    #active_channels: List[int] = field(default_factory=list)
 class MUXManager:
     def __init__(self, i2c_bus: int, i2c_address: int, alert_manager: Optional[AlertManager] = None, config: Optional[Dict] = None):
         """
@@ -27,7 +27,7 @@ class MUXManager:
         i2c_bus=self.i2c_bus,
         i2c_address=self.i2c_address,
         channels=config.get("channels", []),
-        active_channels=config.get("active_channels", []),
+        #active_channels=config.get("active_channels", []),
         )
         self.i2c_bus = i2c_bus
         self.i2c_address = i2c_address
@@ -183,7 +183,7 @@ class MUXManager:
         """
         Detecta los canales definidos en el archivo de configuración.
         """
-        active_channels = []
+        #active_channels = []
         for channel in self.config.channels:
             try:
                 self.select_channel(channel["channel"])
