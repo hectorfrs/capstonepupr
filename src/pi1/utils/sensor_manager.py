@@ -7,7 +7,7 @@ class SensorManager:
     Clase para manejar múltiples sensores AS7265x conectados al MUX.
     """
 
-    def __init__(self, sensor_config, mux_manager, alert_manager=None):
+    def __init__(self, sensor_config, mux_manager, alert_manager=None, config=None):
         """
         Inicializa el administrador de sensores.
 
