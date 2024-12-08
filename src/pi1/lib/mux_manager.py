@@ -11,7 +11,6 @@ class MUXConfig:
     i2c_bus: int
     i2c_address: int
     channels: List[Dict[str, int]] = field(default_factory=list)
-    active_channels: List[int] = field(default_factory=list) 
 class MUXManager:
     def __init__(self, i2c_bus: int, i2c_address: int, alert_manager: Optional[AlertManager] = None, config: Optional[Dict] = None):
         """
@@ -175,7 +174,7 @@ class MUXManager:
 
     def detect_active_channels(self):
         """
-        Detecta los canales activos en el MUX probando solo los configurados en `config.yaml`.
+        Detecta los canales definidos en el archivo de configuración.
         """
         active_channels = []
         for channel in self.config.channels:
@@ -183,13 +182,14 @@ class MUXManager:
                 self.select_channel(channel["channel"])
                 if self.verify_sensor_on_channel(channel["channel"]):
                     active_channels.append(channel["channel"])
-                    logging.info(f"Canal {channel['channel']} activo con sensor.")
+                    logging.info(f"Canal {channel['channel']} activo con sensor {channel['sensor_name']}.")
                 else:
                     logging.warning(f"Canal {channel['channel']} no tiene sensor.")
             except Exception as e:
                 logging.error(f"Error verificando canal {channel['channel']}: {e}")
         self.disable_all_channels()
         return active_channels
+
 
     def run_diagnostics(self):
         """

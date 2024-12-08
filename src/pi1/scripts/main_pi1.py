@@ -399,7 +399,7 @@ def main():
             # Detectar y Actualizar Canales Activos
             try:
                 active_channels = mux_manager.detect_active_channels()
-                config_manager.set_value('mux', 'active_channels', active_channels)
+                #config_manager.set_value('mux', 'active_channels', active_channels)
                 logging.info(f"Canales activos detectados y actualizados: {active_channels}")
             except Exception as e:
                 logging.critical(f"Error detectando canales activos: {e}")
