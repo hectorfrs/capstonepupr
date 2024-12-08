@@ -28,8 +28,8 @@ class MUXManager:
         self.bus = SMBus(i2c_bus)
         self.status = {}
         if isinstance(config, dict):
-            #config_mux = config.get('mux', {})
-            #config_mux.pop('active_channels', None)  # Elimina active_channels si existe
+            config_mux = config.get('mux', {})
+            config_mux.pop('active_channels', None)  # Elimina active_channels si existe
             self.config = MUXConfig(**config)
         else:
             self.config = config if config else MUXConfig(i2c_bus=i2c_bus, i2c_address=i2c_address)
