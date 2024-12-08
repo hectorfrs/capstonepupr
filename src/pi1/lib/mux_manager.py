@@ -6,7 +6,7 @@ from utils.alert_manager import AlertManager
 
 
 class MUXManager:
-    def __init__(self, i2c_bus, i2c_address, alert_manager=None):
+    def __init__(self, i2c_bus, i2c_address, alert_manager=None, config=None):
         """
         Inicializa el MUXManager con la configuración del MUX.
 
@@ -15,6 +15,7 @@ class MUXManager:
         :param alert_manager: Instancia del AlertManager para manejar alertas (opcional)
         
         """
+        print("Clase MUXManager cargada con soporte para 'config'")
         self.i2c_bus = i2c_bus
         self.i2c_address = i2c_address
         self.alert_manager = alert_manager
