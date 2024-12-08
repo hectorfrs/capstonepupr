@@ -17,6 +17,7 @@ class MUXController:
         """
         self.i2c_bus = i2c_bus
         self.i2c_address = i2c_address
+        self.bus = SMBus(i2c_bus)
         try:
             self.i2c = SMBus(self.i2c_bus)
             logging.info(f"Bus I2C {self.i2c_bus} inicializado correctamente.")
