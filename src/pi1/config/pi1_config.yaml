@@ -30,23 +30,39 @@ network:
     ip: "192.168.2.145"           # Dirección IP estática para Wi-Fi
     gateway: "192.168.2.1"        # Puerta de enlace para Wi-Fi
 
-mux:                              # Configuración del MUX de SparkFun     
-  i2c_address: 0x70               # Dirección I2C del MUX de SparkFun (0x70)
-  i2c_bus: 1                      # Bus I2C donde está conectado el MUX y los sensores
-  channels:                       # Canales asignados a los sensores AS7265x
-    - channel: 0                  
-      sensor_name: "AS7265x_1"    # Address del sensor AS7265x en el canal 0 0X49
-    - channel: 4
-      sensor_name: "AS7265x_2"    
-    - channel: 7
+# Configuración del MUX
+mux:
+  i2c_address: 0x70                   # Dirección I2C del MUX
+  i2c_bus: 1                          # Bus I2C donde está conectado el MUX
+  channels:                           # Canales asignados al MUX
+    - id: 0                           # ID del canal físico en el MUX
+      sensor_name: "AS7265x_1"        # Nombre del sensor conectado
+      description: "Sensor espectroscópico principal"
+    - id: 4
+      sensor_name: "AS7265x_2"
+      description: "Sensor espectroscópico secundario"
+    - id: 7
       sensor_name: "AS7265x_3"
+      description: "Sensor espectroscópico terciario"
 
+# Configuración de los sensores
 sensors:
-  as7265x:
-    integration_time: 100         # Tiempo de integración en ms para cada lectura
-    gain: 3                       # Configuración de ganancia para los sensores AS7265x
-  read_interval: 3                # Intervalo entre lecturas en segundos
-  led_intensity: 0                # Intensidad de los LEDs de los sensores (0-255 (0 para apagarlos))
+  default_settings:                   # Configuraciones comunes para todos los sensores
+    integration_time: 100             # Tiempo de integración en ms
+    gain: 3                           # Ganancia para los sensores
+    led_intensity: 0                  # Intensidad de los LEDs
+  as7265x:                            # Configuración específica para sensores AS7265x
+    channels:                         # Asociación directa con los canales del MUX
+      - channel: 0                    # Canal en el MUX
+        name: "AS7265x_1"             # Nombre del sensor
+        enabled: true                 # Habilitar/deshabilitar este sensor
+      - channel: 4                    # Canal en el MUX
+        name: "AS7265x_2"             # Nombre del sensor
+        enabled: true                 # Habilitar/deshabilitar este sensor
+      - channel: 7                    # Canal en el MUX
+        name: "AS7265x_3"             # Nombre del sensor
+        enabled: true                 # Habilitar/deshabilitar este sensor
+
 
 greengrass:
   group_name: "Capstone-Group"   # Nombre del grupo de Greengrass

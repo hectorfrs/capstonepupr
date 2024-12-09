@@ -7,7 +7,7 @@ class SensorManager:
     Clase para manejar múltiples sensores AS7265x conectados al MUX.
     """
 
-    def __init__(self, mux_manager, alert_manager=None, config=None):
+    def __init__(self, mux_manager, alert_manager, config):
         """
         Inicializa el administrador de sensores.
 
@@ -21,47 +21,36 @@ class SensorManager:
         self.sensors = []                   # Lista de sensores inicializados.
 
     def initialize_sensors(self):
-        
-            try:
-                if not self.config.get('mux', {}).get('channels', []):
-                    raise ValueError("No se encontraron configuraciones de canales")
+        """
+        Inicializa sensores según la configuración definida en el archivo config.yaml.
+        """
+        try:
+            # Verificar configuración de sensores en config.yaml
+            sensor_channels = self.config.get('sensors', {}).get('as7265x', {}).get('channels', [])
+            if not sensor_channels:
+                raise ValueError("No se encontraron configuraciones de canales para sensores en config.yaml.")
 
-                for channel_info in self.config['mux']['channels']:    
-                    sensor_name = channel_info['sensor_name']
-                    channel = channel_info['channel']
-                    sensor = CustomAS7265x(name=sensor_name)
-                    sensor.channel = channel
-                    self.sensors.append(sensor)
-                    logging.info(f"Sensor {sensor_name} inicializado en canal {channel}.")
-            except Exception as e:
-                logging.error(f"Error inicializando sensor en canal {channel}: {e}")
-                raise
+            for sensor_info in sensor_channels:
+                channel = sensor_info['channel']
+                sensor_name = sensor_info['name']
+                enabled = sensor_info.get('enabled', True)
 
+                if not enabled:
+                    logging.info(f"Sensor {sensor_name} en canal {channel} está deshabilitado.")
+                    continue
 
-    # def initialize_sensors(self):
-    #     """
-    #     Inicializa sensores según configuración.
-    #     """
-    #     try:
-    #         sensor_config = self.config.get('sensors', {})
-    #         if not sensor_config:
-    #             raise ValueError("No se encontraron configuraciones de sensores en config.yaml.")
+                # Inicializar el sensor
+                sensor = CustomAS7265x(name=sensor_name, mux_manager=self.mux_manager)
+                sensor.channel = channel
+                self.sensors.append(sensor)
+                logging.info(f"Sensor {sensor_name} inicializado en canal {channel}.")
+        except Exception as e:
+            logging.error(f"Error inicializando sensores: {e}")
+            raise
 
-    #         for sensor in sensor_config.get('as7265x', {}).get('channels', []):
-    #             channel = sensor['channel']
-    #             sensor_name = sensor['sensor_name']
-    #             new_sensor = CustomAS7265x(channel=channel, name=sensor_name, mux_manager=self.mux_manager)
-    #             self.sensors.append(new_sensor)
-    #             logging.info(f"Sensor {sensor_name} inicializado en canal {channel}.")
-    #     except Exception as e:
-    #         logging.critical(f"Error inicializando sensores: {e}")
-    #         raise
-
-
-    
     def read_all_sensors(self):
         """
-        Lee datos espectrales de todos los sensores inicializados.
+        Lee datos espectrales de todos los sensores.
         """
         data = {}
         for sensor in self.sensors:
@@ -71,13 +60,15 @@ class SensorManager:
                 logging.error(f"Error leyendo datos del sensor {sensor.name}: {e}")
         return data
 
-
     def perform_diagnostics(self):
         """
         Ejecuta diagnósticos en los sensores inicializados.
         """
         for sensor in self.sensors:
             try:
+                if not sensor.is_connected():
+                    logging.warning(f"Sensor {sensor.name} no está conectado.")
+                    
                 if sensor.is_critical():
                     logging.warning(f"Sensor {sensor.name} está en estado crítico.")
                     if self.alert_manager:
