@@ -116,7 +116,7 @@ def validate_config(config):
     """
     required_keys = {
         'mux': ['i2c_address', 'i2c_bus', 'channels'],
-        'sensors': ['as7265x', 'read_interval'],
+        'sensors': ['as7265x', 'default_settings'],
         'mqtt': ['topics'],
         'logging': ['log_file', 'error_log_file'],
         'network': ['ethernet'],
