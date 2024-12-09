@@ -7,7 +7,7 @@ class SensorManager:
     Clase para manejar múltiples sensores AS7265x conectados al MUX.
     """
 
-    def __init__(self, mux_manager, alert_manager, config):
+    def __init__(self, mux_manager, alert_manager=None, config=None):
         """
         Inicializa el administrador de sensores.
 
@@ -68,7 +68,7 @@ class SensorManager:
             try:
                 if not sensor.is_connected():
                     logging.warning(f"Sensor {sensor.name} no está conectado.")
-                    
+
                 if sensor.is_critical():
                     logging.warning(f"Sensor {sensor.name} está en estado crítico.")
                     if self.alert_manager:
