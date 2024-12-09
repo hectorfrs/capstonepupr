@@ -33,5 +33,8 @@ def run_sensor_diagnostics(sensors, alert_manager=None):
             logging.error(f"Error al diagnosticar el sensor {sensor.name}: {e}")
             if alert_manager:
                 alert_manager.send_alert("CRITICAL", f"Error en {sensor.name}: {e}", {})
-    return diagnostics
+            if not self.sensors:
+                logging.warning("No hay sensores inicializados para ejecutar diagnósticos.")
+            return {}
+        return diagnostics
 

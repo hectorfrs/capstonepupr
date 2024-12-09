@@ -208,21 +208,23 @@ def run_power_saving_mode(sensors, mux_manager, enabled):
     logging.info("Habilitando modo de ahorro de energía...")
     try:
         for sensor in sensors:
-            if hasattr(sensor, "power_off"):
-                sensor.power_off()
-                logging.info(f"Sensor {sensor.name} apagado para ahorro de energía.")
-            else:
-                logging.warning(f"El sensor {sensor.name} no tiene un método 'power_off'.")
+            sensor.power_off()
+            logging.info(f"Sensor {sensor.name} apagado para ahorro de energía.")
         mux_manager.disable_all_channels()
+        logging.info("Todos los canales del MUX han sido desactivados.")
     except Exception as e:
         logging.error(f"Error en el modo de ahorro de energía: {e}")
 
 
 # Diagnostico de Componentes
-def run_diagnostics(config, mux_manager, sensors, alert_manager):
+def run_diagnostics(config, mux_manager, sensors, alert_manager, sensor_manager):
     """
     Ejecuta diagnósticos de sensores y MUX si están habilitados.
     """
+    if not sensor_manager.sensors:
+        logging.warning("No hay sensores inicializados.")
+    return
+
     if config['system']['enable_sensor_diagnostics']:
         logging.info("Ejecutando diagnósticos de sensores...")
         for sensor in sensors:
@@ -241,7 +243,11 @@ def run_diagnostics(config, mux_manager, sensors, alert_manager):
         logging.info("Ejecutando diagnósticos del MUX...")
         run_mux_diagnostics(mux_manager, [ch['channel'] for ch in config['mux']['channels']], alert_manager)
 
-def diagnostics_loop(config, mux_manager, sensors, alert_manager):
+def diagnostics_loop(config, mux_manager, sensors, alert_manager, sensor_manager):
+    if not sensor_manager.sensors:
+        logging.warning("No hay sensores inicializados.")
+    return
+
     while True:
         try:
             run_diagnostics(config, mux_manager, sensors, alert_manager)
