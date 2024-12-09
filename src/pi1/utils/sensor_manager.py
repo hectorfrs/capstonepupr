@@ -30,10 +30,11 @@ class SensorManager:
             if not sensor_channels:
                 raise ValueError("No se encontraron configuraciones de canales para sensores en config.yaml.")
 
-            for sensor_info in sensor_channels:
-                channel = sensor_info['channel']
-                sensor_name = sensor_info['name']
-                enabled = sensor_info.get('enabled', True)
+            for channel_info in sensor_channels:
+                channel = channel_info['channel']
+                sensor_name = channel_info['name']
+                enabled = channel_info.get('enabled', True)
+                read_interval = channel_info.get('read_interval', 3)
 
                 if not enabled:
                     logging.info(f"Sensor {sensor_name} en canal {channel} está deshabilitado.")
@@ -42,8 +43,9 @@ class SensorManager:
                 # Inicializar el sensor
                 sensor = CustomAS7265x(name=sensor_name, mux_manager=self.mux_manager)
                 sensor.channel = channel
+                sensor.read_interval = read_interval
                 self.sensors.append(sensor)
-                logging.info(f"Sensor {sensor_name} inicializado en canal {channel}.")
+                logging.info(f"Sensor {sensor_name} inicializado en canal {channel} con intervalo de lectura {read_interval} segundos.")
         except Exception as e:
             logging.error(f"Error inicializando sensores: {e}")
             raise
