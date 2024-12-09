@@ -179,7 +179,8 @@ def publish_data(mqtt_client, greengrass_manager, topic, data_queue, alert_manag
     while True:
         try:
             data = data_queue.get(timeout=5)
-
+            if isinstance(data, dict):
+                raise ValueError("Formato de datos incorrecto.")
             # Publicar datos en MQTT Localmente
             mqtt_client.publish(topic, data)
             logging.info(f"Datos publicados en MQTT: {data}")
@@ -187,7 +188,8 @@ def publish_data(mqtt_client, greengrass_manager, topic, data_queue, alert_manag
             # Publicar datos en AWS IoT Core
             response = greengrass_manager.invoke_function(data)
             logging.info(f"Datos publicados en MQTT y procesados por Greengrass: {data} | Respuesta: {response}")
-            
+        except ValueError as ve:
+            logging.error(f"Error en los datos: {ve}")
         except Exception as e:
             logging.error(f"Error publicando datos: {e}")
             alert_manager.send_alert(
