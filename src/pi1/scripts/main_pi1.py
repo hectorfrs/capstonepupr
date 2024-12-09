@@ -239,7 +239,7 @@ def run_diagnostics(config, mux_manager, sensors, alert_manager):
 
     if config['system']['enable_mux_diagnostics']:
         logging.info("Ejecutando diagnósticos del MUX...")
-        run_mux_diagnostics(mux_manager, [ch['channel'] for ch in config['mux']['channels']], alert_manager)
+        run_mux_diagnostics(mux_manager, [ch['id'] for ch in config['mux']['channels']], alert_manager)
 
 def diagnostics_loop(config, mux_manager, sensors, alert_manager):
      while True:
@@ -420,7 +420,7 @@ def main():
 
             # Detectar y Actualizar Canales Activos
             try:
-                channels = [ch["channel"] for id in config["mux"]["channels"]]
+                channels = [ch["id"] for ch in config["mux"]["channels"]]
                 mux_manager.initialize_channels(channels)
 
                 #config_manager.set_value('mux', 'active_channels', active_channels)
