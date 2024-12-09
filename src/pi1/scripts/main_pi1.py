@@ -276,7 +276,7 @@ def restart_system(config):
 
 def initialize_mux(config, alert_manager):
     try:
-        channels = [ch["channel"] for ch in config["mux"]["channels"]]
+        channels = [ch["id"] for ch in config["mux"]["channels"]]
         mux_config = MUXConfig(**config['mux'])
         i2c_address = int(config['mux']['i2c_address'], 16) if isinstance(config['mux']['i2c_address'], str) else config['mux']['i2c_address']
         mux_manager = MUXManager(

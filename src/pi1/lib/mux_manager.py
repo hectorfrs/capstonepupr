@@ -54,12 +54,12 @@ class MUXManager:
         :param channels: Lista de números de canal a inicializar.
         """
         try:
-            for channel in channels:
-                if not (0 <= channel <= 7):  # Verificar que el canal esté en el rango permitido
-                    raise ValueError(f"Canal {channel} fuera de rango (0-7).")
+            for id in channels:
+                if not (0 <= id <= 7):  # Verificar que el canal esté en el rango permitido
+                    raise ValueError(f"Canal {id} fuera de rango (0-7).")
                 # Registrar el estado del canal
-                self.select_channel(channel)
-                logging.info(f"Canal {channel} inicializado correctamente.")
+                self.select_channel(id)
+                logging.info(f"Canal {id} inicializado correctamente.")
             # Desactivar todos los canales después de la inicialización
             self.disable_all_channels()
         except Exception as e:
@@ -112,32 +112,32 @@ class MUXManager:
                 )
             return False
 
-    def select_channel(self, channel: int):
+    def select_channel(self, id: int):
         """
         Selecciona un canal en el MUX.
         :param channel: Número del canal (0-7).
         """
         try:
-            if not (0 <= channel <= 7):
-                raise ValueError(f"Canal {channel} fuera de rango (0-7).")
-            self.bus.write_byte(self.i2c_address, 1 << channel)
-            self.status[channel] = True
-            logging.info(f"Canal {channel} seleccionado en el MUX.")
+            if not (0 <= id <= 7):
+                raise ValueError(f"Canal {id} fuera de rango (0-7).")
+            self.bus.write_byte(self.i2c_address, 1 << id)
+            self.status[id] = True
+            logging.info(f"Canal {id} seleccionado en el MUX.")
         except ValueError as ve:
             logging.error(f"Error de valor: {ve}")
             if self.alert_manager:
                 self.alert_manager.send_alert(
                     level="ERROR",
-                    message=f"Error de valor activando canal {channel}",
-                    metadata={"channel": channel, "error": str(ve)},
+                    message=f"Error de valor activando canal {id}",
+                    metadata={"channel": id, "error": str(ve)},
                 )
         except Exception as e:
-            logging.error(f"Error activando canal {channel}: {e}")
+            logging.error(f"Error activando canal {id}: {e}")
             if self.alert_manager:
                 self.alert_manager.send_alert(
                     level="CRITICAL",
-                    message=f"Error activando canal {channel}",
-                    metadata={"channel": channel, "error": str(e)},
+                    message=f"Error activando canal {id} en el MUX.",
+                    metadata={"channel": id, "error": str(e)},
                 )
 
     def disable_all_channels(self):
@@ -146,7 +146,7 @@ class MUXManager:
         """
         try:
             self.bus.write_byte(self.i2c_address, 0x00)
-            self.status = {channel: False for channel in range(8)}
+            self.status = {id: False for id in range(8)}
             logging.info("Todos los canales del MUX desactivados.")
         except Exception as e:
             logging.error(f"Error desactivando todos los canales: {e}")
@@ -165,7 +165,7 @@ class MUXManager:
             logging.error(f"Error obteniendo estado del MUX: {e}")
 
 
-    def reset_channel(self, channel: int):
+    def reset_channel(self, id: int):
         """
         Reinicia un canal específico del MUX.
 
@@ -173,15 +173,15 @@ class MUXManager:
         """
         try:
             self.disable_all_channels()
-            self.select_channel(channel)
-            logging.info(f"Canal {channel} reiniciado en el MUX.")
+            self.select_channel(id)
+            logging.info(f"Canal {id} reiniciado en el MUX.")
         except Exception as e:
-            logging.error(f"Error reiniciando canal {channel}: {e}")
+            logging.error(f"Error reiniciando canal {id}: {e}")
             if self.alert_manager:
                 self.alert_manager.send_alert(
                     level="WARNING",
-                    message=f"Error reiniciando canal {channel} en el MUX.",
-                    metadata={"channel": channel, "error": str(e)}
+                    message=f"Error reiniciando canal {id} en el MUX.",
+                    metadata={"channel": id, "error": str(e)}
                 )
 
     def run_diagnostics(self):
@@ -204,16 +204,16 @@ class MUXManager:
                 )
         return diagnostics
     
-    def is_channel_active(self, channel: int):
+    def is_channel_active(self, id: int):
         """
         Verifica si un canal específico está activo en el MUX.
 
         :param channel: Número del canal (0-7).
         :return: True si el canal está activo, False en caso contrario.
         """
-        return self.mux.is_channel_active(channel)
+        return self.mux.is_channel_active(id)
         
-    def verify_sensor_on_channel(self, channel: int):
+    def verify_sensor_on_channel(self, id: int):
         """
         Verifica si un sensor está conectado en el canal especificado.
 
@@ -221,17 +221,17 @@ class MUXManager:
         :return: True si el sensor está conectado, False en caso contrario.
         """
         try:
-            self.select_channel(channel)
+            self.select_channel(id)
             # Verifica un registro específico del sensor que confirme la conexión
             sensor_response = self.mux.read_register(0x00)  # Cambia 0x00 por un registro válido
             return sensor_response is not None
         except Exception as e:
-            logging.error(f"Error verificando sensor en canal {channel}: {e}")
+            logging.error(f"Error verificando sensor en canal {id}: {e}")
             if self.alert_manager:
                 self.alert_manager.send_alert(
                     level="ERROR",
-                    message=f"Error verificando sensor en canal {channel}",
-                    metadata={"channel": channel, "error": str(e)}
+                    message=f"Error verificando sensor en canal {id}",
+                    metadata={"channel": id, "error": str(e)}
                 )
             return False
         finally:
