@@ -20,44 +20,42 @@ class SensorManager:
         self.alert_manager = alert_manager  # Instancia de AlertManager.
         self.sensors = []                   # Lista de sensores inicializados.
 
-    # def initialize_sensors(self, mux_manager):
+    def initialize_sensors(self):
+        
+            try:
+                if not self.config.get('mux', {}).get('channels', []):
+                    raise ValueError("No se encontraron configuraciones de canales")
+
+                for channel_info in self.config['mux']['channels']:    
+                    sensor_name = channel_info['sensor_name']
+                    channel = channel_info['channel']
+                    sensor = CustomAS7265x(channel=channel, name=sensor_name, mux_manager=self.mux_manager)
+                    sensor.channel = channel
+                    self.sensors.append(sensor)
+                    logging.info(f"Sensor {sensor_name} inicializado en canal {channel}.")
+            except Exception as e:
+                logging.error(f"Error inicializando sensor en canal {channel}: {e}")
+                raise
+
+
+    # def initialize_sensors(self):
     #     """
     #     Inicializa sensores según configuración.
     #     """
-    #     channels = self.config['mux']['channels']
-    #     for channel_info in channels:
-    #         try:
-    #             sensor_name = channel_info['sensor_name']
-    #             channel = channel_info['channel']
-    #             sensor = CustomAS7265x(name=sensor_name)
+    #     try:
+    #         sensor_config = self.config.get('sensors', {})
+    #         if not sensor_config:
+    #             raise ValueError("No se encontraron configuraciones de sensores en config.yaml.")
 
-    #             if sensor.is_connected():
-    #                 sensor.channel = channel
-    #                 self.sensors.append(sensor)
-    #                 logging.info(f"Sensor {sensor_name} conectado en canal {channel}.")
-    #             else:
-    #                 logging.warning(f"Sensor {sensor_name} no responde en canal {channel}.")
-    #         except Exception as e:
-    #             logging.error(f"Error inicializando sensor en canal {channel}: {e}")
-
-    def initialize_sensors(self):
-        """
-        Inicializa sensores según configuración.
-        """
-        try:
-            sensor_config = self.config.get('sensors', {})
-            if not sensor_config:
-                raise ValueError("No se encontraron configuraciones de sensores en config.yaml.")
-
-            for sensor in sensor_config.get('as7265x', {}).get('channels', []):
-                channel = sensor['channel']
-                sensor_name = sensor['sensor_name']
-                new_sensor = CustomAS7265x(channel=channel, name=sensor_name, mux_manager=self.mux_manager)
-                self.sensors.append(new_sensor)
-                logging.info(f"Sensor {sensor_name} inicializado en canal {channel}.")
-        except Exception as e:
-            logging.critical(f"Error inicializando sensores: {e}")
-            raise
+    #         for sensor in sensor_config.get('as7265x', {}).get('channels', []):
+    #             channel = sensor['channel']
+    #             sensor_name = sensor['sensor_name']
+    #             new_sensor = CustomAS7265x(channel=channel, name=sensor_name, mux_manager=self.mux_manager)
+    #             self.sensors.append(new_sensor)
+    #             logging.info(f"Sensor {sensor_name} inicializado en canal {channel}.")
+    #     except Exception as e:
+    #         logging.critical(f"Error inicializando sensores: {e}")
+    #         raise
 
 
     
