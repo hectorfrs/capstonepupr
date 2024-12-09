@@ -307,13 +307,12 @@ def initialize_mux(config, alert_manager):
 # Inicialización de Sensores
 def initialize_sensors(config, mux_manager):
     try:
-        sensor_manager = SensorManager(config=config['sensors'], mux_manager=mux_manager)
-        sensor_manager.initialize_sensors(mux_manager)
-        return sensor_manager.sensors
+        sensor_manager = SensorManager(config=config, mux_manager=mux_manager)
+        sensor_manager.initialize_sensors()
+        return sensor_manager
     except Exception as e:
         logging.critical(f"Error inicializando sensores: {e}")
         raise
-
 
 # def process_channels(mux_manager):
 #     try:
@@ -435,17 +434,27 @@ def main():
                 )
                 raise RuntimeError("Error detectando canales activos")
 
+            # Diagnósticos iniciales
+            run_diagnostics(config, mux_manager, sensors, alert_manager)
+
             # Inicializar Greengrass Manager
             logging.info("Inicializando Greengrass Manager...")
             greengrass_manager = GreengrassManager(config_path=config_manager.config_path)
 
             # Inicializar sensores
             logging.info("Inicializando sensores...")
-            sensors = initialize_sensors(config, mux_manager)
+            sensor_manager = initialize_sensors(config, mux_manager)
 
-            # Diagnósticos iniciales
-            run_diagnostics(config, mux_manager, sensors, alert_manager)
-            
+            # Ejecutar diagnósticos iniciales
+            logging.info("Ejecutando diagnósticos iniciales de sensores...")
+            diagnostics = run_sensor_diagnostics(sensor_manager.sensors, alert_manager)
+            logging.info(f"Resultados del diagnóstico inicial: {diagnostics}")
+
+            # Reaccionar ante sensores no operativos
+            for sensor_name, result in diagnostics.items():
+                if result.get("connected") is False or result.get("status") == "ERROR":
+                    logging.warning(f"El sensor {sensor_name} requiere atención.")
+
             # Modo de ahorro de energía
             run_power_saving_mode(mux_manager, sensors, config['system']['enable_power_saving'])
 

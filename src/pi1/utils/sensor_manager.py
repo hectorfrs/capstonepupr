@@ -40,32 +40,30 @@ class SensorManager:
     #         except Exception as e:
     #             logging.error(f"Error inicializando sensor en canal {channel}: {e}")
 
-    def initialize_sensors(config, mux_manager):
+    def initialize_sensors(self):
+        """
+        Inicializa sensores según configuración.
+        """
         try:
-            sensors = []
-            sensor_config = config.get('sensors', {})
+            sensor_config = self.config.get('sensors', {})
             if not sensor_config:
                 raise ValueError("No se encontraron configuraciones de sensores en config.yaml.")
 
             for sensor in sensor_config.get('as7265x', {}).get('channels', []):
                 channel = sensor['channel']
                 sensor_name = sensor['sensor_name']
-                sensors.append(CustomAS7265x(channel=channel, name=sensor_name, mux_manager=mux_manager))
+                new_sensor = CustomAS7265x(channel=channel, name=sensor_name, mux_manager=self.mux_manager)
+                self.sensors.append(new_sensor)
                 logging.info(f"Sensor {sensor_name} inicializado en canal {channel}.")
-
-            return sensors
         except Exception as e:
             logging.critical(f"Error inicializando sensores: {e}")
             raise
 
-    
-    def update_config_with_active_channels(self, active_channels):
-        self.config['mux']['active_channels'] = active_channels
-        self.save_config()
 
+    
     def read_all_sensors(self):
         """
-        Lee datos espectrales de todos los sensores.
+        Lee datos espectrales de todos los sensores inicializados.
         """
         data = {}
         for sensor in self.sensors:
@@ -75,36 +73,38 @@ class SensorManager:
                 logging.error(f"Error leyendo datos del sensor {sensor.name}: {e}")
         return data
 
+
     def perform_diagnostics(self):
         """
         Ejecuta diagnósticos en los sensores inicializados.
         """
-        for channel, sensor in self.sensors.items():
+        for sensor in self.sensors:
             try:
                 if sensor.is_critical():
-                    logging.warning(f"Sensor en canal {channel} está en estado crítico.")
+                    logging.warning(f"Sensor {sensor.name} está en estado crítico.")
                     if self.alert_manager:
                         self.alert_manager.send_alert(
                             level="WARNING",
-                            message=f"Sensor crítico en canal {channel}",
-                            metadata={"sensor_name": sensor.name, "channel": channel},
+                            message=f"Sensor crítico detectado.",
+                            metadata={"sensor_name": sensor.name, "channel": sensor.channel},
                         )
                 else:
-                    logging.info(f"Sensor en canal {channel} está funcionando correctamente.")
+                    logging.info(f"Sensor {sensor.name} está funcionando correctamente.")
             except Exception as e:
                 logging.error(f"Error ejecutando diagnósticos en sensor {sensor.name}: {e}")
                 if self.alert_manager:
                     self.alert_manager.send_alert(
                         level="ERROR",
-                        message=f"Error en diagnósticos de sensor en canal {channel}",
-                        metadata={"sensor_name": sensor.name, "channel": channel, "error": str(e)},
+                        message=f"Error en diagnósticos del sensor {sensor.name}",
+                        metadata={"sensor_name": sensor.name, "channel": sensor.channel, "error": str(e)},
                     )
+
 
     def power_off_sensors(self):
         """
         Apaga los sensores para ahorrar energía.
         """
-        for channel, sensor in self.sensors.items():
+        for sensor in self.sensors:
             try:
                 sensor.power_off()
                 logging.info(f"Sensor {sensor.name} apagado para ahorro de energía.")
@@ -113,6 +113,7 @@ class SensorManager:
                 if self.alert_manager:
                     self.alert_manager.send_alert(
                         level="WARNING",
-                        message=f"Error apagando sensor en canal {channel}",
-                        metadata={"sensor_name": sensor.name, "channel": channel, "error": str(e)},
+                        message=f"Error apagando sensor {sensor.name}",
+                        metadata={"sensor_name": sensor.name, "channel": sensor.channel, "error": str(e)},
                     )
+
