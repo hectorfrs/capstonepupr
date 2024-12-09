@@ -243,12 +243,8 @@ def run_diagnostics(config, mux_manager, sensors, alert_manager, sensor_manager)
         logging.info("Ejecutando diagnósticos del MUX...")
         run_mux_diagnostics(mux_manager, [ch['channel'] for ch in config['mux']['channels']], alert_manager)
 
-def diagnostics_loop(config, mux_manager, sensors, alert_manager, sensor_manager):
-    if not sensor_manager.sensors:
-        logging.warning("No hay sensores inicializados.")
-    return
-
-    while True:
+def diagnostics_loop(config, mux_manager, sensors, alert_manager):
+     while True:
         try:
             run_diagnostics(config, mux_manager, sensors, alert_manager)
             time.sleep(config["system"]["diagnostics_interval"])
