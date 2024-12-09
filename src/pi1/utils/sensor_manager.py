@@ -29,7 +29,7 @@ class SensorManager:
                 for channel_info in self.config['mux']['channels']:    
                     sensor_name = channel_info['sensor_name']
                     channel = channel_info['channel']
-                    sensor = CustomAS7265x(channel=channel, name=sensor_name, mux_manager=self.mux_manager)
+                    sensor = CustomAS7265x(name=sensor_name, mux_manager=self.mux_manager)
                     sensor.channel = channel
                     self.sensors.append(sensor)
                     logging.info(f"Sensor {sensor_name} inicializado en canal {channel}.")
