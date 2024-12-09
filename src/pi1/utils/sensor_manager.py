@@ -26,7 +26,7 @@ class SensorManager:
         """
         try:
             # Verificar configuración de sensores en config.yaml
-            sensor_channels = self.config.get('sensors', {}).get('as7265x', {}).get('channels', [])
+            sensor_channels = self.config.get('sensors', {}).get('as7265x', {}).get('channels', {})
             if not sensor_channels:
                 raise ValueError("No se encontraron configuraciones de canales para sensores en config.yaml.")
 
