@@ -198,23 +198,23 @@ def publish_data(mqtt_client, greengrass_manager, topic, data_queue, alert_manag
 
 # Ahorro de energia
 def run_power_saving_mode(sensors, mux_manager, enabled):
-    """
-    Activa el modo de ahorro de energía si está habilitado.
-    """
     if not enabled:
         logging.info("Modo de ahorro de energía deshabilitado.")
         return
 
     logging.info("Habilitando modo de ahorro de energía...")
     try:
-        for sensor in sensors:
-            sensor.power_off()
-            logging.info(f"Sensor {sensor.name} apagado para ahorro de energía.")
+        if not sensors:
+            logging.info("No hay sensores para apagar.")
+        else:
+            for sensor in sensors:
+                sensor.power_off()
+                logging.info(f"Sensor {sensor.name} apagado para ahorro de energía.")
+
         mux_manager.disable_all_channels()
         logging.info("Todos los canales del MUX han sido desactivados.")
     except Exception as e:
         logging.error(f"Error en el modo de ahorro de energía: {e}")
-
 
 # Diagnostico de Componentes
 def run_diagnostics(config, mux_manager, sensors, alert_manager):
@@ -443,10 +443,23 @@ def main():
             logging.info("Inicializando sensores...")
             sensor_manager = initialize_sensors(config, mux_manager)
 
-            # Ejecutar diagnósticos iniciales
+            # Ejecutar diagnósticos iniciales de sensores
             logging.info("Ejecutando diagnósticos iniciales de sensores...")
             diagnostics = run_sensor_diagnostics(sensor_manager.sensors, alert_manager)
-            logging.info(f"Resultados del diagnóstico inicial: {diagnostics}")
+
+            if not diagnostics:
+                logging.warning("Los diagnósticos no devolvieron resultados.")
+            else:
+                logging.info(f"Resultados del diagnóstico inicial: {diagnostics}")
+                for sensor_name, result in diagnostics.items():
+                    if result.get("status") != "OK":
+                        logging.warning(f"Sensor {sensor_name} requiere atención: {result}")
+            
+            # Verificar si el resultado es None
+            if diagnostics is None:
+                diagnostics = {}  # Reemplazar con un diccionario vacío
+                logging.error("Diagnósticos retornaron None. Ajustando a un diccionario vacío.")
+
 
             # Reaccionar ante sensores no operativos
             for sensor_name, result in diagnostics.items():

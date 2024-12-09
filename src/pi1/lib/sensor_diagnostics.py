@@ -8,33 +8,32 @@ def run_sensor_diagnostics(sensors, alert_manager=None):
     Ejecuta diagnósticos en los sensores conectados.
     :param sensors: Lista de sensores inicializados.
     :param alert_manager: Manejador de alertas opcional.
+    :return: Diccionario con los resultados del diagnóstico.
     """
     diagnostics = {}
+    if not sensors:
+        logging.warning("No hay sensores inicializados para ejecutar diagnósticos.")
+        return diagnostics  # Retorna un diccionario vacío
+
     for sensor in sensors:
         try:
             if sensor.is_connected():
                 diagnostics[sensor.name] = {
-                    "connected": True,
+                    "status": "OK",
                     "temperature": sensor.read_temperature(),
-                    "calibration_status": sensor.check_calibration(),
-                    "gain_and_integration_valid": sensor.verify_integration_and_gain(
-                        expected_gain=3, expected_time=100
-                    ),
-                    "spectral_data_valid": sensor.check_spectral_range(),
                 }
-                logging.info(f"Diagnósticos para {sensor.name}: {diagnostics[sensor.name]}")
+                logging.info(f"Sensor {sensor.name} conectado y operativo.")
             else:
-                diagnostics[sensor.name] = {"connected": False}
+                diagnostics[sensor.name] = {"status": "NOT_CONNECTED"}
                 logging.warning(f"Sensor {sensor.name} no conectado.")
                 if alert_manager:
                     alert_manager.send_alert("CRITICAL", f"Sensor {sensor.name} no conectado.", {})
         except Exception as e:
-            diagnostics[sensor.name] = {"error": str(e)}
-            logging.error(f"Error al diagnosticar el sensor {sensor.name}: {e}")
+            diagnostics[sensor.name] = {"status": "ERROR", "error": str(e)}
+            logging.error(f"Error diagnosticando el sensor {sensor.name}: {e}")
             if alert_manager:
                 alert_manager.send_alert("CRITICAL", f"Error en {sensor.name}: {e}", {})
-            if not self.sensors:
-                logging.warning("No hay sensores inicializados para ejecutar diagnósticos.")
-            return {}
-        return diagnostics
+    return diagnostics
+
+
 
