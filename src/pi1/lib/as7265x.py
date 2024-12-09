@@ -11,7 +11,7 @@ class CustomAS7265x(Spectrometer):
     Combina configuraciones avanzadas y funciones simplificadas para lecturas espectroscópicas.
     """
 
-    def __init__(self, config_path="config/pi1_config.yaml", name=None):
+    def __init__(self, config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml", name=None):
         """
         Inicializa el sensor AS7265x usando valores de configuración YAML.
 
