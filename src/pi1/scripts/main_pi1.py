@@ -217,14 +217,10 @@ def run_power_saving_mode(sensors, mux_manager, enabled):
 
 
 # Diagnostico de Componentes
-def run_diagnostics(config, mux_manager, sensors, alert_manager, sensor_manager):
+def run_diagnostics(config, mux_manager, sensors, alert_manager):
     """
     Ejecuta diagnósticos de sensores y MUX si están habilitados.
     """
-    if not sensor_manager.sensors:
-        logging.warning("No hay sensores inicializados.")
-    return
-
     if config['system']['enable_sensor_diagnostics']:
         logging.info("Ejecutando diagnósticos de sensores...")
         for sensor in sensors:
