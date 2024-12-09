@@ -327,7 +327,7 @@ def initialize_sensors(config, mux_manager):
 #     except Exception as e:
 #         logging.error(f"Error procesando canales del MUX: {e}")
 
-def process_sensor(sensor, channel, mux_manager, alert_manager):
+def process_sensor(sensor, channel, mux_manager, alert_manager, id):
     """
     Procesa un sensor específico, validando su estado antes de realizar operaciones.
     """
@@ -338,7 +338,7 @@ def process_sensor(sensor, channel, mux_manager, alert_manager):
         if sensor.is_powered_off():
             raise RuntimeError(f"Sensor {sensor.name} está apagado. No se puede leer datos.")
 
-        mux_manager.select_channel(channel)
+        mux_manager.select_channel(id)
         data = sensor.read_advanced_spectrum()
         logging.info(f"Datos del sensor {sensor.name}: {data}")
 
@@ -420,7 +420,7 @@ def main():
 
             # Detectar y Actualizar Canales Activos
             try:
-                channels = [ch["channel"] for ch in config["mux"]["channels"]]
+                channels = [ch["channel"] for id in config["mux"]["channels"]]
                 mux_manager.initialize_channels(channels)
 
                 #config_manager.set_value('mux', 'active_channels', active_channels)
