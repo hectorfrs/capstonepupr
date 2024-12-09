@@ -24,8 +24,8 @@ class CustomAS7265x(Spectrometer):
         # Extraer parámetros del sensor
         self.i2c_bus = self.config['mux']['i2c_bus']
         self.i2c_address = 0x49  # Dirección predeterminada del sensor
-        self.integration_time = self.config['sensors']['as7265x']['integration_time']
-        self.gain = self.config['sensors']['as7265x']['gain']
+        self.integration_time = self.config['sensors']['as7265x']['channels']['integration_time']
+        self.gain = self.config['sensors']['as7265x']['default_settings']['gain']
 
         # Inicializar el bus I²C
         self.bus = SMBus(self.i2c_bus)
@@ -33,7 +33,7 @@ class CustomAS7265x(Spectrometer):
         # Inicializar la biblioteca SparkFun
         #super().__init__(self.bus)
         # Llama al constructor de la clase base con el número de bus I2C
-        super().__init__(i2c_bus=self.config['sensors']['as7265x']['i2c_bus'])
+        super().__init__(i2c_bus=self.config['mux']['i2c_bus'])
 
         # Establecer el nombre del sensor
         self.name = name if name else f"AS7265x_{hex(self.i2c_address)}"
