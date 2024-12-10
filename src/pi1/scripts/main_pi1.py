@@ -446,26 +446,26 @@ def main():
             logging.info("Detectando y Procesando Datos.")
             while True:
                 current_time = time.time()
-                for sensor in sensors:
+                for sensor in sensor_manager.sensors:
                     try:
                         mux_manager.select_channel(sensor.channel)
                         spectral_data = sensor.read_advanced_spectrum()
                         if spectral_data:
                             material = classify_material(spectral_data, config['plastic_thresholds'])
-                            data_queue.put({
-                                "timestamp": datetime.now().isoformat(),
-                                "channel": sensor.channel,
-                                "data": spectral_data,
-                                "material": material,
-                            })
-                            logging.info(f"Canal {sensor.channel} clasificado como: {material}")
+                            try:
+                                data_queue.put({
+                                    "timestamp": datetime.now().isoformat(),
+                                    "channel": sensor.channel,
+                                    "data": spectral_data,
+                                    "material": material,
+                                }, block=False)
+                            except queue.Full:
+                                logging.warning("Cola de datos llena. Descartando lectura.")
                             if material in ["PET", "HDPE"]:
                                 activate_valve(material, mqtt_client)
 
-                            logging.info(f"Material detectado: {material}.")
-
                     except Exception as e:
-                        logging.error(f"Error procesando datos del sensor {sensor.name} en canal {sensor.channel}: {e}")
+                        logging.error(f"Error procesando datos del sensor {sensor.name}: {e}")
                     finally:
                         mux_manager.disable_all_channels()
 
@@ -489,10 +489,9 @@ def main():
         finally:
             if network_manager:
                 network_manager.stop_monitoring()
-                logging.info("Monitoreo de red detenido.")
             if config_manager:
                 config_manager.stop_monitoring()
-                logging.info("Sistema apagado correctamente.")
+            logging.info("Sistema apagado correctamente.")
 
 if __name__ == "__main__":
     try:
