@@ -4,12 +4,7 @@ import logging
 
 
 class CustomAS7265x(Spectrometer):
-    """
-    Clase extendida para interactuar con el sensor AS7265x.
-    Combina configuraciones avanzadas y funciones simplificadas para lecturas espectroscópicas.
-    """
-
-    def __init__(self, name, channel, integration_time=100, gain=3, led_intensity=0, read_interval=3, mux_manager=None, i2c_bus=1):
+    def __init__(self, name, channel, integration_time=100, gain=3, led_intensity=0, read_interval=3, mux_manager=None, i2c_bus=1, i2c_address=0x49):
         """
         Constructor para el sensor AS7265x.
 
@@ -21,6 +16,7 @@ class CustomAS7265x(Spectrometer):
         :param read_interval: Intervalo de lectura en segundos.
         :param mux_manager: Administrador del MUX.
         :param i2c_bus: Número del bus I2C.
+        :param i2c_address: Dirección I2C del sensor (predeterminada 0x49).
         """
         self.name = name
         self.channel = channel
@@ -32,16 +28,20 @@ class CustomAS7265x(Spectrometer):
         self.i2c_bus = i2c_bus  # Asigna el número de bus I2C
         self.i2c_address = i2c_address  # Dirección I2C del sensor
         self.bus = SMBus(self.i2c_bus)  # Inicializa el bus I2C
-        self.i2c_bus = i2c_bus  # Asigna el número de bus I2C
 
-        # Inicializa el bus I2C
-        self.bus = SMBus(self.i2c_bus)
+        # Mensajes de inicialización para depuración
+        logging.info(f"Inicializando {name} en el canal {channel} con:")
+        logging.info(f"  - Tiempo de integración: {integration_time} ms")
+        logging.info(f"  - Ganancia: {gain}")
+        logging.info(f"  - Intensidad LED: {led_intensity}")
+        logging.info(f"  - Intervalo de lectura: {read_interval} s")
 
-        # Llama al constructor de la clase base con el bus I2C
+        # Llama al constructor de la clase base
         super().__init__(i2c_bus=self.i2c_bus)
 
         # Configurar el sensor
         self.configure_sensor()
+
 
     def is_connected(self):
         """
