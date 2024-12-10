@@ -308,7 +308,8 @@ def initialize_mux(config, alert_manager):
 def init_sensors(config, mux_manager, alert_manager):
     try:
         # Inicializar SensorManager
-        sensor_manager = SensorManager(config=config, mux_manager=mux_manager, alert_manager=alert_manager)
+        lock = threading.Lock()  # Crear una instancia de bloqueo
+        sensor_manager = SensorManager(config=config, mux_manager=mux_manager, alert_manager=alert_manager, Lock=Lock)  
 
         # Llamar al método para inicializar sensores
         sensor_manager.initialize_sensors()
