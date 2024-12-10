@@ -112,7 +112,7 @@ class MUXManager:
                 )
             return False
 
-    def select_channel(self, id: int):
+    def select_channel(self, channel_id: int):
         """
         Selecciona un canal en el MUX.
         :param channel: Número del canal (0-7).

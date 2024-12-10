@@ -62,7 +62,7 @@ class SensorManager:
                 raise ValueError("No se encontraron configuraciones de canales para sensores en config.yaml.")
 
             for channel_info in sensor_channels:
-                channel = channel_info['channel']
+                channel_id = channel_info['channel']
                 sensor_name = channel_info['name']
                 enabled = channel_info.get('enabled', True)
                 read_interval = channel_info.get('read_interval', 3)
@@ -90,6 +90,7 @@ class SensorManager:
                 try:
                     self.mux_manager.select_channel(sensor.channel)
                     data = sensor.read_advanced_spectrum()
+                    logging.info(f"Datos leídos del sensor {sensor.name} en canal {sensor.channel}: {data[sensor.name]}")
                     logging.info(f"Datos del sensor {sensor.name}: {data}")
                     time.sleep(sensor.read_interval)
                 except Exception as e:
