@@ -25,29 +25,19 @@ class SensorManager:
 
     
 
-    def validate_sensor_config(self, config: Dict) -> List[Dict]:
+    def validate_sensor_config(self, config):
         """
-        Valida la configuración de sensores y devuelve una lista de configuraciones válidas.
-
-        :param config: Diccionario de configuración desde config.yaml.
-        :return: Lista de configuraciones de sensores.
+        Valida la configuración de sensores y devuelve una lista de canales válidos.
         """
         try:
             channels = config.get('sensors', {}).get('as7265x', {}).get('channels', [])
             if not isinstance(channels, list):
                 raise ValueError("La configuración de los sensores debe ser una lista en 'sensors->as7265x->channels'.")
-            
-            for channel in channels:
-                if not isinstance(channel, dict):
-                    raise ValueError(f"Cada configuración de canal debe ser un diccionario. Se encontró: {channel}")
-
-                if 'channel' not in channel or 'name' not in channel:
-                    raise ValueError(f"Cada canal debe incluir 'channel' y 'name'. Se encontró: {channel}")
-
             return channels
         except Exception as e:
             logging.error(f"Error validando la configuración de sensores: {e}")
             raise
+
 
 
     def read_sensors_concurrently(self):
@@ -139,20 +129,21 @@ class SensorManager:
         Inicializa sensores según la configuración definida en el archivo config.yaml.
         """
         try:
+            # Validamos que los canales sean una lista y sus elementos sean diccionarios
             sensor_channels = self.validate_sensor_config(self.config)
 
             if not isinstance(sensor_channels, list):
-                raise ValueError("La configuración de los sensores debe ser una lista.")
-
+                raise ValueError(f"Se esperaba una lista de canales, pero se encontró: {type(sensor_channels)}")
+            
             for channel_info in sensor_channels:
                 if not isinstance(channel_info, dict):
-                    raise ValueError(f"Cada entrada en la configuración de sensores debe ser un diccionario. Se encontró: {type(channel_info)}")
+                    raise ValueError(f"Se esperaba un diccionario para cada canal, pero se encontró: {type(channel_info)}")
 
+                # Si todo es correcto, inicializa el sensor
                 channel = channel_info['channel']
                 sensor_name = channel_info['name']
                 read_interval = channel_info.get('read_interval', 3)
 
-                # Inicializa el sensor
                 sensor = CustomAS7265x(name=sensor_name, mux_manager=self.mux_manager)
                 sensor.channel = channel
                 sensor.read_interval = read_interval
