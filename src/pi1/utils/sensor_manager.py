@@ -128,8 +128,9 @@ class SensorManager:
     def initialize_sensors(self):
         """
         Inicializa los sensores AS7265x según la configuración proporcionada.
-        """ 
+        """
         try:
+            # Obtener configuraciones del YAML
             sensor_channels = self.config["sensors"]["as7265x"]["channels"]
             default_settings = self.config["sensors"]["default_settings"]
             i2c_bus = self.config["mux"]["i2c_bus"]  # Obtén el bus I2C desde la configuración del MUX
@@ -160,7 +161,7 @@ class SensorManager:
                     led_intensity=led_intensity,
                     read_interval=read_interval,
                     mux_manager=self.mux_manager,
-                    i2c_bus=i2c_bus  # Pasa el bus I2C
+                    i2c_bus=i2c_bus  # Pasa el bus I2C desde el YAML
                 )
 
                 # Registrar el sensor en SensorManager
@@ -187,11 +188,6 @@ class SensorManager:
                     metadata={"error": str(e)}
                 )
             raise
-
-
-
-
-
 
 
 
