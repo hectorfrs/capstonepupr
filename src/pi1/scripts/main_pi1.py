@@ -305,25 +305,19 @@ def initialize_mux(config, alert_manager):
 
 
 # Inicialización de Sensores
-def init_sensors(config, mux_manager):
+def init_sensors(config, mux_manager, alert_manager):
     try:
-        sensor_manager = initialize_sensors(config, mux_manager, alert_manager)
-    except Exception as e:
-        logging.critical("Error al inicializar los sensores. El sistema se detendrá.{e}", exc_info=True)
-        sys.exit(1)
+        # Crear una instancia de SensorManager
+        sensor_manager = SensorManager(mux_manager=mux_manager, alert_manager=alert_manager)
 
-# def process_channels(mux_manager):
-#     try:
-#         active_channels = mux_manager.detect_active_channels()
-#         for channel in active_channels:
-#             try:
-#                 mux_manager.activate_channel(channel)
-#                 logging.info(f"Canal {channel} activado.")
-#                 # Otras operaciones aquí
-#             finally:
-#                 mux_manager.deactivate_channel(channel)
-#     except Exception as e:
-#         logging.error(f"Error procesando canales del MUX: {e}")
+        # Inicializar los sensores utilizando la instancia de SensorManager
+        sensor_manager.initialize_sensors(config)
+        
+        logging.info("Sensores inicializados correctamente.")
+        return sensor_manager
+    except Exception as e:
+        logging.critical(f"Error al inicializar los sensores. El sistema se detendrá: {e}", exc_info=True)
+        sys.exit(1)
 
 def process_sensor(sensor, channel, mux_manager, alert_manager, id):
     """
@@ -441,7 +435,7 @@ def main():
 
             # Inicializar sensores
             logging.info("Inicializando sensores...")
-            sensor_manager = init_sensors(config, mux_manager)
+            sensor_manager = init_sensors(config, mux_manager, alert_manager)
             # Leer datos de sensores en paralelo
             sensor_manager.read_sensors_concurrently()
 
