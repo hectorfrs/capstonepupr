@@ -6,6 +6,7 @@ import threading
 from lib.as7265x import CustomAS7265x
 from typing import List, Dict
 from lib.mux_manager import MUXManager
+from concurrent.futures import ThreadPoolExecutor
 
 
 class SensorManager:
@@ -21,18 +22,17 @@ class SensorManager:
         :param mux_manager: Instancia de MUXManager para manejar los canales.
         :param alert_manager: Instancia opcional de AlertManager para manejar alertas.
         """
-        self.config = config                # Configuración de los sensores.
-        self.mux_manager = mux_manager      # Instancia de MUXManager.
-        self.alert_manager = alert_manager  # Instancia de AlertManager.
-        self.sensors = []                   # Lista de sensores inicializados.
+        self.config = config                    # Configuración de los sensores.
+        self.mux_manager = mux_manager          # Instancia de MUXManager.
+        self.alert_manager = alert_manager      # Instancia de AlertManager.
+        self.sensors = []                       # Lista de sensores inicializados.
+        self.lock = lock or threading.Lock()    # Cerradura para sincronización.
 
     
 
     def validate_sensor_config(self) -> List[Dict]:
         """
         Valida la configuración de sensores y devuelve una lista de configuraciones válidas.
-
-        :return: Lista de configuraciones de sensores.
         """
         try:
             channels = self.config.get('sensors', {}).get('as7265x', {}).get('channels', [])
@@ -46,12 +46,59 @@ class SensorManager:
             logging.error(f"Error validando la configuración de sensores: {e}")
             raise
 
-    def validate_sensor_data(data):
+    def validate_sensor_data(self, data):
+        """
+        Valida los datos leídos del sensor.
+        """
         expected_keys = ['violet', 'blue', 'green', 'yellow', 'orange', 'red']
         for key in expected_keys:
             value = data.get(key, None)
             if value is None or not (0 <= value <= 65535):
-                return False  # Datos inválidos
+                logging.error(f"Datos inválidos detectados: {data}")
+                return False
+        logging.info(f"Datos validados correctamente: {data}")
+        return True
+
+    def read_sensor_with_retries(self, sensor, retries=3, delay=1):
+        """
+        Intenta leer datos de un sensor con un número especificado de reintentos.
+
+        :param sensor: El sensor del cual se leerán los datos.
+        :param retries: Número de intentos antes de fallar.
+        :param delay: Tiempo en segundos entre reintentos.
+        :return: Datos leídos o None si falla.
+        """
+        for attempt in range(retries):
+            try:
+                with self.lock:
+                    self.mux_manager.select_channel(sensor.channel)
+                data = sensor.read_advanced_spectrum()
+                logging.info(f"Datos leídos del sensor {sensor.name} en intento {attempt + 1}: {data}")
+                return data
+            except Exception as e:
+                logging.warning(f"Error leyendo sensor {sensor.name} en intento {attempt + 1}: {e}")
+                time.sleep(delay)
+            finally:
+                with self.lock:
+                    self.mux_manager.disable_all_channels()
+        logging.error(f"Fallo al leer el sensor {sensor.name} tras {retries} intentos.")
+        return None
+
+    def read_sensors(self):
+        """
+        Lee datos de todos los sensores y valida los resultados.
+
+        :return: Un diccionario con los nombres de los sensores como claves y los datos leídos como valores.
+        """
+        results = {}
+        for sensor in self.sensors:
+            logging.info(f"Iniciando lectura del sensor {sensor.name}.")
+            data = self.read_sensor_with_retries(sensor)
+            if data and self.validate_sensor_data(data):
+                results[sensor.name] = data
+            else:
+                logging.warning(f"Datos no válidos o no disponibles para el sensor {sensor.name}.")
+        return results
         return True
 
     def check_sensor_status(sensor):
@@ -69,22 +116,20 @@ class SensorManager:
         """
         Lee datos espectrales de los sensores de manera concurrente.
         """
-        lock = threading.Lock()
-
         def read_sensor(sensor):
             """
             Lee datos de un sensor específico.
             """
             while True:
                 try:
-                    with lock:
+                    with self.lock:
                         self.mux_manager.select_channel(sensor.channel)
                     data = sensor.read_advanced_spectrum()
                     logging.info(f"Datos leídos del sensor {sensor.name}: {data}")
                 except Exception as e:
                     logging.error(f"Error leyendo datos del sensor {sensor.name}: {e}")
                 finally:
-                    with lock:
+                    with self.lock:
                         self.mux_manager.disable_all_channels()
 
         # Crear un ThreadPoolExecutor para ejecutar las lecturas en paralelo
@@ -155,56 +200,104 @@ class SensorManager:
                         metadata={"sensor_name": sensor.name, "channel": sensor.channel, "error": str(e)}
                     )
 
-    def initialize_sensors(self):
+    # def initialize_sensors(self):
+    #     """
+    #     Inicializa sensores según la configuración definida en config.yaml.
+    #     """
+    #     try:
+    #         # Validar la configuración
+    #         sensor_channels = self.validate_sensor_config()
+    #         default_settings = self.config.get('sensors', {}).get('default_settings', {})
+
+    #         # Inicializar sensores
+    #         for sensor_config in sensor_channels:
+    #             if not sensor_config.get("enabled", True):
+    #                 logging.info(f"Sensor {sensor_config.get('name')} en canal {sensor_config.get('channel')} está deshabilitado. Omitiendo...")
+    #                 continue
+
+    #             # Aplicar configuraciones específicas o usar valores predeterminados
+    #             integration_time = sensor_config.get("integration_time", default_settings.get("integration_time", 100))
+    #             gain = sensor_config.get("gain", default_settings.get("gain", 3))
+    #             led_intensity = sensor_config.get("led_intensity", default_settings.get("led_intensity", 0))
+    #             read_interval = sensor_config.get("read_interval", default_settings.get("read_interval", 3))
+    #             operating_mode = sensor_config.get("operating_mode", default_settings.get("operating_mode", 0))
+    #             enable_interrupts = sensor_config.get("enable_interrupts", default_settings.get("enable_interrupts", True))
+
+    #             # Crear instancia del sensor
+    #             sensor = CustomAS7265x(
+    #             name=sensor_config.get("name"),
+    #             channel=sensor_config.get("channel"),
+    #             i2c_address=sensor_config.get("i2c_address", 0x49),  # Dirección predeterminada: 0x49
+    #             integration_time=integration_time,
+    #             gain=gain,
+    #             led_intensity=led_intensity,
+    #             read_interval=read_interval,
+    #             mux_manager=self.mux_manager,
+    #             i2c_bus=self.mux_manager.i2c_bus
+    #             )
+
+    #             self.sensors.append(sensor)
+    #             logging.info(f"Sensor {sensor.name} inicializado en canal {sensor.channel} con:")
+    #             logging.info(f"  - Tiempo de integración: {integration_time} ms")
+    #             logging.info(f"  - Ganancia: {gain}")
+    #             logging.info(f"  - Intensidad LED: {led_intensity}")
+    #             logging.info(f"  - Intervalo de lectura: {read_interval} s")
+    #             logging.info(f"  - Modo de operación: {operating_mode}")
+    #             logging.info(f"  - Interrupciones habilitadas: {enable_interrupts}")
+
+    #         if not self.sensors:
+    #             raise RuntimeError("No se inicializaron sensores. Verifique la configuración.")
+
+    #         logging.info("Sensores inicializados correctamente.")
+
+    #     except Exception as e:
+    #         logging.critical(f"Error inicializando sensores: {e}", exc_info=True)
+    #         if self.alert_manager:
+    #             self.alert_manager.send_alert(
+    #                 level="CRITICAL",
+    #                 message="Error inicializando los sensores.",
+    #                 metadata={"error": str(e)}
+    #             )
+    #         raise
+
+
+def initialize_sensors(self):
         """
         Inicializa sensores según la configuración definida en config.yaml.
         """
         try:
-            # Validar la configuración
             sensor_channels = self.validate_sensor_config()
             default_settings = self.config.get('sensors', {}).get('default_settings', {})
 
-            # Inicializar sensores
             for sensor_config in sensor_channels:
                 if not sensor_config.get("enabled", True):
                     logging.info(f"Sensor {sensor_config.get('name')} en canal {sensor_config.get('channel')} está deshabilitado. Omitiendo...")
                     continue
 
-                # Aplicar configuraciones específicas o usar valores predeterminados
                 integration_time = sensor_config.get("integration_time", default_settings.get("integration_time", 100))
                 gain = sensor_config.get("gain", default_settings.get("gain", 3))
                 led_intensity = sensor_config.get("led_intensity", default_settings.get("led_intensity", 0))
                 read_interval = sensor_config.get("read_interval", default_settings.get("read_interval", 3))
-                operating_mode = sensor_config.get("operating_mode", default_settings.get("operating_mode", 0))
-                enable_interrupts = sensor_config.get("enable_interrupts", default_settings.get("enable_interrupts", True))
 
-                # Crear instancia del sensor
                 sensor = CustomAS7265x(
-                name=sensor_config.get("name"),
-                channel=sensor_config.get("channel"),
-                i2c_address=sensor_config.get("i2c_address", 0x49),  # Dirección predeterminada: 0x49
-                integration_time=integration_time,
-                gain=gain,
-                led_intensity=led_intensity,
-                read_interval=read_interval,
-                mux_manager=self.mux_manager,
-                i2c_bus=self.mux_manager.i2c_bus
+                    name=sensor_config.get("name"),
+                    channel=sensor_config.get("channel"),
+                    i2c_address=sensor_config.get("i2c_address", 0x49),
+                    integration_time=integration_time,
+                    gain=gain,
+                    led_intensity=led_intensity,
+                    read_interval=read_interval,
+                    mux_manager=self.mux_manager,
+                    i2c_bus=self.mux_manager.i2c_bus
                 )
 
                 self.sensors.append(sensor)
-                logging.info(f"Sensor {sensor.name} inicializado en canal {sensor.channel} con:")
-                logging.info(f"  - Tiempo de integración: {integration_time} ms")
-                logging.info(f"  - Ganancia: {gain}")
-                logging.info(f"  - Intensidad LED: {led_intensity}")
-                logging.info(f"  - Intervalo de lectura: {read_interval} s")
-                logging.info(f"  - Modo de operación: {operating_mode}")
-                logging.info(f"  - Interrupciones habilitadas: {enable_interrupts}")
+                logging.info(f"Sensor {sensor.name} inicializado en canal {sensor.channel} con configuraciones específicas.")
 
             if not self.sensors:
                 raise RuntimeError("No se inicializaron sensores. Verifique la configuración.")
 
             logging.info("Sensores inicializados correctamente.")
-
         except Exception as e:
             logging.critical(f"Error inicializando sensores: {e}", exc_info=True)
             if self.alert_manager:
@@ -214,43 +307,3 @@ class SensorManager:
                     metadata={"error": str(e)}
                 )
             raise
-
-
-
-
-    # def initialize_sensors(self):
-    #     """
-    #     Inicializa sensores según la configuración definida en el archivo config.yaml.
-    #     """
-    #     try:
-    #         sensor_channels = self.config.get('sensors', {}).get('as7265x', {}).get('channels', [])
-    #         if not sensor_channels:
-    #             raise ValueError("No se encontraron configuraciones de canales para sensores en config.yaml.")
-
-    #         # Asegúrate de que sensor_channels sea una lista
-    #         if not isinstance(sensor_channels, list):
-    #             raise ValueError("La configuración de los sensores no es válida. Se esperaba una lista en 'sensors->as7265x->channels'.")
-
-    #         # Iterar sobre la lista de sensores
-    #         for channel_info in sensor_channels:
-    #             if not isinstance(channel_info, dict):
-    #                 raise ValueError(f"Cada canal debe ser un diccionario. Se encontró: {channel_info}")
-
-    #             channel = channel_info['channel']
-    #             sensor_name = channel_info['name']
-    #             enabled = channel_info.get('enabled', True)
-    #             read_interval = channel_info.get('read_interval', 3)
-
-    #             if not enabled:
-    #                 logging.info(f"Sensor {sensor_name} en canal {channel} está deshabilitado.")
-    #                 continue
-
-    #             # Inicializar el sensor
-    #             sensor = CustomAS7265x(name=sensor_name, mux_manager=self.mux_manager)
-    #             sensor.channel = channel
-    #             sensor.read_interval = read_interval
-    #             self.sensors.append(sensor)
-    #             logging.info(f"Sensor {sensor_name} inicializado en canal {channel} con intervalo de lectura {read_interval} segundos.")
-    #     except Exception as e:
-    #         logging.error(f"Error inicializando sensores: {e}")
-    #         raise
