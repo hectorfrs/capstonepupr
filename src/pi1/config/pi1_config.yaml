@@ -52,30 +52,50 @@ mux:
 sensors:
   default_settings:                   # Configuraciones comunes para todos los sensores
     integration_time: 100             # Tiempo de integración en ms
-    gain: 3                           # Ganancia para los sensores
-    led_intensity: 0                  # Intensidad de los LEDs
+    gain: 3                           # Ganancia (0: 1x, 1: 3.7x, 2: 16x, 3: 64x)
+    led_intensity: 128                # Intensidad de los LEDs (0-255)
+    read_interval: 1                  # Intervalo de lectura en segundos
+    enable_interrupts: true           # Habilitar interrupciones
+    operating_mode: 0                 # Modo de operación (0=Normal, 1=Esclavo, etc.)
   as7265x:                            # Configuración específica para sensores AS7265x
     channels:                         # Asociación directa con los canales del MUX
       - channel: 0                    # Canal en el MUX
         name: "AS7265x_1"             # Nombre del sensor
-        read_interval: 1              # Intervalo de lectura en segundos
-        integration_time: 100         # Tiempo de integración en ms
-        led_intensity: 128            # Intensidad de los LEDs
+        integration_time: 150         # Tiempo de integración en ms (sobrescribe el predeterminado)
+        gain: 2                       # Ganancia (sobrescribe el predeterminado)
+        led_intensity: 100            # Intensidad del LED (sobrescribe el predeterminado)
+        read_interval: 2              # Intervalo de lectura en segundos (sobrescribe el predeterminado)
         spectral_resolution: "high"   # Resolución espectral high, medium, low
+        enable_interrupts: false      # Deshabilitar interrupciones
+        operating_mode: 1             # Modo de operación del sensor (1=Continuo)
         enabled: true                 # Habilitar/deshabilitar este sensor
       - channel: 4                    # Canal en el MUX
         name: "AS7265x_2"             # Nombre del sensor
-        read_interval: 1              # Intervalo de lectura en segundos
         integration_time: 100         # Tiempo de integración en ms
-        led_intensity: 128            # Intensidad de los LEDs
+        gain: 3                       # Ganancia
+        led_intensity: 128            # Intensidad del LED
+        read_interval: 1              # Intervalo de lectura en segundos
+        spectral_resolution: "high" # Resolución espectral
+        enable_interrupts: true       # Habilitar interrupciones
+        operating_mode: 0             # Modo de operación
         enabled: true                 # Habilitar/deshabilitar este sensor
       - channel: 7                    # Canal en el MUX
         name: "AS7265x_3"             # Nombre del sensor
+        integration_time: 120         # Tiempo de integración en ms
+        gain: 1                       # Ganancia
+        led_intensity: 255            # Intensidad del LED
         read_interval: 1              # Intervalo de lectura en segundos
-        integration_time: 100         # Tiempo de integración en ms
-        led_intensity: 128            # Intensidad de los LEDs
+        spectral_resolution: "high"    # Resolución espectral
+        enable_interrupts: true       # Habilitar interrupciones
+        operating_mode: 0             # Modo de operación
         enabled: true                 # Habilitar/deshabilitar este sensor
 
+# Configuración avanzada
+advanced_settings:
+  diagnostics_interval: 300           # Intervalo de diagnósticos en segundos
+  metrics_interval: 60                # Intervalo de envío de métricas en segundos
+  critical_temperature: 85            # Temperatura crítica en °C para el sensor
+  power_saving: true                  # Activar modo de ahorro de energía
 
 greengrass:
   group_name: "Capstone-Group"   # Nombre del grupo de Greengrass
