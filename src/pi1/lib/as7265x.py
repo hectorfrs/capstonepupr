@@ -19,7 +19,7 @@ class CustomAS7265x(Spectrometer):
         """
         # # Cargar configuración desde YAML
         # self.name = name # Guardar el nombre del sensor
-        #self.config = self.load_config(config_path)
+        self.config = self.load_config(config_path)
 
         # # Extraer parámetros del sensor
         # self.i2c_bus = self.config['mux']['i2c_bus']
