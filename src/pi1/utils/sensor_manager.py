@@ -130,7 +130,6 @@ class SensorManager:
         Inicializa los sensores AS7265x según la configuración proporcionada.
         """
         try:
-            # Validar la configuración de los sensores
             sensor_channels = self.config["sensors"]["as7265x"]["channels"]
             default_settings = self.config["sensors"]["default_settings"]
 
@@ -154,13 +153,13 @@ class SensorManager:
                 # Inicializar sensor
                 sensor = CustomAS7265x(
                     name=name,
+                    channel=channel,
+                    integration_time=integration_time,
+                    gain=gain,
+                    led_intensity=led_intensity,
+                    read_interval=read_interval,
                     mux_manager=self.mux_manager
                 )
-                sensor.channel = channel
-                sensor.integration_time = integration_time
-                sensor.gain = gain
-                sensor.led_intensity = led_intensity
-                sensor.read_interval = read_interval
 
                 # Registrar el sensor en SensorManager
                 self.sensors.append(sensor)
@@ -186,6 +185,7 @@ class SensorManager:
                     metadata={"error": str(e)}
                 )
             raise
+
 
 
 
