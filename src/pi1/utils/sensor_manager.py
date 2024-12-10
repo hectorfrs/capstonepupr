@@ -26,17 +26,18 @@ class SensorManager:
     
 
     def validate_sensor_config(self, config):
-        """
-        Valida la configuración de sensores y devuelve una lista de canales válidos.
-        """
         try:
             channels = config.get('sensors', {}).get('as7265x', {}).get('channels', [])
             if not isinstance(channels, list):
-                raise ValueError("La configuración de los sensores debe ser una lista en 'sensors->as7265x->channels'.")
+                raise ValueError("La configuración de sensores debe ser una lista.")
+            for channel in channels:
+                if not isinstance(channel, dict):
+                    raise ValueError(f"Cada canal debe ser un diccionario. Se encontró: {channel}")
             return channels
         except Exception as e:
             logging.error(f"Error validando la configuración de sensores: {e}")
             raise
+
 
 
 
