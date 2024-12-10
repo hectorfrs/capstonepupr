@@ -128,6 +128,8 @@ class SensorManager:
         """
         Inicializa sensores según la configuración definida en el archivo config.yaml.
         """
+        logging.debug(f"Configuración de sensores cargada: {self.config['sensors']['as7265x']['channels']}")
+
         try:
             # Validamos que los canales sean una lista y sus elementos sean diccionarios
             sensor_channels = self.validate_sensor_config(self.config)
