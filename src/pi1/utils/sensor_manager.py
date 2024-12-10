@@ -27,19 +27,28 @@ class SensorManager:
 
     def validate_sensor_config(self, config: Dict) -> List[Dict]:
         """
-        Valida la configuración de sensores y devuelve una lista de canales válidos.
+        Valida la configuración de sensores y devuelve una lista de configuraciones válidas.
 
         :param config: Diccionario de configuración desde config.yaml.
-        :return: Lista de configuraciones de canales.
+        :return: Lista de configuraciones de sensores.
         """
         try:
             channels = config.get('sensors', {}).get('as7265x', {}).get('channels', [])
             if not isinstance(channels, list):
                 raise ValueError("La configuración de los sensores debe ser una lista en 'sensors->as7265x->channels'.")
+            
+            for channel in channels:
+                if not isinstance(channel, dict):
+                    raise ValueError(f"Cada configuración de canal debe ser un diccionario. Se encontró: {channel}")
+
+                if 'channel' not in channel or 'name' not in channel:
+                    raise ValueError(f"Cada canal debe incluir 'channel' y 'name'. Se encontró: {channel}")
+
             return channels
         except Exception as e:
             logging.error(f"Error validando la configuración de sensores: {e}")
             raise
+
 
     def read_sensors_concurrently(self):
         """
@@ -130,13 +139,15 @@ class SensorManager:
         Inicializa sensores según la configuración definida en el archivo config.yaml.
         """
         try:
-            sensor_channels = validate_sensor_config(self.config)
+            # Llama a validate_sensor_config 
+            sensor_channels = self.validate_sensor_config(self.config)
 
             for channel_info in sensor_channels:
                 channel = channel_info['channel']
                 sensor_name = channel_info['name']
                 read_interval = channel_info.get('read_interval', 3)
 
+                # Inicializa el sensor
                 sensor = CustomAS7265x(name=sensor_name, mux_manager=self.mux_manager)
                 sensor.channel = channel
                 sensor.read_interval = read_interval
@@ -145,6 +156,7 @@ class SensorManager:
         except Exception as e:
             logging.error(f"Error inicializando sensores: {e}")
             raise
+
 
     # def initialize_sensors(self):
     #     """
