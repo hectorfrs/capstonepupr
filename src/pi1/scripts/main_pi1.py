@@ -309,7 +309,7 @@ def init_sensors(config, mux_manager):
     try:
         sensor_manager = initialize_sensors(config, mux_manager, alert_manager)
     except Exception as e:
-        logging.critical("Error al inicializar los sensores. El sistema se detendrá.")
+        logging.critical("Error al inicializar los sensores. El sistema se detendrá.{e}", exc_info=True)
         sys.exit(1)
 
 # def process_channels(mux_manager):
