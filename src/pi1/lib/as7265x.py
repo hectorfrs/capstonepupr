@@ -29,13 +29,13 @@ class CustomAS7265x(Spectrometer):
         self.led_intensity = led_intensity
         self.read_interval = read_interval
         self.mux_manager = mux_manager
-        self.i2c_bus = i2c_bus  # Asigna el bus I2C
+        self.i2c_bus = i2c_bus  # Asigna el número de bus I2C
+
+        # Llama al constructor de la clase base con el número de bus I2C
+        super().__init__(i2c_bus)
 
         # Inicializa el bus I2C
         self.bus = SMBus(self.i2c_bus)
-
-        # Llama al constructor de la clase base con el bus I2C
-        super().__init__(self.bus)
 
         # Configurar el sensor
         self.configure_sensor()
