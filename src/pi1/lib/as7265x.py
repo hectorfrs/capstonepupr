@@ -56,6 +56,15 @@ class CustomAS7265x(Spectrometer):
             return False
 
     def configure_sensor(self):
+        """
+        Configura el sensor AS7265x con el tiempo de integración y ganancia especificados.
+        """
+        self.mux_manager.select_channel(self.channel)  # Asegúrate de que el canal esté seleccionado
+
+        if not self.is_connected():
+            logging.error(f"Sensor no detectado en {hex(self.i2c_address)}. Saltando configuración.")
+            return
+
         retry_attempts = 3
         while retry_attempts > 0:
             try:
@@ -63,7 +72,7 @@ class CustomAS7265x(Spectrometer):
                 self.set_integration_time(self.integration_time)
                 self.set_gain(self.gain)
                 logging.info("Configuración del sensor completada.")
-                break
+                return
             except OSError as e:
                 logging.warning(f"Error configurando el sensor: {e}. Reintentando...")
                 retry_attempts -= 1
@@ -71,9 +80,10 @@ class CustomAS7265x(Spectrometer):
             except Exception as e:
                 logging.error(f"Error configurando el sensor: {e}")
                 raise
-        else:
-            raise RuntimeError(f"No se pudo configurar el sensor {self.name} tras varios intentos.")
 
+        raise RuntimeError(f"No se pudo configurar el sensor {self.name} tras varios intentos.")
+
+    
     def set_integration_time(self, time_ms):
         """
         Establece el tiempo de integración del sensor.
