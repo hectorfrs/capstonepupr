@@ -67,7 +67,7 @@ sensors:
         read_interval: 2              # Intervalo de lectura en segundos (sobrescribe el predeterminado)
         spectral_resolution: "high"   # Resolución espectral high, medium, low
         enable_interrupts: false      # Deshabilitar interrupciones
-        operating_mode: 1             # Modo de operación del sensor (1=Continuo)
+        operating_mode: 0             # Modo de operación del sensor (1=Continuo)
         enabled: true                 # Habilitar/deshabilitar este sensor
       - channel: 4                    # Canal en el MUX
         name: "AS7265x_2"             # Nombre del sensor

@@ -4,7 +4,7 @@ import logging
 
 
 class CustomAS7265x(Spectrometer):
-    def __init__(self, name, channel, integration_time=100, gain=3, led_intensity=0, read_interval=3, mux_manager=None, i2c_bus=1, i2c_address=0x49):
+    def __init__(self, name, channel, integration_time=100, gain=3, led_intensity=0, read_interval=3, mux_manager=None, i2c_bus=1, operating_mode=0, enable_interrupts=True):
         """
         Constructor para el sensor AS7265x.
 
@@ -16,7 +16,8 @@ class CustomAS7265x(Spectrometer):
         :param read_interval: Intervalo de lectura en segundos.
         :param mux_manager: Administrador del MUX.
         :param i2c_bus: Número del bus I2C.
-        :param i2c_address: Dirección I2C del sensor (predeterminada 0x49).
+        :param operating_mode: Modo de operación del sensor (0-3).
+        :param enable_interrupts: Habilitar interrupciones (True/False).
         """
         self.name = name
         self.channel = channel
@@ -25,24 +26,70 @@ class CustomAS7265x(Spectrometer):
         self.led_intensity = led_intensity
         self.read_interval = read_interval
         self.mux_manager = mux_manager
-        self.i2c_bus = i2c_bus  # Asigna el número de bus I2C
-        self.i2c_address = i2c_address  # Dirección I2C del sensor
-        self.bus = SMBus(self.i2c_bus)  # Inicializa el bus I2C
+        self.i2c_bus = i2c_bus
+        self.operating_mode = operating_mode
+        self.enable_interrupts = enable_interrupts
 
-        # Mensajes de inicialización para depuración
-        logging.info(f"Inicializando {name} en el canal {channel} con:")
-        logging.info(f"  - Tiempo de integración: {integration_time} ms")
-        logging.info(f"  - Ganancia: {gain}")
-        logging.info(f"  - Intensidad LED: {led_intensity}")
-        logging.info(f"  - Intervalo de lectura: {read_interval} s")
-
-        # Llama al constructor de la clase base
-        super().__init__(i2c_bus=self.i2c_bus)
+        # Inicializar el bus I2C
+        self.bus = SMBus(self.i2c_bus)
+        super().__init__(self.bus)
 
         # Configurar el sensor
         self.configure_sensor()
 
+    def configure_sensor(self):
+        """
+        Configura el sensor AS7265x con el tiempo de integración y ganancia especificados.
+        """
+        self.mux_manager.select_channel(self.channel)  # Asegúrate de que el canal esté seleccionado
 
+        if not self.is_connected():
+            logging.error(f"Sensor no detectado en {hex(self.i2c_address)}. Saltando configuración.")
+            return
+
+        retry_attempts = 3
+        while retry_attempts > 0:
+            try:
+                logging.info(f"Configurando el sensor AS7265x en la dirección {hex(self.i2c_address)}...")
+                self.set_integration_time(self.integration_time)
+                self.set_gain(self.gain)
+                logging.info("Configuración del sensor completada.")
+                return
+            except OSError as e:
+                logging.warning(f"Error configurando el sensor: {e}. Reintentando...")
+                retry_attempts -= 1
+                time.sleep(1)  # Espera antes de reintentar
+            except Exception as e:
+                logging.error(f"Error configurando el sensor: {e}")
+                raise
+
+        raise RuntimeError(f"No se pudo configurar el sensor {self.name} tras varios intentos.")
+    
+    def set_operating_mode(self, mode):
+        """
+        Configura el modo de operación del sensor.
+
+        :param mode: Modo de operación (0-3).
+        """
+        if mode < 0 or mode > 3:
+            raise ValueError("El modo de operación debe estar entre 0 y 3.")
+        self.write_register(0x07, mode)  # Registro ficticio para el modo de operación
+        logging.info(f"Modo de operación configurado: {mode}")
+
+    def enable_sensor_interrupts(self):
+        """
+        Habilita las interrupciones del sensor.
+        """
+        self.write_register(0x08, 1)  # Registro ficticio para habilitar interrupciones
+        logging.info("Interrupciones del sensor habilitadas.")
+
+    def disable_sensor_interrupts(self):
+        """
+        Deshabilita las interrupciones del sensor.
+        """
+        self.write_register(0x08, 0)  # Registro ficticio para deshabilitar interrupciones
+        logging.info("Interrupciones del sensor deshabilitadas.")
+    
     def is_connected(self):
         """
         Verifica si el sensor AS7265x está conectado al bus I2C.
