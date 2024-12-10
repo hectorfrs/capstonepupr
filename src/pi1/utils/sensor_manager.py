@@ -152,16 +152,17 @@ class SensorManager:
 
                 # Crear instancia del sensor
                 sensor = CustomAS7265x(
-                    name=sensor_config.get("name"),
-                    channel=sensor_config.get("channel"),
-                    integration_time=integration_time,
-                    gain=gain,
-                    led_intensity=led_intensity,
-                    read_interval=read_interval,
-                    mux_manager=self.mux_manager,
-                    operating_mode=operating_mode,
-                    enable_interrupts=enable_interrupts
+                name=sensor_config.get("name"),
+                channel=sensor_config.get("channel"),
+                i2c_address=sensor_config.get("i2c_address", 0x49),  # Dirección predeterminada: 0x49
+                integration_time=integration_time,
+                gain=gain,
+                led_intensity=led_intensity,
+                read_interval=read_interval,
+                mux_manager=self.mux_manager,
+                i2c_bus=self.mux_manager.i2c_bus
                 )
+
                 self.sensors.append(sensor)
                 logging.info(f"Sensor {sensor.name} inicializado en canal {sensor.channel} con:")
                 logging.info(f"  - Tiempo de integración: {integration_time} ms")
