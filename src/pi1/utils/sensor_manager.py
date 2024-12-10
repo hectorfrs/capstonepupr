@@ -26,7 +26,7 @@ class SensorManager:
         self.mux_manager = mux_manager          # Instancia de MUXManager.
         self.alert_manager = alert_manager      # Instancia de AlertManager.
         self.sensors = []                       # Lista de sensores inicializados.
-        self.lock = lock or threading.Lock()    # Cerradura para sincronización.
+        self.lock = threading.Lock()            # Cerradura para sincronización.
 
     
 
