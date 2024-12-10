@@ -132,6 +132,7 @@ class SensorManager:
         try:
             sensor_channels = self.config["sensors"]["as7265x"]["channels"]
             default_settings = self.config["sensors"]["default_settings"]
+            i2c_bus = self.config["mux"]["i2c_bus"]  # Obtén el bus I2C desde la configuración del MUX
 
             # Inicializar sensores
             for sensor_config in sensor_channels:
@@ -158,7 +159,8 @@ class SensorManager:
                     gain=gain,
                     led_intensity=led_intensity,
                     read_interval=read_interval,
-                    mux_manager=self.mux_manager
+                    mux_manager=self.mux_manager,
+                    i2c_bus=i2c_bus 
                 )
 
                 # Registrar el sensor en SensorManager
@@ -185,6 +187,7 @@ class SensorManager:
                     metadata={"error": str(e)}
                 )
             raise
+
 
 
 
