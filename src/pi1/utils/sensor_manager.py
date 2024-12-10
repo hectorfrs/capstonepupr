@@ -61,8 +61,16 @@ class SensorManager:
             if not sensor_channels:
                 raise ValueError("No se encontraron configuraciones de canales para sensores en config.yaml.")
 
+            # Asegúrate de que sensor_channels sea una lista
+            if not isinstance(sensor_channels, list):
+                raise ValueError("La configuración de los sensores no es válida. Se esperaba una lista en 'sensors->as7265x->channels'.")
+
+            # Iterar sobre la lista de sensores
             for channel_info in sensor_channels:
-                channel_id = channel_info['channel']
+                if not isinstance(channel_info, dict):
+                    raise ValueError(f"Cada canal debe ser un diccionario. Se encontró: {channel_info}")
+
+                channel = channel_info['channel']
                 sensor_name = channel_info['name']
                 enabled = channel_info.get('enabled', True)
                 read_interval = channel_info.get('read_interval', 3)
