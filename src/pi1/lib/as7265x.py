@@ -125,3 +125,71 @@ class CustomAS7265x(Spectrometer):
         value = self.bus.read_byte_data(self.i2c_address, register)
         logging.info(f"Valor leído del registro {hex(register)}: {value}")
         return value
+
+    def read_advanced_spectrum(self):
+        """
+        Lee los datos espectrales directamente desde registros.
+
+        :return: Diccionario con valores espectrales.
+        """
+        logging.info("Leyendo datos espectrales avanzados...")
+        spectrum = {
+            "violet": self.read_register(0x08),
+            "blue": self.read_register(0x0A),
+            "green": self.read_register(0x0C),
+            "yellow": self.read_register(0x0E),
+            "orange": self.read_register(0x10),
+            "red": self.read_register(0x12),
+        }
+        logging.info(f"Espectro avanzado: {spectrum}")
+        return spectrum
+    
+    def read_temperature(self):
+        """
+        Lee la temperatura del sensor.
+        """
+        try:
+            temperature = self.read_register(0x06)  # Registro según la documentación
+            print(f"Temperatura leída: {temperature} °C")
+            return temperature
+        except Exception as e:
+            print(f"Error leyendo la temperatura: {e}")
+            raise
+    
+    def is_critical(self):
+        """
+        Determina si el sensor está en un estado crítico.
+
+        :return: True si el sensor está en un estado crítico, False en caso contrario.
+        """
+        try:
+            # Verificar temperatura
+            temperature = self.read_temperature()
+            if not (-40 <= temperature <= 85):  # Según especificación del sensor
+                logging.critical(f"Temperatura crítica detectada en {self.name}: {temperature} °C")
+                return True
+            
+            # Verificar errores de lectura
+            read_error_register = 0x07  # Registro de error según la documentación
+            error_status = self.read_register(read_error_register)
+            if error_status != 0:  # Cualquier valor diferente de 0 indica un error
+                logging.critical(f"Error de lectura detectado en {self.name}: {error_status}")
+                return True
+            
+            # (Opcional) Agregar verificaciones adicionales según sea necesario
+
+            return False  # No se detectaron problemas críticos
+        except Exception as e:
+            logging.critical(f"Error evaluando estado crítico en {self.name}: {e}")
+            return True
+    
+    def power_off(self):
+        """
+        Apaga el sensor para ahorrar energía.
+        """
+        try:
+            # Simula el apagado del sensor
+            logging.info(f"Apagando el sensor {self.name} para ahorro de energía.")
+            # Aquí se puede implementar el apagado real si es necesario
+        except Exception as e:
+            logging.error(f"Error apagando el sensor {self.name}: {e}")
