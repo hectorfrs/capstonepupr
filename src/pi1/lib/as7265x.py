@@ -11,22 +11,37 @@ class CustomAS7265x(Spectrometer):
     Combina configuraciones avanzadas y funciones simplificadas para lecturas espectroscópicas.
     """
 
-    def __init__(self, channel, config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml", name=None, mux_manager=None):
+    def __init__(self, channel, read_interval, name=None, integration_time=100, gain=3, led_intensity=0, mux_manager=None, config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml"):
         """
         Inicializa el sensor AS7265x usando valores de configuración YAML.
 
         :param config_path: Ruta al archivo de configuración YAML.
         """
-        # Cargar configuración desde YAML
-        self.name = name # Guardar el nombre del sensor
-        self.config = self.load_config(config_path)
+        # # Cargar configuración desde YAML
+        # self.name = name # Guardar el nombre del sensor
+        # self.config = self.load_config(config_path)
 
-        # Extraer parámetros del sensor
-        self.i2c_bus = self.config['mux']['i2c_bus']
-        self.i2c_address = 0x49  # Dirección predeterminada del sensor
+        # # Extraer parámetros del sensor
+        # self.i2c_bus = self.config['mux']['i2c_bus']
+        # self.i2c_address = 0x49  # Dirección predeterminada del sensor
+        # self.channel = channel
+        # self.integration_time = self.config['sensors']['as7265x']['channels']['integration_time']
+        # self.gain = self.config['sensors']['as7265x']['default_settings']['gain']
+
+        self.name = name
         self.channel = channel
-        self.integration_time = self.config['sensors']['as7265x']['channels']['integration_time']
-        self.gain = self.config['sensors']['as7265x']['default_settings']['gain']
+        self.integration_time = integration_time
+        self.gain = gain
+        self.led_intensity = led_intensity
+        self.read_interval = read_interval
+        self.mux_manager = mux_manager
+
+        # Configura más inicializaciones aquí según sea necesario
+        logging.info(f"Inicializando {name} en el canal {channel} con:")
+        logging.info(f"  - Tiempo de integración: {integration_time} ms")
+        logging.info(f"  - Ganancia: {gain}")
+        logging.info(f"  - Intensidad LED: {led_intensity}")
+        logging.info(f"  - Intervalo de lectura: {read_interval} s")
 
         # Inicializar el bus I²C
         self.bus = SMBus(self.i2c_bus)
