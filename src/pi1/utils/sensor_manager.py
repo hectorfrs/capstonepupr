@@ -139,10 +139,15 @@ class SensorManager:
         Inicializa sensores según la configuración definida en el archivo config.yaml.
         """
         try:
-            # Llama a validate_sensor_config 
             sensor_channels = self.validate_sensor_config(self.config)
 
+            if not isinstance(sensor_channels, list):
+                raise ValueError("La configuración de los sensores debe ser una lista.")
+
             for channel_info in sensor_channels:
+                if not isinstance(channel_info, dict):
+                    raise ValueError(f"Cada entrada en la configuración de sensores debe ser un diccionario. Se encontró: {type(channel_info)}")
+
                 channel = channel_info['channel']
                 sensor_name = channel_info['name']
                 read_interval = channel_info.get('read_interval', 3)
@@ -156,6 +161,7 @@ class SensorManager:
         except Exception as e:
             logging.error(f"Error inicializando sensores: {e}")
             raise
+
 
 
     # def initialize_sensors(self):
