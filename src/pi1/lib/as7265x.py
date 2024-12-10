@@ -31,15 +31,17 @@ class CustomAS7265x(Spectrometer):
         self.enable_interrupts = enable_interrupts
 
         # Inicializar el bus I2C
-        self.bus = SMBus(self.i2c_bus)
-        
-        super().__init__(self.bus)    
+        self.bus = SMBus(self.i2c_bus)  # Este queda para operaciones directas en este nivel.
+
+        # Pasar el número del bus I2C a la clase base
+        super().__init__(i2c_bus)    
 
         # Establecer el nombre del sensor
         self.name = name if name else f"AS7265x_{hex(self.i2c_address)}"
 
         # Configurar el sensor
         self.configure_sensor()
+
 
     def configure_sensor(self):
         """
