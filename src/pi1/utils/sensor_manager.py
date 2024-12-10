@@ -129,32 +129,36 @@ class SensorManager:
         """
         Inicializa sensores según la configuración definida en el archivo config.yaml.
         """
-        logging.debug(f"Configuración de sensores cargada: {self.config['sensors']['as7265x']['channels']}")
-
         try:
-            # Validamos que los canales sean una lista y sus elementos sean diccionarios
             sensor_channels = self.validate_sensor_config(self.config)
 
-            if not isinstance(sensor_channels, list):
-                raise ValueError(f"Se esperaba una lista de canales, pero se encontró: {type(sensor_channels)}")
-            
             for channel_info in sensor_channels:
-                if not isinstance(channel_info, dict):
-                    raise ValueError(f"Se esperaba un diccionario para cada canal, pero se encontró: {type(channel_info)}")
-
-                # Si todo es correcto, inicializa el sensor
-                channel = channel_info['channel']
-                sensor_name = channel_info['name']
+                channel = channel_info.get('channel')
+                if channel is None:
+                    raise ValueError(f"Canal no especificado en {channel_info}")
+                sensor_name = channel_info.get('name')
+                if not sensor_name:
+                    raise ValueError(f"Nombre del sensor no especificado en {channel_info}")
+                
                 read_interval = channel_info.get('read_interval', 3)
+                integration_time = channel_info.get('integration_time', 100)
+                led_intensity = channel_info.get('led_intensity', 0)
 
                 sensor = CustomAS7265x(name=sensor_name, mux_manager=self.mux_manager)
                 sensor.channel = channel
                 sensor.read_interval = read_interval
+                sensor.integration_time = integration_time
+                sensor.led_intensity = led_intensity
                 self.sensors.append(sensor)
-                logging.info(f"Sensor {sensor_name} inicializado en canal {channel} con intervalo de lectura {read_interval} segundos.")
+
+                logging.info(f"Sensor {sensor_name} inicializado en canal {channel} con:")
+                logging.info(f"- Intervalo de lectura: {read_interval}s")
+                logging.info(f"- Tiempo de integración: {integration_time}ms")
+                logging.info(f"- Intensidad LED: {led_intensity}")
         except Exception as e:
             logging.error(f"Error inicializando sensores: {e}")
             raise
+
 
 
 
