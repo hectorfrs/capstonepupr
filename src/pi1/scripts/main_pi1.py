@@ -369,36 +369,26 @@ def main():
     
     while retries < MAX_RETRIES:
         try:
-            # Cargar configuración
-            config_path = "/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml"
+            # Configuración
             config_manager = RealTimeConfigManager(config_path)
             config_manager.start_monitoring()
             config = config_manager.get_config()
             validate_config(config)
 
-            #  # Usa la configuración cargada
-            # MAX_RETRIES = config["system"]["max_retries"]
-            # DIAGNOSTICS_INTERVAL = config["system"]["diagnostics_interval"]
-
-            # # Resto de tu inicialización y lógica principal...
-            # logging.info(f"MAX_RETRIES: {MAX_RETRIES}, DIAGNOSTICS_INTERVAL: {DIAGNOSTICS_INTERVAL}")
-
-            # Configurar logging
+            # Configuración de logging
             configure_logging(config)
             logging.info("Sistema iniciado en Raspberry Pi #1...")
 
-            # Inicializar Alert Manager
+            # Inicialización de Alert Manager
             alert_manager = AlertManager(
                 mqtt_client=None,
                 alert_topic=config['mqtt']['topics']['alerts'],
                 local_log_path=config['logging']['log_file']
             )
 
-            # Configurar red y monitoreo
+            # Configuración de red
             network_manager = NetworkManager(config)
             network_manager.start_monitoring()
-            
-            # Enviar alerta de red
             if not network_manager.is_connected():
                 alert_manager.send_alert(
                     level="CRITICAL",
@@ -406,66 +396,36 @@ def main():
                     metadata={"ethernet_ip": config['network']['ethernet']['ip']}
                 )
 
-            # Inicializar MQTT Client
+            # Inicialización de MQTT Client
             mqtt_client = MQTTPublisher(config_path)
             mqtt_client.connect()
 
             # Inicialización del MUX
-            logging.info("Inicializando MUX...")
             mux_manager = initialize_mux(config, alert_manager)
-
             if mux_manager is None:
-                logging.critical("MUXManager no se inicializó correctamente. Abortando.")
                 raise RuntimeError("MUXManager no inicializado")
-
-            # Detectar y Actualizar Canales Activos
-            try:
-                channels = [ch["id"] for ch in config["mux"]["channels"]]
-                mux_manager.initialize_channels(channels)
-
-                #config_manager.set_value('mux', 'active_channels', active_channels)
-                #logging.info(f"Canales activos detectados y actualizados: {active_channels}")
-            except Exception as e:
-                logging.critical(f"Error detectando canales activos: {e}")
-                alert_manager.send_alert(
-                    level="CRITICAL",
-                    message="Error detectando canales activos",
-                    metadata={"error": str(e)},
-                )
-                raise RuntimeError("Error detectando canales activos")
+            mux_manager.initialize_channels([ch["id"] for ch in config["mux"]["channels"]])
 
             # Diagnósticos iniciales
             run_diagnostics(config, mux_manager, sensors, alert_manager)
 
-            # Inicializar Greengrass Manager
-            logging.info("Inicializando Greengrass Manager...")
+            # Inicialización de Greengrass Manager
             greengrass_manager = GreengrassManager(config_path=config_manager.config_path)
 
-            # Inicializar sensores
-            logging.info("Inicializando sensores...")
+            # Inicialización de Sensores
             sensor_manager = init_sensors(config, mux_manager, alert_manager)
-            # Leer datos de sensores en paralelo
-            sensor_manager.read_sensors_concurrently()
+            threading.Thread(
+                target=sensor_manager.read_sensors_concurrently,
+                daemon=True
+            ).start()
 
-            # Ejecutar diagnósticos iniciales de sensores
-            logging.info("Ejecutando diagnósticos iniciales de sensores...")
+            # Diagnósticos iniciales de sensores
             diagnostics = run_sensor_diagnostics(sensor_manager.sensors, alert_manager)
-
-            if not diagnostics:
-                logging.warning("Los diagnósticos no devolvieron resultados.")
-            else:
-                logging.info(f"Resultados del diagnóstico inicial: {diagnostics}")
-                for sensor_name, result in diagnostics.items():
-                    if result.get("status") != "OK":
-                        logging.warning(f"Sensor {sensor_name} requiere atención: {result}")
-            
-            # Verificar si el resultado es None
             if diagnostics is None:
-                diagnostics = {}  # Reemplazar con un diccionario vacío
+                diagnostics = {}
                 logging.error("Diagnósticos retornaron None. Ajustando a un diccionario vacío.")
 
-
-            # Reaccionar ante sensores no operativos
+            # Revisión de Diagnósticos
             for sensor_name, result in diagnostics.items():
                 if result.get("connected") is False or result.get("status") == "ERROR":
                     logging.warning(f"El sensor {sensor_name} requiere atención.")
