@@ -67,7 +67,13 @@ class CustomAS7265x(Spectrometer):
                 time.sleep(1)  # Espera antes de reintentar
             except Exception as e:
                 logging.error(f"Error configurando el sensor: {e}")
-                raise
+            except OSError as e:
+                if e.errno == 121:  # Remote I/O Error
+                    # Manejo del error, como reintentar la lectura o registrar el fallo
+                    logging.error(f"Remote I/O Error: {e}")
+                    retry_attempts -= 1
+                    time.sleep(1)  # Espera antes de reintentar
+            raise
 
         raise RuntimeError(f"No se pudo configurar el sensor {self.name} tras varios intentos.")
     

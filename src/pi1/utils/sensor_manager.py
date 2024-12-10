@@ -3,6 +3,7 @@ import logging
 from lib.as7265x import CustomAS7265x
 from threading import Thread
 from typing import List, Dict
+from concurrent.futures import ThreadPoolExecutor
 
 
 class SensorManager:
@@ -43,32 +44,57 @@ class SensorManager:
             logging.error(f"Error validando la configuración de sensores: {e}")
             raise
 
+    def validate_sensor_data(data):
+        expected_keys = ['violet', 'blue', 'green', 'yellow', 'orange', 'red']
+        for key in expected_keys:
+            value = data.get(key, None)
+            if value is None or not (0 <= value <= 65535):
+                return False  # Datos inválidos
+        return True
 
-
+    def check_sensor_status(sensor):
+        try:
+            status = sensor.get_status_register()
+            if status & 0x01:  # Estado válido, dependiendo del registro
+                return True
+            print("Advertencia: Sensor no listo")
+            return False
+        except Exception as e:
+            print(f"Error verificando estado del sensor: {e}")
+            return False
 
     def read_sensors_concurrently(self):
         """
         Lee datos espectrales de los sensores de manera concurrente.
         """
+        lock = threading.Lock()
+
         def read_sensor(sensor):
+            """
+            Lee datos de un sensor específico.
+            """
             while True:
                 try:
-                    self.mux_manager.select_channel(sensor.channel)
+                    with lock:
+                        self.mux_manager.select_channel(sensor.channel)
                     data = sensor.read_advanced_spectrum()
                     logging.info(f"Datos leídos del sensor {sensor.name}: {data}")
                 except Exception as e:
                     logging.error(f"Error leyendo datos del sensor {sensor.name}: {e}")
                 finally:
-                    self.mux_manager.disable_all_channels()
+                    with lock:
+                        self.mux_manager.disable_all_channels()
 
-        threads = []
-        for sensor in self.sensors:
-            t = Thread(target=read_sensor, args=(sensor,), daemon=True)
-            threads.append(t)
-            t.start()
+        # Crear un ThreadPoolExecutor para ejecutar las lecturas en paralelo
+        with ThreadPoolExecutor(max_workers=len(self.sensors)) as executor:
+            futures = [executor.submit(read_sensor, sensor) for sensor in self.sensors]
 
-        for t in threads:
-            t.join()
+            # Manejar excepciones si ocurre algún error en los hilos
+            for future in futures:
+                try:
+                    future.result()
+                except Exception as e:
+                    logging.error(f"Error en la ejecución del hilo: {e}")
 
     def read_all_sensors(self):
         """

@@ -144,7 +144,7 @@ def classify_material(spectral_data, thresholds):
         for material, ranges in thresholds.items():
             if all(ranges[i][0] <= spectral_data[i] <= ranges[i][1] for i in range(len(ranges))):
                 return material
-        return "Otros"
+        return "Unknown"
     except Exception as e:
         logging.error(f"Error detectando material: {e}")
         return "Error"
