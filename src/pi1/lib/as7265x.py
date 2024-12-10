@@ -32,7 +32,11 @@ class CustomAS7265x(Spectrometer):
 
         # Inicializar el bus I2C
         self.bus = SMBus(self.i2c_bus)
-        super().__init__(i2c_bus)        
+        
+        super().__init__(self.bus)    
+
+        # Establecer el nombre del sensor
+        self.name = name if name else f"AS7265x_{hex(self.i2c_address)}"
 
         # Configurar el sensor
         self.configure_sensor()
