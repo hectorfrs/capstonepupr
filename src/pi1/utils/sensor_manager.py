@@ -2,6 +2,7 @@
 import logging
 from lib.as7265x import CustomAS7265x
 from threading import Thread
+from typing import List, Dict
 
 
 class SensorManager:
@@ -22,17 +23,45 @@ class SensorManager:
         self.alert_manager = alert_manager  # Instancia de AlertManager.
         self.sensors = []                   # Lista de sensores inicializados.
 
+    def initialize_sensors(self):
+        """
+        Inicializa sensores según la configuración definida en el archivo config.yaml.
+        """
+        try:
+            sensor_channels = validate_sensor_config(self.config)
+
+            for channel_info in sensor_channels:
+                channel = channel_info['channel']
+                sensor_name = channel_info['name']
+                read_interval = channel_info.get('read_interval', 3)
+
+                sensor = CustomAS7265x(name=sensor_name, mux_manager=self.mux_manager)
+                sensor.channel = channel
+                sensor.read_interval = read_interval
+                self.sensors.append(sensor)
+                logging.info(f"Sensor {sensor_name} inicializado en canal {channel} con intervalo de lectura {read_interval} segundos.")
+        except Exception as e:
+            logging.error(f"Error inicializando sensores: {e}")
+            raise
+
     # def initialize_sensors(self):
     #     """
     #     Inicializa sensores según la configuración definida en el archivo config.yaml.
     #     """
     #     try:
-    #         # Verificar configuración de sensores en config.yaml
     #         sensor_channels = self.config.get('sensors', {}).get('as7265x', {}).get('channels', [])
     #         if not sensor_channels:
     #             raise ValueError("No se encontraron configuraciones de canales para sensores en config.yaml.")
 
+    #         # Asegúrate de que sensor_channels sea una lista
+    #         if not isinstance(sensor_channels, list):
+    #             raise ValueError("La configuración de los sensores no es válida. Se esperaba una lista en 'sensors->as7265x->channels'.")
+
+    #         # Iterar sobre la lista de sensores
     #         for channel_info in sensor_channels:
+    #             if not isinstance(channel_info, dict):
+    #                 raise ValueError(f"Cada canal debe ser un diccionario. Se encontró: {channel_info}")
+
     #             channel = channel_info['channel']
     #             sensor_name = channel_info['name']
     #             enabled = channel_info.get('enabled', True)
@@ -52,41 +81,20 @@ class SensorManager:
     #         logging.error(f"Error inicializando sensores: {e}")
     #         raise
 
-    def initialize_sensors(self):
+    def validate_sensor_config(config: Dict) -> List[Dict]:
         """
-        Inicializa sensores según la configuración definida en el archivo config.yaml.
+        Valida la configuración de sensores y devuelve una lista de canales válidos.
+
+        :param config: Diccionario de configuración desde config.yaml.
+        :return: Lista de configuraciones de canales.
         """
         try:
-            sensor_channels = self.config.get('sensors', {}).get('as7265x', {}).get('channels', [])
-            if not sensor_channels:
-                raise ValueError("No se encontraron configuraciones de canales para sensores en config.yaml.")
-
-            # Asegúrate de que sensor_channels sea una lista
-            if not isinstance(sensor_channels, list):
-                raise ValueError("La configuración de los sensores no es válida. Se esperaba una lista en 'sensors->as7265x->channels'.")
-
-            # Iterar sobre la lista de sensores
-            for channel_info in sensor_channels:
-                if not isinstance(channel_info, dict):
-                    raise ValueError(f"Cada canal debe ser un diccionario. Se encontró: {channel_info}")
-
-                channel = channel_info['channel']
-                sensor_name = channel_info['name']
-                enabled = channel_info.get('enabled', True)
-                read_interval = channel_info.get('read_interval', 3)
-
-                if not enabled:
-                    logging.info(f"Sensor {sensor_name} en canal {channel} está deshabilitado.")
-                    continue
-
-                # Inicializar el sensor
-                sensor = CustomAS7265x(name=sensor_name, mux_manager=self.mux_manager)
-                sensor.channel = channel
-                sensor.read_interval = read_interval
-                self.sensors.append(sensor)
-                logging.info(f"Sensor {sensor_name} inicializado en canal {channel} con intervalo de lectura {read_interval} segundos.")
+            channels = config.get('sensors', {}).get('as7265x', {}).get('channels', [])
+            if not isinstance(channels, list):
+                raise ValueError("La configuración de los sensores debe ser una lista en 'sensors->as7265x->channels'.")
+            return channels
         except Exception as e:
-            logging.error(f"Error inicializando sensores: {e}")
+            logging.error(f"Error validando la configuración de sensores: {e}")
             raise
 
     def read_sensors_concurrently(self):
