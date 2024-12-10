@@ -125,38 +125,70 @@ class SensorManager:
                         metadata={"sensor_name": sensor.name, "channel": sensor.channel, "error": str(e)},
                     )
 
-    def initialize_sensors(self):
+    def initialize_sensors(config, mux_manager, alert_manager):
         """
-        Inicializa sensores según la configuración definida en el archivo config.yaml.
+        Inicializa los sensores AS7265x según la configuración proporcionada.
         """
         try:
-            sensor_channels = self.validate_sensor_config(self.config)
+            # Validar la configuración de los sensores
+            sensor_channels = config["sensors"]["as7265x"]["channels"]
+            default_settings = config["sensors"]["default_settings"]
 
-            for channel_info in sensor_channels:
-                channel = channel_info.get('channel')
-                if channel is None:
-                    raise ValueError(f"Canal no especificado en {channel_info}")
-                sensor_name = channel_info.get('name')
-                if not sensor_name:
-                    raise ValueError(f"Nombre del sensor no especificado en {channel_info}")
-                
-                read_interval = channel_info.get('read_interval', 3)
-                integration_time = channel_info.get('integration_time', 100)
-                led_intensity = channel_info.get('led_intensity', 0)
+            # Crear la instancia de SensorManager
+            sensor_manager = SensorManager(config=config, mux_manager=mux_manager, alert_manager=alert_manager)
 
-                sensor = CustomAS7265x(name=sensor_name, mux_manager=self.mux_manager)
+            # Inicializar sensores
+            for sensor_config in sensor_channels:
+                channel = sensor_config.get("channel")
+                name = sensor_config.get("name")
+                enabled = sensor_config.get("enabled", True)
+
+                # Omitir sensores deshabilitados
+                if not enabled:
+                    logging.info(f"Sensor {name} en canal {channel} está deshabilitado. Omitiendo...")
+                    continue
+
+                # Aplicar configuraciones específicas o usar valores por defecto
+                integration_time = sensor_config.get("integration_time", default_settings.get("integration_time", 100))
+                gain = sensor_config.get("gain", default_settings.get("gain", 3))
+                led_intensity = sensor_config.get("led_intensity", default_settings.get("led_intensity", 0))
+                read_interval = sensor_config.get("read_interval", 3)
+
+                # Inicializar sensor
+                sensor = CustomAS7265x(
+                    name=name,
+                    mux_manager=mux_manager
+                )
                 sensor.channel = channel
-                sensor.read_interval = read_interval
                 sensor.integration_time = integration_time
+                sensor.gain = gain
                 sensor.led_intensity = led_intensity
-                self.sensors.append(sensor)
+                sensor.read_interval = read_interval
 
-                logging.info(f"Sensor {sensor_name} inicializado en canal {channel} con:")
-                logging.info(f"- Intervalo de lectura: {read_interval}s")
-                logging.info(f"- Tiempo de integración: {integration_time}ms")
-                logging.info(f"- Intensidad LED: {led_intensity}")
+                # Registrar el sensor en SensorManager
+                sensor_manager.sensors.append(sensor)
+
+                logging.info(f"Sensor {name} inicializado en canal {channel}:")
+                logging.info(f"  - Tiempo de integración: {integration_time} ms")
+                logging.info(f"  - Ganancia: {gain}")
+                logging.info(f"  - Intensidad LED: {led_intensity}")
+                logging.info(f"  - Intervalo de lectura: {read_interval} s")
+
+            # Validar si los sensores están conectados
+            if not sensor_manager.sensors:
+                raise RuntimeError("No se pudieron inicializar sensores. Verifique la configuración.")
+
+            logging.info("Sensores inicializados correctamente.")
+            return sensor_manager
+
         except Exception as e:
-            logging.error(f"Error inicializando sensores: {e}")
+            logging.critical(f"Error inicializando sensores: {e}", exc_info=True)
+            if alert_manager:
+                alert_manager.send_alert(
+                    level="CRITICAL",
+                    message="Error inicializando los sensores.",
+                    metadata={"error": str(e)}
+                )
             raise
 
 

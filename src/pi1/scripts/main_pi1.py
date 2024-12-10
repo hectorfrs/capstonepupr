@@ -307,12 +307,10 @@ def initialize_mux(config, alert_manager):
 # Inicialización de Sensores
 def init_sensors(config, mux_manager):
     try:
-        sensor_manager = SensorManager(config=config, mux_manager=mux_manager)
-        sensor_manager.initialize_sensors()
-        return sensor_manager
+        sensor_manager = initialize_sensors(config, mux_manager, alert_manager)
     except Exception as e:
-        logging.critical(f"Error inicializando sensores: {e}")
-        raise
+        logging.critical("Error al inicializar los sensores. El sistema se detendrá.")
+        sys.exit(1)
 
 # def process_channels(mux_manager):
 #     try:
