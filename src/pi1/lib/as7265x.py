@@ -4,12 +4,13 @@ import logging
 
 
 class CustomAS7265x(Spectrometer):
-    def __init__(self, name, channel, integration_time=100, gain=3, led_intensity=0, read_interval=3, mux_manager=None, i2c_bus=1, operating_mode=0, enable_interrupts=True):
+    def __init__(self, name, channel, i2c_address, integration_time=100, gain=3, led_intensity=0, read_interval=3, mux_manager=None, i2c_bus=1, operating_mode=0, enable_interrupts=True):
         """
         Constructor para el sensor AS7265x.
 
         :param name: Nombre del sensor.
         :param channel: Canal del MUX asociado.
+        :param i2c_address: Dirección I2C del sensor.
         :param integration_time: Tiempo de integración en milisegundos.
         :param gain: Ganancia del sensor.
         :param led_intensity: Intensidad del LED (0-255).
@@ -21,6 +22,7 @@ class CustomAS7265x(Spectrometer):
         """
         self.name = name
         self.channel = channel
+        self.i2c_address = i2c_address  
         self.integration_time = integration_time
         self.gain = gain
         self.led_intensity = led_intensity
@@ -31,16 +33,14 @@ class CustomAS7265x(Spectrometer):
         self.enable_interrupts = enable_interrupts
 
         # Inicializar el bus I2C
-        self.bus = SMBus(self.i2c_bus)  # Este queda para operaciones directas en este nivel.
+        self.bus = SMBus(self.i2c_bus)
 
-        # Pasar el número del bus I2C a la clase base
-        super().__init__(i2c_bus)    
-
-        # Establecer el nombre del sensor
-        self.name = name if name else f"AS7265x_{hex(self.i2c_address)}"
+        # Inicializar la clase base con el número del bus
+        super().__init__(i2c_bus)
 
         # Configurar el sensor
         self.configure_sensor()
+
 
 
     def configure_sensor(self):
