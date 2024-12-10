@@ -2,6 +2,7 @@
 import logging
 from lib.as7265x import CustomAS7265x
 from threading import Thread
+import threading
 from typing import List, Dict
 from concurrent.futures import ThreadPoolExecutor
 
