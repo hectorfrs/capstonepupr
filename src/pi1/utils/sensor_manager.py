@@ -191,6 +191,7 @@ class SensorManager:
 
 
 
+
     # def initialize_sensors(self):
     #     """
     #     Inicializa sensores según la configuración definida en el archivo config.yaml.
