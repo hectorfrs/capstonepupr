@@ -71,6 +71,7 @@ class SensorManager:
         for attempt in range(retries):
             try:
                 with self.lock:
+                    logging.debug(f"Lock inicializado en SensorManager: {self.lock}")
                     self.mux_manager.select_channel(sensor.channel)
                 data = sensor.read_advanced_spectrum()
                 logging.info(f"Datos leídos del sensor {sensor.name} en intento {attempt + 1}: {data}")

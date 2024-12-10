@@ -307,20 +307,22 @@ def initialize_mux(config, alert_manager):
 
 # Inicialización de Sensores
 def init_sensors(config, mux_manager, alert_manager):
+    """
+    Inicializa los sensores utilizando SensorManager.
+
+    :param config: Configuración del sistema.
+    :param mux_manager: Instancia de MUXManager.
+    :param alert_manager: Instancia de AlertManager.
+    """
     try:
-        # Inicializar SensorManager
-        lock = threading.Lock()  # Crear una instancia de bloqueo
-        sensor_manager = SensorManager(config=config, mux_manager=mux_manager, alert_manager=alert_manager, Lock=Lock)  
-
-        # Llamar al método para inicializar sensores
+        logging.info("Inicializando sensores...")
+        lock = threading.Lock()  # Crear una instancia de threading.Lock
+        sensor_manager = SensorManager(config=config, mux_manager=mux_manager, alert_manager=alert_manager, lock=lock)
         sensor_manager.initialize_sensors()
-
-        logging.info("Sensores inicializados exitosamente.")
         return sensor_manager
-
     except Exception as e:
         logging.critical(f"Error al inicializar los sensores. El sistema se detendrá: {e}", exc_info=True)
-        sys.exit(1)
+        raise
 
 def process_sensor(sensor, channel, mux_manager, alert_manager, id):
     """
