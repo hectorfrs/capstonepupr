@@ -1,10 +1,11 @@
 # sensor_manager.py - Clase para manejar múltiples sensores AS7265x conectados al MUX.
 import logging
-from lib.as7265x import CustomAS7265x
-from threading import Thread
+import time
 import threading
+
+from lib.as7265x import CustomAS7265x
 from typing import List, Dict
-from concurrent.futures import ThreadPoolExecutor
+from lib.mux_manager import MUXManager
 
 
 class SensorManager:
