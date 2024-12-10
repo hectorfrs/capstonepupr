@@ -308,10 +308,10 @@ def initialize_mux(config, alert_manager):
 def init_sensors(config, mux_manager, alert_manager):
     try:
         # Crear una instancia de SensorManager
-        sensor_manager = SensorManager(mux_manager=mux_manager, alert_manager=alert_manager)
+        sensor_manager = SensorManager(config=config, mux_manager=mux_manager, alert_manager=alert_manager)
 
         # Inicializar los sensores utilizando la instancia de SensorManager
-        sensor_manager.initialize_sensors(config)
+        sensor_manager.initialize_sensors()
         
         logging.info("Sensores inicializados correctamente.")
         return sensor_manager
