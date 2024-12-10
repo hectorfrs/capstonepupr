@@ -25,9 +25,14 @@ class SensorManager:
 
     
 
-    def validate_sensor_config(self, config):
+    def validate_sensor_config(self) -> List[Dict]:
+        """
+        Valida la configuración de sensores y devuelve una lista de configuraciones válidas.
+
+        :return: Lista de configuraciones de sensores.
+        """
         try:
-            channels = config.get('sensors', {}).get('as7265x', {}).get('channels', [])
+            channels = self.config.get('sensors', {}).get('as7265x', {}).get('channels', [])
             if not isinstance(channels, list):
                 raise ValueError("La configuración de sensores debe ser una lista.")
             for channel in channels:
@@ -50,9 +55,7 @@ class SensorManager:
                 try:
                     self.mux_manager.select_channel(sensor.channel)
                     data = sensor.read_advanced_spectrum()
-                    logging.info(f"Datos leídos del sensor {sensor.name} en canal {sensor.channel}: {data[sensor.name]}")
-                    logging.info(f"Datos del sensor {sensor.name}: {data}")
-                    time.sleep(sensor.read_interval)
+                    logging.info(f"Datos leídos del sensor {sensor.name}: {data}")
                 except Exception as e:
                     logging.error(f"Error leyendo datos del sensor {sensor.name}: {e}")
                 finally:
@@ -87,14 +90,13 @@ class SensorManager:
             try:
                 if not sensor.is_connected():
                     logging.warning(f"Sensor {sensor.name} no está conectado.")
-
-                if sensor.is_critical():
+                elif sensor.is_critical():
                     logging.warning(f"Sensor {sensor.name} está en estado crítico.")
                     if self.alert_manager:
                         self.alert_manager.send_alert(
                             level="WARNING",
-                            message=f"Sensor crítico detectado.",
-                            metadata={"sensor_name": sensor.name, "channel": sensor.channel},
+                            message=f"Sensor {sensor.name} en estado crítico.",
+                            metadata={"sensor_name": sensor.name, "channel": sensor.channel}
                         )
                 else:
                     logging.info(f"Sensor {sensor.name} está funcionando correctamente.")
@@ -104,7 +106,7 @@ class SensorManager:
                     self.alert_manager.send_alert(
                         level="ERROR",
                         message=f"Error en diagnósticos del sensor {sensor.name}",
-                        metadata={"sensor_name": sensor.name, "channel": sensor.channel, "error": str(e)},
+                        metadata={"sensor_name": sensor.name, "channel": sensor.channel, "error": str(e)}
                     )
 
 
@@ -121,61 +123,56 @@ class SensorManager:
                 if self.alert_manager:
                     self.alert_manager.send_alert(
                         level="WARNING",
-                        message=f"Error apagando sensor {sensor.name}",
-                        metadata={"sensor_name": sensor.name, "channel": sensor.channel, "error": str(e)},
+                        message=f"Error apagando el sensor {sensor.name}",
+                        metadata={"sensor_name": sensor.name, "channel": sensor.channel, "error": str(e)}
                     )
 
     def initialize_sensors(self):
         """
-        Inicializa los sensores AS7265x según la configuración proporcionada.
+        Inicializa sensores según la configuración definida en config.yaml.
         """
         try:
-            # Obtener configuraciones del YAML
-            sensor_channels = self.config["sensors"]["as7265x"]["channels"]
-            default_settings = self.config["sensors"]["default_settings"]
-            i2c_bus = self.config["mux"]["i2c_bus"]  # Obtén el bus I2C desde la configuración del MUX
+            # Validar la configuración
+            sensor_channels = self.validate_sensor_config()
+            default_settings = self.config.get('sensors', {}).get('default_settings', {})
 
             # Inicializar sensores
             for sensor_config in sensor_channels:
-                channel = sensor_config.get("channel")
-                name = sensor_config.get("name")
-                enabled = sensor_config.get("enabled", True)
-
-                # Omitir sensores deshabilitados
-                if not enabled:
-                    logging.info(f"Sensor {name} en canal {channel} está deshabilitado. Omitiendo...")
+                if not sensor_config.get("enabled", True):
+                    logging.info(f"Sensor {sensor_config.get('name')} en canal {sensor_config.get('channel')} está deshabilitado. Omitiendo...")
                     continue
 
-                # Aplicar configuraciones específicas o usar valores por defecto
+                # Aplicar configuraciones específicas o usar valores predeterminados
                 integration_time = sensor_config.get("integration_time", default_settings.get("integration_time", 100))
                 gain = sensor_config.get("gain", default_settings.get("gain", 3))
                 led_intensity = sensor_config.get("led_intensity", default_settings.get("led_intensity", 0))
-                read_interval = sensor_config.get("read_interval", 3)
+                read_interval = sensor_config.get("read_interval", default_settings.get("read_interval", 3))
+                operating_mode = sensor_config.get("operating_mode", default_settings.get("operating_mode", 0))
+                enable_interrupts = sensor_config.get("enable_interrupts", default_settings.get("enable_interrupts", True))
 
-                # Inicializar sensor
+                # Crear instancia del sensor
                 sensor = CustomAS7265x(
-                    name=name,
-                    channel=channel,
+                    name=sensor_config.get("name"),
+                    channel=sensor_config.get("channel"),
                     integration_time=integration_time,
                     gain=gain,
                     led_intensity=led_intensity,
                     read_interval=read_interval,
                     mux_manager=self.mux_manager,
-                    i2c_bus=i2c_bus  # Pasa el bus I2C desde el YAML
+                    operating_mode=operating_mode,
+                    enable_interrupts=enable_interrupts
                 )
-
-                # Registrar el sensor en SensorManager
                 self.sensors.append(sensor)
-
-                logging.info(f"Sensor {name} inicializado en canal {channel}:")
+                logging.info(f"Sensor {sensor.name} inicializado en canal {sensor.channel} con:")
                 logging.info(f"  - Tiempo de integración: {integration_time} ms")
                 logging.info(f"  - Ganancia: {gain}")
                 logging.info(f"  - Intensidad LED: {led_intensity}")
                 logging.info(f"  - Intervalo de lectura: {read_interval} s")
+                logging.info(f"  - Modo de operación: {operating_mode}")
+                logging.info(f"  - Interrupciones habilitadas: {enable_interrupts}")
 
-            # Validar si los sensores están conectados
             if not self.sensors:
-                raise RuntimeError("No se pudieron inicializar sensores. Verifique la configuración.")
+                raise RuntimeError("No se inicializaron sensores. Verifique la configuración.")
 
             logging.info("Sensores inicializados correctamente.")
 
