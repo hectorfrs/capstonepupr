@@ -335,6 +335,9 @@ def process_sensor(sensor, channel, mux_manager, alert_manager, id):
         data = sensor.read_advanced_spectrum()
         logging.info(f"Datos del sensor {sensor.name}: {data}")
 
+    except IOError as e:
+        logging.error(f"Error al leer el sensor: {e}")
+
     except Exception as e:
         logging.error(f"Error procesando el sensor {sensor.name}: {e}")
         alert_manager.send_alert(
