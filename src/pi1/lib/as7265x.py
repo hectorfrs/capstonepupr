@@ -56,21 +56,23 @@ class CustomAS7265x(Spectrometer):
             return False
 
     def configure_sensor(self):
-        """
-        Configura el sensor AS7265x con el tiempo de integración y ganancia especificados.
-        """
-        if not self.is_connected():
-            logging.error(f"Sensor no detectado en {hex(self.i2c_address)}. Saltando configuración.")
-            return
-
-        try:
-            logging.info(f"Configurando el sensor AS7265x en la dirección {hex(self.i2c_address)}...")
-            self.set_integration_time(self.integration_time)
-            self.set_gain(self.gain)
-            logging.info("Configuración del sensor completada.")
-        except Exception as e:
-            logging.error(f"Error configurando el sensor: {e}")
-            raise
+        retry_attempts = 3
+        while retry_attempts > 0:
+            try:
+                logging.info(f"Configurando el sensor AS7265x en la dirección {hex(self.i2c_address)}...")
+                self.set_integration_time(self.integration_time)
+                self.set_gain(self.gain)
+                logging.info("Configuración del sensor completada.")
+                break
+            except OSError as e:
+                logging.warning(f"Error configurando el sensor: {e}. Reintentando...")
+                retry_attempts -= 1
+                time.sleep(1)  # Espera antes de reintentar
+            except Exception as e:
+                logging.error(f"Error configurando el sensor: {e}")
+                raise
+        else:
+            raise RuntimeError(f"No se pudo configurar el sensor {self.name} tras varios intentos.")
 
     def set_integration_time(self, time_ms):
         """
