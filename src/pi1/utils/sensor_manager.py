@@ -25,7 +25,7 @@ class SensorManager:
 
     
 
-    def validate_sensor_config(config: Dict) -> List[Dict]:
+    def validate_sensor_config(self, config: Dict) -> List[Dict]:
         """
         Valida la configuración de sensores y devuelve una lista de canales válidos.
 
