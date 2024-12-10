@@ -1,6 +1,8 @@
 # sensor_manager.py - Clase para manejar múltiples sensores AS7265x conectados al MUX.
 import logging
 from lib.as7265x import CustomAS7265x
+from threading import Thread
+
 
 class SensorManager:
     """
@@ -20,13 +22,42 @@ class SensorManager:
         self.alert_manager = alert_manager  # Instancia de AlertManager.
         self.sensors = []                   # Lista de sensores inicializados.
 
+    # def initialize_sensors(self):
+    #     """
+    #     Inicializa sensores según la configuración definida en el archivo config.yaml.
+    #     """
+    #     try:
+    #         # Verificar configuración de sensores en config.yaml
+    #         sensor_channels = self.config.get('sensors', {}).get('as7265x', {}).get('channels', [])
+    #         if not sensor_channels:
+    #             raise ValueError("No se encontraron configuraciones de canales para sensores en config.yaml.")
+
+    #         for channel_info in sensor_channels:
+    #             channel = channel_info['channel']
+    #             sensor_name = channel_info['name']
+    #             enabled = channel_info.get('enabled', True)
+    #             read_interval = channel_info.get('read_interval', 3)
+
+    #             if not enabled:
+    #                 logging.info(f"Sensor {sensor_name} en canal {channel} está deshabilitado.")
+    #                 continue
+
+    #             # Inicializar el sensor
+    #             sensor = CustomAS7265x(name=sensor_name, mux_manager=self.mux_manager)
+    #             sensor.channel = channel
+    #             sensor.read_interval = read_interval
+    #             self.sensors.append(sensor)
+    #             logging.info(f"Sensor {sensor_name} inicializado en canal {channel} con intervalo de lectura {read_interval} segundos.")
+    #     except Exception as e:
+    #         logging.error(f"Error inicializando sensores: {e}")
+    #         raise
+
     def initialize_sensors(self):
         """
         Inicializa sensores según la configuración definida en el archivo config.yaml.
         """
         try:
-            # Verificar configuración de sensores en config.yaml
-            sensor_channels = self.config.get('sensors', {}).get('as7265x', {}).get('channels', {})
+            sensor_channels = self.config.get('sensors', {}).get('as7265x', {}).get('channels', [])
             if not sensor_channels:
                 raise ValueError("No se encontraron configuraciones de canales para sensores en config.yaml.")
 
@@ -49,6 +80,31 @@ class SensorManager:
         except Exception as e:
             logging.error(f"Error inicializando sensores: {e}")
             raise
+
+    def read_sensors_concurrently(self):
+        """
+        Lee datos espectrales de los sensores de manera concurrente.
+        """
+        def read_sensor(sensor):
+            while True:
+                try:
+                    self.mux_manager.select_channel(sensor.channel)
+                    data = sensor.read_advanced_spectrum()
+                    logging.info(f"Datos del sensor {sensor.name}: {data}")
+                    time.sleep(sensor.read_interval)
+                except Exception as e:
+                    logging.error(f"Error leyendo datos del sensor {sensor.name}: {e}")
+                finally:
+                    self.mux_manager.disable_all_channels()
+
+        threads = []
+        for sensor in self.sensors:
+            t = Thread(target=read_sensor, args=(sensor,), daemon=True)
+            threads.append(t)
+            t.start()
+
+        for t in threads:
+            t.join()
 
     def read_all_sensors(self):
         """

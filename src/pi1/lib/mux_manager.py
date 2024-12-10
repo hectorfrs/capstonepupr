@@ -118,11 +118,10 @@ class MUXManager:
         :param channel: Número del canal (0-7).
         """
         try:
-            if not (0 <= id <= 7):
-                raise ValueError(f"Canal {id} fuera de rango (0-7).")
-            self.bus.write_byte(self.i2c_address, 1 << id)
-            self.status[id] = True
-            logging.info(f"Canal {id} seleccionado en el MUX.")
+            if not (0 <= channel_id <= 7):
+                raise ValueError(f"ID del canal {channel_id} fuera de rango (0-7).")
+            self.bus.write_byte(self.i2c_address, 1 << channel_id)
+            logging.info(f"Canal {channel_id} activado en el MUX.")
         except ValueError as ve:
             logging.error(f"Error de valor: {ve}")
             if self.alert_manager:
@@ -132,13 +131,14 @@ class MUXManager:
                     metadata={"channel": id, "error": str(ve)},
                 )
         except Exception as e:
-            logging.error(f"Error activando canal {id}: {e}")
+            logging.error(f"Error activando canal {channel_id}: {e}")
             if self.alert_manager:
                 self.alert_manager.send_alert(
                     level="CRITICAL",
                     message=f"Error activando canal {id} en el MUX.",
                     metadata={"channel": id, "error": str(e)},
                 )
+            raise
 
     def disable_all_channels(self):
         """

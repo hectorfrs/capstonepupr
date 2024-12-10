@@ -444,6 +444,8 @@ def main():
             # Inicializar sensores
             logging.info("Inicializando sensores...")
             sensor_manager = initialize_sensors(config, mux_manager)
+            # Leer datos de sensores en paralelo
+            sensor_manager.read_sensors_concurrently()
 
             # Ejecutar diagnósticos iniciales de sensores
             logging.info("Ejecutando diagnósticos iniciales de sensores...")
