@@ -11,12 +11,36 @@ class CustomAS7265x(Spectrometer):
     Combina configuraciones avanzadas y funciones simplificadas para lecturas espectroscópicas.
     """
 
-    def __init__(self, channel, read_interval, name=None, integration_time=100, gain=3, led_intensity=0, mux_manager=None, config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml"):
+    def __init__(self, name, channel, integration_time=100, gain=3, led_intensity=0, read_interval=3, mux_manager=None, i2c_bus=1, config_path="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config.yaml"):
         """
-        Inicializa el sensor AS7265x usando valores de configuración YAML.
+        Constructor para el sensor AS7265x.
 
-        :param config_path: Ruta al archivo de configuración YAML.
+        :param name: Nombre del sensor.
+        :param channel: Canal del MUX asociado.
+        :param integration_time: Tiempo de integración en milisegundos.
+        :param gain: Ganancia del sensor.
+        :param led_intensity: Intensidad del LED (0-255).
+        :param read_interval: Intervalo de lectura en segundos.
+        :param mux_manager: Administrador del MUX.
+        :param i2c_bus: Número del bus I2C.
         """
+        self.name = name
+        self.channel = channel
+        self.integration_time = integration_time
+        self.gain = gain
+        self.led_intensity = led_intensity
+        self.read_interval = read_interval
+        self.mux_manager = mux_manager
+        self.i2c_bus = i2c_bus  # Asigna el bus I2C
+        self.bus = SMBus(self.i2c_bus)  # Inicializa el bus I2C
+
+        # Mensajes de inicialización para depuración
+        logging.info(f"Inicializando {name} en el canal {channel} con:")
+        logging.info(f"  - Tiempo de integración: {integration_time} ms")
+        logging.info(f"  - Ganancia: {gain}")
+        logging.info(f"  - Intensidad LED: {led_intensity}")
+        logging.info(f"  - Intervalo de lectura: {read_interval} s")
+
         # # Cargar configuración desde YAML
         # self.name = name # Guardar el nombre del sensor
         #self.config = self.load_config(config_path)
@@ -29,23 +53,7 @@ class CustomAS7265x(Spectrometer):
         # self.gain = self.config['sensors']['as7265x']['default_settings']['gain']
         #self.bus = SMBus(self.i2c_bus)
         #self.i2c_bus = self.config['mux']['i2c_bus']
-        self.i2c_address = 0x49  # Dirección predeterminada del sensor
-        self.name = name
-        self.channel = channel
-        self.integration_time = integration_time
-        self.gain = gain
-        self.led_intensity = led_intensity
-        self.read_interval = read_interval
-        self.mux_manager = mux_manager
-        self.i2c_bus = i2c_bus 
-        self.bus = SMBus(self.i2c_bus)  
-
-         # Configura más inicializaciones aquí según sea necesario
-        logging.info(f"Inicializando {name} en el canal {channel} con:")
-        logging.info(f"  - Tiempo de integración: {integration_time} ms")
-        logging.info(f"  - Ganancia: {gain}")
-        logging.info(f"  - Intensidad LED: {led_intensity}")
-        logging.info(f"  - Intervalo de lectura: {read_interval} s")
+        
 
         # Inicializar el bus I²C
         self.bus = SMBus(self.i2c_bus)
