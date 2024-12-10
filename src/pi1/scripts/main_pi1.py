@@ -305,7 +305,7 @@ def initialize_mux(config, alert_manager):
 
 
 # Inicialización de Sensores
-def initialize_sensors(config, mux_manager):
+def ini_sensors(config, mux_manager):
     try:
         sensor_manager = SensorManager(config=config, mux_manager=mux_manager)
         sensor_manager.initialize_sensors()
@@ -443,7 +443,7 @@ def main():
 
             # Inicializar sensores
             logging.info("Inicializando sensores...")
-            sensor_manager = initialize_sensors(config, mux_manager)
+            sensor_manager = init_sensors(config, mux_manager)
             # Leer datos de sensores en paralelo
             sensor_manager.read_sensors_concurrently()
 
