@@ -30,15 +30,15 @@ def main():
     config = load_config()
 
     # Inicializar MUX
-    mux_address = config["mux"]["address"]
-    mux = TCA9548AManager(mux_address)
+    mux_address = hex(config["mux"]["address"])
+    mux = TCA9548AManager(int(mux_address, 16))
 
     # Habilitar canales del MUX
     
     mux_channels = config["mux"]["channels"]
     mux_channels = [entry['channel'] for entry in config['mux']['channels']]
     mux.enable_multiple_channels(mux_channels)
-    logging.debug(f"Canales extraídos: {mux_channels}")
+    logging.info(f"Canales cargados: {mux_channels}")
 
     # Inicializar sensores en los canales
     sensors = []
