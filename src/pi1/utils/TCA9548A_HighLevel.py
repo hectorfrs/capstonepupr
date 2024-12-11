@@ -56,9 +56,12 @@ class TCA9548AMUXHighLevel:
     def get_active_channel(self):
         """
         Devuelve los canales actualmente activos en el MUX.
+        :return: Lista de canales activos (0-7).
         """
-        active_channels = self.mux.get_active_channels()
-        logging.info(f"Canales activos en el MUX: {active_channels}")
+        status = self.mux.read_control_register()  # Leer el registro de control
+        active_channels = [i for i in range(8) if status & (1 << i)]
+        logging.info(f"Canales activos: {active_channels}")
         return active_channels
+
 
 

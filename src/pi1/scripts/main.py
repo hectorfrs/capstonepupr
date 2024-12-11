@@ -80,9 +80,9 @@ def main():
         
         # Verificar qué canal está activo
         active_channels = mux.get_active_channel()
-        if 0 not in active_channels:
+        if channel not in active_channels:
             logging.error(f"El canal {channel} no está activo después de habilitarlo.")
-            return
+            continue
         logging.info(f"Canal activo verificado: {active_channels}")
         
         # Crea instancia High Level para el sensor
