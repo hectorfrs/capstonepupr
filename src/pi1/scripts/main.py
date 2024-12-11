@@ -75,8 +75,7 @@ def main():
         logging.info(f"Inicializando sensor en canal {channel}...")
         mux.enable_channel(channel)
         logging.info(f"Canal {channel} habilitado. Esperando estabilización...")
-        #tiempo de espera de 200 ms
-        time.sleep(0.2)
+        time.sleep(0.5)    # Tiempo de estabilización a 500 ms
         
         # Verificar qué canal está activo
         active_channels = mux.get_active_channel()
@@ -85,13 +84,9 @@ def main():
             continue
         logging.info(f"Canal activo verificado: {active_channels}")
         
-        # Crea instancia High Level para el sensor
-        sensor = AS7265xSensorHighLevel(address=0x49)
-
-        
-
-
         try:
+            # Crea instancia High Level para el sensor
+            sensor = AS7265xSensorHighLevel(address=0x49)
             # Verificar el estado del sensor
             sensor.check_sensor_status()
             logging.info("El sensor está listo para ser configurado.")
@@ -110,10 +105,13 @@ def main():
             logging.info(f"Sensor en canal {channel} configurado correctamente.")
 
             # Deshabilitar todos los canales después de configurar el sensor
-           # mux.disable_all_channels()
+            mux.disable_all_channels()
         except Exception as e:
             logging.error(f"Error con el sensor en canal {channel}: {e}")
-            return
+            continue
+        finally:
+            # Deshabilitar todos los canales después de configurar el sensor
+            mux.disable_all_channels()
 
     # Capturar datos de los sensores
     for idx, sensor in enumerate(sensors):
@@ -139,6 +137,9 @@ def main():
         
 
     # Deshabilitar todos los canales del MUX al finalizar
+    logging.debug(f"Sensores inicializados: {sensors}")
+    logging.debug(f"Canales del MUX: {mux_channels}")
+
     mux.disable_all_channels()
     logging.info("Pruebas completadas. Todos los canales deshabilitados.")
 
