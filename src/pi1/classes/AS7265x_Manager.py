@@ -137,8 +137,8 @@ class AS7265xManager:
 
     def read_raw_spectrum(self):
         """
-        Lee y devuelve los valores crudos del espectro.
-        :return: Lista de valores crudos.
+        Lee y devuelve los valores crudos del espectro, con detalles del dispositivo y registro.
+        :return: Lista de tuplas con detalles y valores crudos.
         """
         raw_registers = [
             (0x08, 0x09), (0x0A, 0x0B), (0x0C, 0x0D),
@@ -148,18 +148,23 @@ class AS7265xManager:
         raw_values = []
 
         for device in devices:
-            self.set_devsel(device)  # Assuming a method to select the device
-            for reg_pair in raw_registers:
-                high_byte = self._read_register(reg_pair[0])
-                low_byte = self._read_register(reg_pair[1])
-                raw_values.append((high_byte << 8) | low_byte)
-            raw_values.append({
-                "device": device,
-                "registers": reg_pair,
-                "value": value
-            })
-            logging.debug(f"Device: {device}, Registers: {reg_pair}, Value: {value}")
+            try:
+                self.set_devsel(device)  # Assuming a method to select the device
+                logging.info(f"Dispositivo seleccionado: {device}.")
+                for reg_pair in raw_registers:
+                    high_byte = self._read_register(reg_pair[0])
+                    low_byte = self._read_register(reg_pair[1])
+                    value = (high_byte << 8) | low_byte
+                    raw_values.append({
+                        "device": device,
+                        "registers": reg_pair,
+                        "value": value
+                    })
+                    logging.debug(f"Device: {device}, Registers: {reg_pair}, Value: {value}")
+            except Exception as e:
+                raise RuntimeError(f"Error reading raw spectrum from {device}: {e}")
         return raw_values
+
 
     def reorder_data(self, data):
         """
