@@ -46,7 +46,17 @@ class AS7265xSensorHighLevel:
         High-level method to get the raw spectral data.
         """
         try:
-            raw_data = self.sensor.read_raw_spectrum()  
+            logging.debug("Reading raw spectrum...")
+            #raw_data = self.sensor.read_raw_spectrum()  
+
+            raw_data = {
+            "violet": self.sensor.read_raw_spectrum(0x08, 0x09),
+            "blue": self.self.sensor.read_raw_spectrum(0x0A, 0x0B),
+            "green": self.sensor.read_raw_spectrum(0x0C, 0x0D),
+            "yellow": self.sensor.read_raw_spectrum(0x0E, 0x0F),
+            "orange": self.sensor.read_raw_spectrum(0x10, 0x11),
+            "red": self.sensor.read_raw_spectrum(0x12, 0x13),
+        }
             return raw_data
         except Exception as e:
             raise RuntimeError(f"Error reading raw spectrum: {e}")
