@@ -92,24 +92,20 @@ def main():
             # Verificar el estado del sensor
             sensor.check_sensor_status()
             logging.info("El sensor está listo para ser configurado.")
-        except Exception as e:
-            logging.error(f"Error en el estado del sensor: {e}")
-        return
 
-        try:
+            # Configurar el sensor
             sensor.configure(
-            integration_time=config["sensors"]["integration_time"],
-            gain=config["sensors"]["gain"],
-            mode=config["sensors"]["mode"]
-        )
+                integration_time=config["sensors"]["integration_time"],
+                gain=config["sensors"]["gain"],
+                mode=config["sensors"]["mode"]
+            )
             sensors.append(sensor)
             logging.info(f"Sensor en canal {channel} configurado correctamente.")
 
-        # Deshabilitar el canal después de configurar el sensor
+            # Deshabilitar todos los canales después de configurar el sensor
             mux.disable_all_channels()
-
-        except OSError as e:
-            logging.error(f"Error de comunicación con el sensor: {e}")
+        except Exception as e:
+            logging.error(f"Error con el sensor en canal {channel}: {e}")
             return
 
     # Capturar datos de los sensores

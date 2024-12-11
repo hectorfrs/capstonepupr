@@ -46,14 +46,12 @@ class TCA9548AManager:
 
     def disable_channel(self, channel):
         """
-        Deshabilita un canal en el MUX.
+        Deshabilita un canal en el MUX escribiendo 0 en su máscara.
         :param channel: Canal a deshabilitar (0-7).
         """
-        if not 0 <= channel <= 7:
-            raise ValueError("El canal debe estar entre 0 y 7.")
-        self.bus.disable_channels(1 << channel)
-        logging.info(f"Canal {channel} deshabilitado.")
-
+        logging.warning("No es posible deshabilitar un canal individual. Deshabilita todos los canales.")
+        raise NotImplementedError("La deshabilitación individual no es soportada por el MUX TCA9548A.")
+    
     def enable_multiple_channels(self, channels):
         """
         Habilita múltiples canales en el MUX.
@@ -74,10 +72,14 @@ class TCA9548AManager:
 
     def disable_all_channels(self):
         """
-        Deshabilita todos los canales del MUX.
+        Deshabilita todos los canales del MUX escribiendo 0x00 en el registro de control.
         """
-        self.bus.disable_all_channels()
-        logging.info("Todos los canales deshabilitados.")
+        try:
+            self.bus.write_byte(self.address, 0x00)
+            logging.info("Todos los canales deshabilitados en el MUX.")
+        except Exception as e:
+            logging.error(f"Error al deshabilitar todos los canales en el MUX: {e}")
+            raise
 
     def get_active_channels(self):
         """
@@ -104,7 +106,11 @@ class TCA9548AManager:
 
     def reset(self):
         """
-        Resetea el MUX a través del comando de reset.
+        Resetea el MUX escribiendo 0x00 en el registro de control.
         """
-        self.bus.disable_all_channels()
-        logging.info("MUX reseteado y todos los canales deshabilitados.")
+        try:
+            self.bus.write_byte(self.address, 0x00)
+            logging.info("MUX reseteado y todos los canales deshabilitados.")
+        except Exception as e:
+            logging.error(f"Error al resetear el MUX: {e}")
+            raise
