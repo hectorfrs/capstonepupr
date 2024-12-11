@@ -59,8 +59,6 @@ class TCA9548AManager:
         self.mux.enable_channels(mask)
         logging.info(f"Canales {channels} habilitados.")
 
-
-
     def disable_all_channels(self):
         """
         Deshabilita todos los canales del MUX.
@@ -77,6 +75,13 @@ class TCA9548AManager:
         active_channels = [i for i in range(8) if status & (1 << i)]
         logging.info(f"Estado del registro de control: {bin(status)}, Canales activos: {active_channels}")
         return active_channels
+
+    def read_control_register(self):
+        """
+        Lee el registro de control del MUX para determinar los canales activos.
+        :return: Byte que representa el estado de los canales activos.
+        """
+        return self.mux._i2c.read_byte(self.mux.address)
 
     def reset(self):
         """

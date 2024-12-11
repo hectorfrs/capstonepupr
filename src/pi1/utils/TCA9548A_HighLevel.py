@@ -61,10 +61,4 @@ class TCA9548AMUXHighLevel:
         logging.info(f"Canales activos en el MUX: {active_channels}")
         return active_channels
 
-    def read_control_register(self):
-        """
-        Lee el registro de control del MUX para determinar los canales activos.
-        :return: Byte que representa el estado de los canales activos.
-        """
-        return self.mux._i2c.read_byte(self.mux.address)
 
