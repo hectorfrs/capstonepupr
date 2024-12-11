@@ -118,14 +118,14 @@ def main():
             # Habilitar el canal correspondiente
             mux.enable_channel(mux_channels[idx])
             logging.info(f"Canal {mux_channels[idx]} habilitado para lectura.")
-            time.sleep(0.5) # Tiempo de espera de 500 ms
-            
+            time.sleep(0.5)
+
             # Realizar la lectura
-            logging.info(f"Capturando datos del sensor {idx} en canal {mux_channels[idx]}")
             spectrum = sensor.read_calibrated_spectrum()
-            logging.info(f"Espectro calibrado del sensor {idx}: {spectrum}")
+            logging.info(f"Espectro calibrado del sensor {idx} en canal {mux_channels[idx]}: {spectrum}")
         except Exception as e:
-            logging.error(f"Error al leer datos del sensor en canal {mux_channels[idx]}: {e}")
+            logging.error(f"Error al procesar el sensor {idx} en canal {mux_channels[idx]}: {e}")
+
 
         
 
