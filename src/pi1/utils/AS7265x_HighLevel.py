@@ -49,3 +49,14 @@ class AS7265xSensorHighLevel:
         raw_data = self.sensor.read_raw_data()
         logging.info(f"Datos crudos leídos: {raw_data}")
         return raw_data
+
+    def check_sensor_status(sensor):
+        """
+        Verifica el estado inicial del sensor AS7265x.
+        """
+        status = self.sensor._read_register(0x00)
+        if status == 0x80:
+            logging.info("El sensor está listo para recibir comandos.")
+        else:
+            logging.error(f"Estado inesperado del sensor: {status:#04x}")
+            raise Exception("El sensor no está en estado listo.")
