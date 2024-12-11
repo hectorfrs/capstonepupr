@@ -67,3 +67,14 @@ class AS7265xSensorHighLevel:
         return True
 
         raise Exception("El sensor sigue ocupado después de varios intentos.")
+
+    def reset(self):
+        """
+        Reinicia el sensor AS7265x utilizando la clase base.
+        """
+        try:
+            self.sensor.reset()
+            logging.info("El sensor ha sido reiniciado correctamente.")
+        except Exception as e:
+            logging.error(f"Error al reiniciar el sensor: {e}")
+            raise
