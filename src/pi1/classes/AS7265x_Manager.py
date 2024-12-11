@@ -149,8 +149,8 @@ class AS7265xManager:
         for device in devices:
             self.set_devsel(device)  # Assuming a method to select the device
             for reg_pair in raw_registers:
-                high_byte = self.read_reg(reg_pair[0])
-                low_byte = self.read_reg(reg_pair[1])
+                high_byte = self._read_register(reg_pair[0])
+                low_byte = self._read_register(reg_pair[1])
                 raw_values.append((high_byte << 8) | low_byte)
         logging.info(f"Espectro crudo leído: {raw_values}")
         return raw_values
