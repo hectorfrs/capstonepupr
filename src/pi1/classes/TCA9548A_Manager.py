@@ -52,11 +52,13 @@ class TCA9548AManager:
         """
         mask = 0
         for channel in channels:
-            if not 0 <= channel <= 7:
-                raise ValueError("Todos los canales deben estar entre 0 y 7.")
+            if not isinstance(channel, int) or not 0 <= channel <= 7:
+                raise ValueError(f"Canal inválido: {channel}. Debe ser un entero entre 0 y 7.")
             mask |= 1 << channel
         self.mux.enable_channels(mask)
         logging.info(f"Canales {channels} habilitados.")
+        logging.debug(f"mux_channels: {mux_channels}")
+
 
     def disable_all_channels(self):
         """
