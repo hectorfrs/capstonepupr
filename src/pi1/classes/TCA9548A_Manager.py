@@ -42,8 +42,12 @@ class TCA9548AManager:
         """
         if not 0 <= channel <= 7:
             raise ValueError("El canal debe estar entre 0 y 7.")
-        self.mux.enable_channels(1 << channel)
-        logging.info(f"Canal {channel} habilitado.")
+        try:
+            self.bus.write_byte(self.address, 1 << channel)
+            logging.info(f"Canal {channel} habilitado en el MUX.")
+        except Exception as e:
+            logging.error(f"Error al habilitar el canal {channel} en el MUX: {e}")
+            raise
 
     def disable_channel(self, channel):
         """
