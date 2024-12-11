@@ -28,7 +28,7 @@ class AS7265xManager:
         Inicializa el sensor AS7265x.
         :param address: Dirección I2C del sensor.
         """
-        self.sensor = qwiic.QwiicDevice(address)
+        self.sensor = qwiic.QwiicAS7265x()
 
         if not self.sensor.connected:
             logging.error(f"No se puede conectar al sensor en la dirección {hex(address)}")
