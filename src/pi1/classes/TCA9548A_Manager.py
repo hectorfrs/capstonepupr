@@ -4,6 +4,7 @@
 
 import qwiic
 import qwiic_tca9548a
+import smbus2
 import time
 import logging
 import sys
@@ -68,12 +69,12 @@ class TCA9548AManager:
 
     def get_active_channels(self):
         """
-        Lee el registro de control para determinar los canales activos.
+        Devuelve los canales actualmente activos en el MUX.
         :return: Lista de canales activos (0-7).
         """
-        status = self.mux.read_control_register()
+        status = self.read_control_register()
         active_channels = [i for i in range(8) if status & (1 << i)]
-        logging.info(f"Estado del registro de control: {bin(status)}, Canales activos: {active_channels}")
+        logging.info(f"Canales activos: {active_channels}")
         return active_channels
 
     def read_control_register(self):
@@ -81,7 +82,13 @@ class TCA9548AManager:
         Lee el registro de control del MUX para determinar los canales activos.
         :return: Byte que representa el estado de los canales activos.
         """
-        return self.mux._i2c.read_byte(self.mux.address)
+        try:
+            status = self.bus.read_byte(self.address)  # Dirección del MUX
+            logging.info(f"Registro de control leído: {bin(status)}")
+            return status
+        except Exception as e:
+            logging.error(f"Error al leer el registro de control del MUX: {e}")
+            raise
 
     def reset(self):
         """
