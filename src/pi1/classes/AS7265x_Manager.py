@@ -32,7 +32,7 @@ class AS7265xManager:
         :param address: Dirección I²C del sensor.
         """
         self.address = address
-        self.qwiic_device = qwiic.QwiicDevice(address)  # Inicializar dispositivo Qwiic
+        self.qwiic_device = qwiic.QwiicDevice()  # Inicializar dispositivo Qwiic
         self.smbus = smbus2.SMBus(bus_num)  # Inicializar SMBus2
 
         # Verificar conexión
