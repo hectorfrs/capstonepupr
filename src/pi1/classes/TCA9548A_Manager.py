@@ -3,6 +3,7 @@
 # copyright (c) 2024
 
 import qwiic
+import qwiic_tca9548a
 import time
 import logging
 import sys

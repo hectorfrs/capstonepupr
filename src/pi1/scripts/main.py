@@ -67,6 +67,7 @@ def main():
     logging.info("Inicializando sensores en los canales del MUX...")
     sensors = []
     for channel in mux_channels:
+        logging.info(f"Inicializando sensor en canal {channel}...")
         mux.enable_channel(channel)
         sensor = AS7265xManager()
         sensor.configure(

@@ -62,7 +62,7 @@ class AS7265xManager:
         :param value: Valor a escribir.
         """
         while self._read_status() & self.TX_VALID:
-            time.sleep(0.01)                                # Esperar hasta que el buffer de escritura esté listo
+            time.sleep(0.05)                                # Esperar hasta que el buffer de escritura esté listo
         self._write_register(self.REG_WRITE, reg | 0x80)    # Escribir dirección del registro
         self._write_register(self.REG_WRITE, value)         # Escribir valor
         logging.debug(f"Registro virtual {hex(reg)} configurado con {value}.")
