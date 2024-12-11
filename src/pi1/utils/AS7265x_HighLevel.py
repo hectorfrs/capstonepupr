@@ -41,14 +41,16 @@ class AS7265xSensorHighLevel:
         logging.info(f"Espectro calibrado leído: {spectrum}")
         return spectrum
 
-    def read_raw_data(self):
+    def read_raw_spectrum(self):
         """
-        Lee y devuelve los datos crudos del sensor.
-        :return: Lista de valores crudos.
+        High-level method to get the raw spectral data.
         """
-        raw_data = self.sensor.read_raw_data()
-        logging.info(f"Datos crudos leídos: {raw_data}")
-        return raw_data
+        try:
+            raw_data = self.manager.read_raw_data()  # Assuming `self.manager` is an instance of AS7265x_Manager
+            return raw_data
+        except Exception as e:
+            raise RuntimeError(f"Error reading raw spectrum: {e}")
+
 
     def check_sensor_status(self):
         """
@@ -85,4 +87,6 @@ class AS7265xSensorHighLevel:
         :return: Valor del estado del sensor.
         """
         return self.sensor._read_status()
+
+    
 

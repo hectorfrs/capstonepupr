@@ -129,12 +129,12 @@ def main():
             # Realizar la lectura
             if read_calibrated:
                 logging.info(f"Realizando lectura calibrada del sensor {idx} en canal {mux_channels[idx]}")
-                data = sensor.read_calibrated_spectrum()
+                spectrum = sensor.read_calibrated_spectrum()
             else:
                 logging.info(f"Realizando lectura datos crudos del sensor {idx} en canal {mux_channels[idx]}")
-                data = sensor.read_raw_spectrum()
+                spectrum = read_raw_spectrum(sensor)
 
-            logging.info(f"Datos leidos de sensor {idx} en canal {mux_channels[idx]}: {data}")
+            logging.info(f"Datos leidos de sensor {idx} en canal {mux_channels[idx]}: {spectrum}")
 
         except Exception as e:
             logging.error(f"Error al procesar el sensor {idx} en canal {mux_channels[idx]}: {e}")

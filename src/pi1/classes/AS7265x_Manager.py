@@ -134,19 +134,26 @@ class AS7265xManager:
         logging.info(f"Espectro calibrado leído: {spectrum}")
         return spectrum
 
-    def read_raw_data(self):
+    def read_raw_spectrum(self):
         """
         Lee y devuelve los valores crudos del espectro.
         :return: Lista de valores crudos.
         """
-        raw_data = []
-        for reg in range(0x08, 0x20, 2):
-            msb = self._read_virtual_register(reg)
-            lsb = self._read_virtual_register(reg + 1)
-            value = (msb << 8) | lsb
-            raw_data.append(value)
-        logging.info(f"Datos crudos leídos: {raw_data}")
-        return raw_data
+        raw_registers = [
+            (0x08, 0x09), (0x0A, 0x0B), (0x0C, 0x0D),
+            (0x0E, 0x0F), (0x10, 0x11), (0x12, 0x13)
+        ]
+        devices = ["AS72651", "AS72652", "AS72653"]
+        raw_values = []
+
+        for device in devices:
+            self.set_devsel(device)  # Assuming a method to select the device
+            for reg_pair in raw_registers:
+                high_byte = self.read_reg(reg_pair[0])
+                low_byte = self.read_reg(reg_pair[1])
+                raw_values.append((high_byte << 8) | low_byte)
+        logging.info(f"Espectro crudo leído: {raw_values}")
+        return raw_values
 
     def reorder_data(self, data):
         """
