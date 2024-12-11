@@ -54,17 +54,16 @@ class AS7265xSensorHighLevel:
         """
         Verifica el estado inicial del sensor AS7265x.
         """
-        try:
         # Leer el estado del sensor
-            sensor_status = self.sensor._read_status()
+        for attempt in range(3):  # Hasta 3 intentos
+            sensor_status = self._read_status()
             logging.debug(f"Estado del sensor: {bin(sensor_status)}")
 
             if sensor_status & 0x80:  # Bit ocupado
-                raise Exception("El sensor está ocupado procesando datos.")
-            elif sensor_status & 0x01:  # Error inesperado
-                raise Exception(f"Estado inesperado del sensor: {hex(sensor_status)}")
+                logging.warning(f"El sensor está ocupado. Reintento {attempt + 1}/3...")
+                time.sleep(1)  # Esperar 1 segundo antes de reintentar
             else:
                 logging.info("El sensor está listo para recibir comandos.")
-        except Exception as e:
-            logging.error(f"Error al verificar el estado del sensor: {e}")
-            raise
+        return True
+
+        raise Exception("El sensor sigue ocupado después de varios intentos.")

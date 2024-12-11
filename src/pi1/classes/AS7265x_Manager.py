@@ -164,3 +164,15 @@ class AS7265xManager:
             reordered[dest - 1] = data[src - 1]
         logging.info(f"Datos reordenados: {reordered}")
         return reordered
+
+    def reset(self):
+        """
+        Reinicia el sensor AS7265x utilizando el bit de reset.
+        """
+        try:
+            self._write_virtual_register(0x04, 0x02)  # Registro de control: bit de reinicio
+            time.sleep(1)  # Esperar 1 segundo para que el sensor se reinicie
+            logging.info("El sensor ha sido reiniciado.")
+        except Exception as e:
+            logging.error(f"Error al intentar reiniciar el sensor: {e}")
+            raise

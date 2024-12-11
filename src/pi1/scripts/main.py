@@ -87,15 +87,17 @@ def main():
         try:
             # Crea instancia High Level para el sensor
             sensor = AS7265xSensorHighLevel(address=0x49)
-            # Verificar el estado del sensor
-            sensor.check_sensor_status()
-            logging.info("El sensor está listo para ser configurado.")
-
-            if not sensor.check_sensor_status():
-                logging.error(f"El sensor en canal {mux_channels[idx]} no está listo para lecturas.")
-            continue
+            # Reset y Verificar el estado del sensor
+            sensor.reset()
+            time.sleep(1)  # Esperar 1 segundo después de resetear
+            sensor_status = sensor.check_sensor_status()
+            
+            if not sensor_status:
+                logging.error(f"El sensor en canal {channel} no está listo después del reinicio.")
+                continue
 
             # Configurar el sensor
+            logging.info("El sensor está listo para ser configurado.")
             sensor.configure(
                 integration_time=config["sensors"]["integration_time"],
                 gain=config["sensors"]["gain"],
