@@ -23,6 +23,7 @@ class AS7265xManager:
 
     TX_VALID = 0x02             # Buffer de escritura ocupado
     RX_VALID = 0x01             # Datos disponibles para leer
+    POLLING_DELAY = 0.05        # Retardo de espera para el buffer de escritura
 
     DEVICES = {"AS72651": 0b00, "AS72652": 0b01, "AS72653": 0b10}  # Selección de dispositivos internos
 
@@ -59,7 +60,7 @@ class AS7265xManager:
                 return value
             except OSError as e:
                 logging.warning(f"Error de I2C al leer el registro {hex(reg)} (Intento {attempt + 1}/{attempts}): {e}")
-                time.sleep(0.1)  # Esperar antes de reintentar
+                time.sleep(self.POLLING_DELAY)  # Esperar antes de reintentar
         raise OSError(f"No se pudo leer el registro {hex(reg)} después de {attempts} intentos.")
 
     def _write_virtual_register(self, reg, value):
@@ -140,8 +141,8 @@ class AS7265xManager:
         :return: Lista de valores crudos.
         """
         raw_registers = [
-            "R, G, A"(0x08, 0x09), "S, H, B"(0x0A, 0x0B), "T, I, C"(0x0C, 0x0D),
-            "U, J, D"(0x0E, 0x0F), "V, K, E"(0x10, 0x11), "W, L, F"(0x12, 0x13)
+            (0x08, 0x09), (0x0A, 0x0B), (0x0C, 0x0D),
+            (0x0E, 0x0F), (0x10, 0x11), (0x12, 0x13)
         ]
         devices = ["AS72651", "AS72652", "AS72653"]
         raw_values = []
@@ -171,6 +172,18 @@ class AS7265xManager:
             reordered[dest - 1] = data[src - 1]
         logging.info(f"Datos reordenados: {reordered}")
         return reordered
+    
+    def set_integration_time(self, time):
+        """
+        Configura el tiempo de integración.
+        """
+        if not (1 <= time <= 255):
+            raise ValueError("El tiempo de integración debe estar entre 1 y 255.")
+        
+        devices = ["AS72651", "AS72652", "AS72653"]
+        for device in devices:
+            self.set_devsel(device)
+            self.write_reg(0x05, time)
 
     def reset(self):
         """
