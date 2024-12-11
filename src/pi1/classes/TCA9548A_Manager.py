@@ -15,17 +15,26 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 class TCA9548AManager:
     """Clase para manejar el MUX TCA9548A utilizando la librería Qwiic."""
 
-    def __init__(self, address=0x70):
+    def __init__(self, address=0x70, i2c_bus=1):
         """
         Inicializa el MUX TCA9548A.
-        :param address: Dirección I2C del MUX (por defecto: 0x70).
+        :param address: Dirección I2C del MUX.
+        :param i2c_bus: Número del bus I2C (por defecto: 1).
         """
-        self.mux = qwiic.QwiicTCA9548A(address)
+        self.address = address
+        self.bus = smbus2.SMBus(i2c_bus)
+
+        try:
+            self.bus.read_byte(self.address)
+            logging.info(f"MUX TCA9548A conectado en la dirección {hex(self.address)}.")
+        except Exception as e:
+            logging.error(f"No se puede conectar al MUX en {hex(self.address)}: {e}")
+            raise
 
         if not self.mux.is_connected():
             logging.error(f"No se puede conectar al MUX en la dirección {hex(address)}")
             raise ConnectionError(f"No se puede conectar al MUX en la dirección {hex(address)}")
-        logging.info(f"MUX TCA9548A conectado en la dirección {hex(address)}")
+            logging.info(f"MUX TCA9548A conectado en la dirección {hex(address)}")
 
     def enable_channel(self, channel):
         """
