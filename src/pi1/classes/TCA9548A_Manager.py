@@ -30,7 +30,7 @@ class TCA9548AManager:
             logging.error(f"No se puede conectar al MUX en {hex(self.address)}: {e}")
             raise
 
-        if not self.mux.is_connected():
+        if not self.bus.is_connected():
             logging.error(f"No se puede conectar al MUX en la dirección {hex(address)}")
             raise ConnectionError(f"No se puede conectar al MUX en la dirección {hex(address)}")
             logging.info(f"MUX TCA9548A conectado en la dirección {hex(address)}")
@@ -56,7 +56,7 @@ class TCA9548AManager:
         """
         if not 0 <= channel <= 7:
             raise ValueError("El canal debe estar entre 0 y 7.")
-        self.mux.disable_channels(1 << channel)
+        self.bus.disable_channels(1 << channel)
         logging.info(f"Canal {channel} deshabilitado.")
 
     def enable_multiple_channels(self, channels):
@@ -69,14 +69,14 @@ class TCA9548AManager:
             if not isinstance(channel, int) or not 0 <= channel <= 7:
                 raise ValueError(f"Canal inválido: {channel}. Debe ser un entero entre 0 y 7.")
             mask |= 1 << channel
-        self.mux.enable_channels(mask)
+        self.bus.enable_channels(mask)
         logging.info(f"Canales {channels} habilitados.")
 
     def disable_all_channels(self):
         """
         Deshabilita todos los canales del MUX.
         """
-        self.mux.disable_all_channels()
+        self.bus.disable_all_channels()
         logging.info("Todos los canales deshabilitados.")
 
     def get_active_channels(self):
@@ -106,5 +106,5 @@ class TCA9548AManager:
         """
         Resetea el MUX a través del comando de reset.
         """
-        self.mux.disable_all_channels()
+        self.bus.disable_all_channels()
         logging.info("MUX reseteado y todos los canales deshabilitados.")
