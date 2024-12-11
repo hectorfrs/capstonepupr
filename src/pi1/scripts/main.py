@@ -74,6 +74,8 @@ def main():
 
         logging.info(f"Inicializando sensor en canal {channel}...")
         mux.enable_channel(channel)
+        logging.info("Canal {channel} habilitado. Esperando estabilización...")
+        mux.get_active_channel(channel)
         time.sleep(0.5)
         # Crea instancia High Level para el sensor
         sensor = AS7265xSensorHighLevel(address=0x49)

@@ -52,3 +52,12 @@ class TCA9548AMUXHighLevel:
         """
         self.mux.disable_all_channels()
         logging.info("Todos los canales del MUX deshabilitados.")
+
+    def get_active_channel(self):
+        """
+        Devuelve el canal activo en el MUX.
+        """
+        active_channels = self.mux.get_active_channels()
+        logging.info(f"Canal activo: {active_channels}")
+        return active_channels
+
