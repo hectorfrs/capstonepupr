@@ -57,7 +57,7 @@ class TCA9548AManager:
             mask |= 1 << channel
         self.mux.enable_channels(mask)
         logging.info(f"Canales {channels} habilitados.")
-        logging.debug(f"mux_channels: {mux_channels}")
+
 
 
     def disable_all_channels(self):

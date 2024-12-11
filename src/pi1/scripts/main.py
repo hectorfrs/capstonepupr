@@ -7,6 +7,8 @@ import yaml
 from classes.TCA9548A_Manager import TCA9548AManager
 from classes.AS7265x_Manager import AS7265xManager
 
+
+
 # Configuración de logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
@@ -32,8 +34,11 @@ def main():
     mux = TCA9548AManager(mux_address)
 
     # Habilitar canales del MUX
+    
     mux_channels = config["mux"]["channels"]
+    mux_channels = [entry['channel'] for entry in config['mux']['channels']]
     mux.enable_multiple_channels(mux_channels)
+    logging.debug(f"Canales extraídos: {mux_channels}")
 
     # Inicializar sensores en los canales
     sensors = []
