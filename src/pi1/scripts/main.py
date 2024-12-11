@@ -23,12 +23,34 @@ def load_config(file_path=config_path):
     except Exception as e:
         logging.error(f"Error al cargar el archivo de configuración: {e}")
         raise
+    
+def scan_i2c_bus():
+    """
+    Escanea el bus I2C y devuelve una lista de dispositivos detectados.
+    """
+    devices = qwiic.scan()
+    if devices:
+        logging.info(f"Dispositivos detectados en el bus I2C: {[hex(addr) for addr in devices]}")
+    else:
+        logging.warning("No se detectaron dispositivos en el bus I2C.")
+    return devices
 
 # Función principal
 def main():
     # Cargar configuración
     config = load_config()
 
+    # Escanear el bus I2C
+    detected_devices = scan_i2c_bus()
+
+    # Verificar si las direcciones esperadas están presentes
+    expected_devices = [0x70, 0x49]  # Dirección del MUX y del sensor AS7265x
+    for device in expected_devices:
+        if device not in detected_devices:
+            logging.error(f"Dispositivo con dirección {hex(device)} no encontrado.")
+        else:
+            logging.info(f"Dispositivo con dirección {hex(device)} detectado correctamente.")
+    
     # Inicializar MUX
     mux_address = hex(config["mux"]["address"])
     mux = TCA9548AManager(int(mux_address, 16))
