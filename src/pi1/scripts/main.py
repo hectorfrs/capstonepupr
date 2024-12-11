@@ -132,7 +132,7 @@ def main():
                 spectrum = sensor.read_calibrated_spectrum()
             else:
                 logging.info(f"Realizando lectura datos crudos del sensor {idx} en canal {mux_channels[idx]}")
-                spectrum = read_raw_spectrum(sensor)
+                spectrum = sensor.read_raw_spectrum()
 
             logging.info(f"Datos leidos de sensor {idx} en canal {mux_channels[idx]}: {spectrum}")
 
