@@ -1,5 +1,8 @@
 
 # config_manager.py - Clase para manejar la configuración del sistema.
+# Desarrollado por Hector F. Rivera Santiago
+# Copyright (c) 2024
+
 import yaml
 import logging
 

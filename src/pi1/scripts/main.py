@@ -5,8 +5,8 @@
 import logging
 import yaml
 import qwiic
-from classes.TCA9548A_Manager import TCA9548AManager
-from classes.AS7265x_Manager import AS7265xManager
+from utils.TCA9548A_HighLevel import TCA9548AMUXHighLevel
+from utils.AS7265x_HighLevel import AS7265xSensorHighLevel
 
 
 
@@ -54,22 +54,28 @@ def main():
     
     # Inicializar MUX
     logging.info("Inicializando MUX...")
-    mux_address = hex(config["mux"]["address"])
-    mux = TCA9548AManager(int(mux_address, 16))
+    #mux_address = hex(config["mux"]["address"])
+    #mux = TCA9548AManager(int(mux_address, 16))
+    mux = TCA9548AMUXHighLevel(address=config['mux']['address'])
 
     # Habilitar canales del MUX
     logging.info (f"Inicializando canales del MUX: {mux_address}")
-    mux_channels = config["mux"]["channels"]
+    #mux_channels = config["mux"]["channels"]
     mux_channels = [entry['channel'] for entry in config['mux']['channels']]
     mux.enable_multiple_channels(mux_channels)
 
     # Inicializar sensores en los canales
     logging.info("Inicializando sensores en los canales del MUX...")
     sensors = []
-    for channel in mux_channels:
+    for channel_entry in config["mux"]["channels"]:
+        channel = channel_entry["channel"]
+        sensor_name = channel_entry["sensor_name"]
+
         logging.info(f"Inicializando sensor en canal {channel}...")
         mux.enable_channel(channel)
-        sensor = AS7265xManager()
+        
+        # Crea instancia High Level para el sensor
+        sensor = AS7265xSensorHighLevel(address=0x49)
         sensor.configure(
             integration_time=config["sensors"]["integration_time"],
             gain=config["sensors"]["gain"],
@@ -77,6 +83,9 @@ def main():
         )
         sensors.append(sensor)
         logging.info(f"Sensor en canal {channel} configurado correctamente.")
+
+        # Deshabilitar el canal después de configurar el sensor
+        mux.disable_all_channels()
 
     # Capturar datos de los sensores
     for idx, sensor in enumerate(sensors):
