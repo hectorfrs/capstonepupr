@@ -73,19 +73,28 @@ def main():
 
         logging.info(f"Inicializando sensor en canal {channel}...")
         mux.enable_channel(channel)
-        
+        time.sleep(0.1)
         # Crea instancia High Level para el sensor
         sensor = AS7265xSensorHighLevel(address=0x49)
-        sensor.configure(
+
+        try:
+            status = sensor.sensor._read_register(0x00)  # Leer registro de estado
+            logging.info(f"Estado inicial del sensor: {status:#04x}")
+        
+            sensor.configure(
             integration_time=config["sensors"]["integration_time"],
             gain=config["sensors"]["gain"],
             mode=config["sensors"]["mode"]
         )
-        sensors.append(sensor)
-        logging.info(f"Sensor en canal {channel} configurado correctamente.")
+            sensors.append(sensor)
+            logging.info(f"Sensor en canal {channel} configurado correctamente.")
 
         # Deshabilitar el canal después de configurar el sensor
-        mux.disable_all_channels()
+            mux.disable_all_channels()
+
+        except OSError as e:
+            logging.error(f"Error de comunicación con el sensor: {e}")
+            return
 
     # Capturar datos de los sensores
     for idx, sensor in enumerate(sensors):
