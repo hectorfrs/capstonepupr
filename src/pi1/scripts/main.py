@@ -88,6 +88,11 @@ def main():
         # Crea instancia High Level para el sensor
         sensor = AS7265xSensorHighLevel(address=0x49)
 
+        if not sensors:
+            logging.error("No se inicializaron sensores. Verifica la configuración y el hardware.")
+        return
+
+
         try:
             # Verificar el estado del sensor
             sensor.check_sensor_status()
@@ -107,7 +112,7 @@ def main():
             logging.info(f"Sensor en canal {channel} configurado correctamente.")
 
             # Deshabilitar todos los canales después de configurar el sensor
-            mux.disable_all_channels()
+           # mux.disable_all_channels()
         except Exception as e:
             logging.error(f"Error con el sensor en canal {channel}: {e}")
             return
