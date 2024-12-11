@@ -140,8 +140,8 @@ class AS7265xManager:
         :return: Lista de valores crudos.
         """
         raw_registers = [
-            (0x08, 0x09), (0x0A, 0x0B), (0x0C, 0x0D),
-            (0x0E, 0x0F), (0x10, 0x11), (0x12, 0x13)
+            "R, G, A"(0x08, 0x09), "S, H, B"(0x0A, 0x0B), "T, I, C"(0x0C, 0x0D),
+            "U, J, D"(0x0E, 0x0F), "V, K, E"(0x10, 0x11), "W, L, F"(0x12, 0x13)
         ]
         devices = ["AS72651", "AS72652", "AS72653"]
         raw_values = []
@@ -152,7 +152,7 @@ class AS7265xManager:
                 high_byte = self._read_register(reg_pair[0])
                 low_byte = self._read_register(reg_pair[1])
                 raw_values.append((high_byte << 8) | low_byte)
-        logging.info(f"Espectro crudo leído: {raw_values}")
+        #logging.info(f"Espectro crudo leído: {raw_values}")
         return raw_values
 
     def reorder_data(self, data):
