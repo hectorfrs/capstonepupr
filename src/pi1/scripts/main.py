@@ -5,6 +5,7 @@
 import logging
 import yaml
 import qwiic
+import time
 from utils.TCA9548A_HighLevel import TCA9548AMUXHighLevel
 from utils.AS7265x_HighLevel import AS7265xSensorHighLevel
 
