@@ -130,9 +130,6 @@ def main():
         except Exception as e:
             logging.error(f"Error al procesar el sensor {idx} en canal {mux_channels[idx]}: {e}")
 
-
-        
-
     # Deshabilitar todos los canales del MUX al finalizar
     logging.debug(f"Sensores inicializados: {sensors}")
     logging.debug(f"Canales del MUX: {mux_channels}")
