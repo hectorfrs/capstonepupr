@@ -12,7 +12,7 @@ import sys
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 class TCA9548AManager:
-    """Clase para manejar el MUX TCA9548A utilizando la librería Qwiic."""
+    """Clase para manejar el MUX TCA9548A utilizando la librería Qwiic & SMBus."""
 
     def __init__(self, address=0x70, i2c_bus=1):
         """

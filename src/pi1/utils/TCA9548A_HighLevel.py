@@ -14,7 +14,7 @@ class TCA9548AMUXHighLevel:
     Este archivo abstrae las operaciones comunes como habilitar/deshabilitar canales.
     """
 
-    def __init__(self, address=0x70):
+    def __init__(self, address=0x70, i2c_bus=1):
         """
         Inicializa el controlador de alto nivel para el MUX TCA9548A.
         :param address: Dirección I²C del MUX.
