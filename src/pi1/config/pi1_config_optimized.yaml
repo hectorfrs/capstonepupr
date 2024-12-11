@@ -18,3 +18,4 @@ sensors:
   gain: 2
   integration_time: 200
   mode: 0
+  read_calibrated_data: false   # Set to true to read calibrated data
