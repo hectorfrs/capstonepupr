@@ -70,12 +70,12 @@ class TCA9548AManager:
 
     def get_active_channels(self):
         """
-        Obtiene los canales actualmente habilitados.
-        :return: Lista de canales habilitados.
+        Lee el registro de control para determinar los canales activos.
+        :return: Lista de canales activos (0-7).
         """
-        status = self.mux.get_active_channels()
+        status = self.mux.read_control_register()
         active_channels = [i for i in range(8) if status & (1 << i)]
-        logging.info(f"Canales activos: {active_channels}")
+        logging.info(f"Estado del registro de control: {bin(status)}, Canales activos: {active_channels}")
         return active_channels
 
     def reset(self):
