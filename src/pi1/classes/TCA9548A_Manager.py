@@ -3,7 +3,7 @@
 # copyright (c) 2024
 
 import qwiic_tca9548a
-import smbus2
+from smbus2 import SMBus
 import time
 import logging
 import sys

@@ -2,7 +2,7 @@
 # Desarrollado por Héctor F. Rivera Santiago
 # copyright (c) 2024
 
-import smbus2
+from smbus2 import SMBus
 import time
 import logging
 
@@ -33,7 +33,7 @@ class AS7265xManager:
         :param address: Dirección I²C del sensor.
         """
         self.address = address
-        self.bus = smbus2.SMBus(bus_num)
+        self.bus = SMBus(bus_num)
         logging.info(f"Sensor AS7265x inicializado en la dirección {hex(address)}.")
 
     def _write_register(self, reg, value):
