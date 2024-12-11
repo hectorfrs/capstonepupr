@@ -123,19 +123,30 @@ def main():
             logging.info(f"Canal {mux_channels[idx]} habilitado para lectura.")
             time.sleep(0.5)
 
+             # Determinar el tipo de lectura según la configuración
+            read_calibrated = config["sensors"].get("read_calibrated_data", True)
+
             # Realizar la lectura
-            logging.info(f"Capturando datos del sensor {idx} en canal {mux_channels[idx]}")
-            spectrum = sensor.read_calibrated_spectrum()
-            logging.info(f"Espectro calibrado del sensor {idx} en canal {mux_channels[idx]}: {spectrum}")
+            if read_calibrated:
+                logging.info(f"Realizando lectura calibrada del sensor {idx} en canal {mux_channels[idx]}")
+                data = sensor.read_calibrated_spectrum()
+            else:
+                logging.info(f"Realizando lectura datos crudos del sensor {idx} en canal {mux_channels[idx]}")
+                data = sensor.read_raw_spectrum()
+
+            logging.info(f"Datos leidos de sensor {idx} en canal {mux_channels[idx]}: {data}")
+
         except Exception as e:
             logging.error(f"Error al procesar el sensor {idx} en canal {mux_channels[idx]}: {e}")
+        finally:
+            mux.disable_all_channels()
+            logging.info("Captura completada. Todos los canales deshabilitados.")
 
     # Deshabilitar todos los canales del MUX al finalizar
-    logging.debug(f"Sensores inicializados: {sensors}")
-    logging.debug(f"Canales del MUX: {mux_channels}")
+    #logging.debug(f"Sensores inicializados: {sensors}")
+    #logging.debug(f"Canales del MUX: {mux_channels}")
 
-    mux.disable_all_channels()
-    logging.info("Pruebas completadas. Todos los canales deshabilitados.")
+    
 
 if __name__ == "__main__":
     main()
