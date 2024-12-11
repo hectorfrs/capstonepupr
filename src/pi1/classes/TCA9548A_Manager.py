@@ -1,5 +1,8 @@
+# TCA9548A_Manager.py - Clase para manejar el MUX TCA9548A utilizando la librería Qwiic.
+# Desarrollado por Héctor F. Rivera Santiago
+# copyright (c) 2024
 
-import qwiic_tca9548a
+import qwiic
 import time
 import logging
 import sys

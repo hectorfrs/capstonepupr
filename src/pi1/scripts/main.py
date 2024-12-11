@@ -1,4 +1,7 @@
 # main.py - Script principal para la captura de datos de los sensores AS7265x
+# Desarrollado por Héctor F. Rivera Santiago
+# copyright (c) 2024
+
 import logging
 import yaml
 from classes.TCA9548A_Manager import TCA9548AManager

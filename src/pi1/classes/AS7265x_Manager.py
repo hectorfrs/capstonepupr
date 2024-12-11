@@ -1,4 +1,7 @@
 # AS7265xManager.py - Clase para manejar el sensor AS7265x utilizando la biblioteca Qwiic I2C.
+# Desarrollado por Héctor F. Rivera Santiago
+# copyright (c) 2024
+
 import qwiic
 import time
 import logging
