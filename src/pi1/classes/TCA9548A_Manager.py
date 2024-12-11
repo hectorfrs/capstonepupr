@@ -61,11 +61,16 @@ class TCA9548AManager:
         """
         mask = 0
         for channel in channels:
-            if not isinstance(channel, int) or not 0 <= channel <= 7:
-                raise ValueError(f"Canal inválido: {channel}. Debe ser un entero entre 0 y 7.")
-            mask |= 1 << channel
-        self.bus.enable_channels(mask)
-        logging.info(f"Canales {channels} habilitados.")
+            if not 0 <= channel <= 7:
+                raise ValueError(f"Canal inválido: {channel}. Debe estar entre 0 y 7.")
+            mask |= 1 << channel  # Agregar el canal a la máscara
+        try:
+            self.bus.write_byte(self.address, mask)  # Escribir la máscara en el MUX
+            logging.info(f"Canales {channels} habilitados en el MUX con máscara {bin(mask)}.")
+        except Exception as e:
+            logging.error(f"Error al habilitar múltiples canales {channels} en el MUX: {e}")
+            raise
+
 
     def disable_all_channels(self):
         """
