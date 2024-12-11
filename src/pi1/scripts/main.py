@@ -90,11 +90,8 @@ def main():
             # Reset y Verificar el estado del sensor
             sensor.reset()
             time.sleep(1)  # Esperar 1 segundo después de resetear
-            sensor.check_sensor_status()
-            
-            if not sensor.check_sensor_status():
-                logging.error(f"El sensor en canal {channel} no está listo después del reinicio.")
-                continue
+            status = sensor.read_status()
+            logging.debug(f"Estado del sensor después del reinicio: {bin(status)}")
 
             # Configurar el sensor
             logging.info("El sensor está listo para ser configurado.")

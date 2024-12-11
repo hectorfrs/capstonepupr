@@ -78,3 +78,11 @@ class AS7265xSensorHighLevel:
         except Exception as e:
             logging.error(f"Error al reiniciar el sensor: {e}")
             raise
+
+    def read_status(self):
+        """
+        Lee el estado del sensor AS7265x.
+        :return: Valor del estado del sensor.
+        """
+        return self.sensor._read_status()
+
