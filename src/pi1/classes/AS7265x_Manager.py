@@ -51,9 +51,16 @@ class AS7265xManager:
         :param reg: Dirección del registro.
         :return: Valor leído.
         """
-        value = self.bus.read_byte_data(self.address, reg)
-        logging.debug(f"Leído {value} del registro {hex(reg)}.")
-        return value
+        attempts = 3
+        for attempt in range(attempts):
+            try:
+                value = self.bus.read_byte_data(self.address, reg)
+                logging.debug(f"Leído {value} del registro {hex(reg)}.")
+                return value
+            except OSError as e:
+                logging.warning(f"Error de I2C al leer el registro {hex(reg)} (Intento {attempt + 1}/{attempts}): {e}")
+                time.sleep(0.1)  # Esperar antes de reintentar
+        raise OSError(f"No se pudo leer el registro {hex(reg)} después de {attempts} intentos.")
 
     def _write_virtual_register(self, reg, value):
         """

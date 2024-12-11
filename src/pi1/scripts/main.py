@@ -75,8 +75,8 @@ def main():
         logging.info(f"Inicializando sensor en canal {channel}...")
         mux.enable_channel(channel)
         logging.info(f"Canal {channel} habilitado. Esperando estabilización...")
-        #tiempo de espera de 500 ms
-        time.sleep(0.5)
+        #tiempo de espera de 200 ms
+        time.sleep(0.2)
         
         # Verificar qué canal está activo
         active_channels = mux.get_active_channel()
@@ -92,6 +92,10 @@ def main():
             # Verificar el estado del sensor
             sensor.check_sensor_status()
             logging.info("El sensor está listo para ser configurado.")
+
+            if not sensor.check_sensor_status():
+                logging.error(f"El sensor en canal {mux_channels[idx]} no está listo para lecturas.")
+            continue
 
             # Configurar el sensor
             sensor.configure(
@@ -110,9 +114,18 @@ def main():
 
     # Capturar datos de los sensores
     for idx, sensor in enumerate(sensors):
-        logging.info(f"Capturando datos del sensor {idx} en canal {mux_channels[idx]}")
-        spectrum = sensor.read_calibrated_spectrum()
-        logging.info(f"Espectro calibrado del sensor {idx}: {spectrum}")
+        mux.enable_channel(mux_channels[idx])
+        time.sleep(0.5)  # Tiempo para estabilización
+        logging.info(f"Canal {mux_channels[idx]} habilitado para lectura.")
+
+        try:
+            logging.info(f"Capturando datos del sensor {idx} en canal {mux_channels[idx]}")
+            spectrum = sensor.read_calibrated_spectrum()
+            logging.info(f"Espectro calibrado del sensor {idx}: {spectrum}")
+        except Exception as e:
+            logging.error(f"Error al leer datos del sensor en canal {mux_channels[idx]}: {e}")
+
+        
 
     # Deshabilitar todos los canales del MUX al finalizar
     mux.disable_all_channels()
