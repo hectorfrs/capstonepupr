@@ -55,7 +55,7 @@ def main():
     # Inicializar MUX
     logging.info("Inicializando MUX...")
     #mux_address = hex(config["mux"]["address"])
-    #mux = TCA9548AManager(int(mux_address, 16))
+    mux = TCA9548AManager(int(mux_address, 16))
     mux = TCA9548AMUXHighLevel(address=config['mux']['address'])
 
     # Habilitar canales del MUX
