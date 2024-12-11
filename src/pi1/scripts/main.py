@@ -4,6 +4,7 @@
 
 import logging
 import yaml
+import qwiic
 from classes.TCA9548A_Manager import TCA9548AManager
 from classes.AS7265x_Manager import AS7265xManager
 
@@ -23,7 +24,7 @@ def load_config(file_path=config_path):
     except Exception as e:
         logging.error(f"Error al cargar el archivo de configuración: {e}")
         raise
-    
+
 def scan_i2c_bus():
     """
     Escanea el bus I2C y devuelve una lista de dispositivos detectados.
