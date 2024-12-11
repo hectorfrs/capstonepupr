@@ -134,7 +134,7 @@ def main():
                 logging.info(f"Realizando lectura datos crudos del sensor {idx} en canal {mux_channels[idx]}")
                 spectrum = sensor.read_raw_spectrum()
 
-            logging.info(f"Datos leidos de sensor {idx} en canal {mux_channels[idx]}: {spectrum}")
+            #logging.info(f"Datos leidos de sensor {idx} en canal {mux_channels[idx]}: {spectrum}")
 
         except Exception as e:
             logging.error(f"Error al procesar el sensor {idx} en canal {mux_channels[idx]}: {e}")

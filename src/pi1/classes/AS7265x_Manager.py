@@ -137,33 +137,28 @@ class AS7265xManager:
 
     def read_raw_spectrum(self):
         """
-        Lee y devuelve los valores crudos del espectro, con detalles del dispositivo y registro.
-        :return: Lista de tuplas con detalles y valores crudos.
+        Lee y devuelve los valores crudos del espectro en un formato de diccionario.
+        :return: Diccionario con nombres de colores y valores.
         """
         raw_registers = [
             (0x08, 0x09), (0x0A, 0x0B), (0x0C, 0x0D),
             (0x0E, 0x0F), (0x10, 0x11), (0x12, 0x13)
         ]
+        wavelengths = ["Violet", "Blue", "Green", "Yellow", "Orange", "Red"]
         devices = ["AS72651", "AS72652", "AS72653"]
-        raw_values = []
+
+        spectral_data = {color: 0 for color in wavelengths}
 
         for device in devices:
-            try:
-                self.set_devsel(device)  # Assuming a method to select the device
-                logging.info(f"Dispositivo seleccionado: {device}.")
-                for reg_pair in raw_registers:
-                    high_byte = self._read_register(reg_pair[0])
-                    low_byte = self._read_register(reg_pair[1])
-                    value = (high_byte << 8) | low_byte
-                    raw_values.append({
-                        "device": device,
-                        "registers": reg_pair,
-                        "value": value
-                    })
-                    logging.debug(f"Device: {device}, Registers: {reg_pair}, Value: {value}")
-            except Exception as e:
-                raise RuntimeError(f"Error reading raw spectrum from {device}: {e}")
-        return raw_values
+            self.set_devsel(device)  # Selecciona el dispositivo
+            for i, reg_pair in enumerate(raw_registers):
+                high_byte = self._read_register(reg_pair[0])
+                low_byte = self._read_register(reg_pair[1])
+                value = (high_byte << 8) | low_byte
+                spectral_data[wavelengths[i]] += value
+
+        return spectral_data
+
 
 
     def reorder_data(self, data):

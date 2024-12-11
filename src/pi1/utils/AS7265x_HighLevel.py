@@ -43,17 +43,16 @@ class AS7265xSensorHighLevel:
 
     def read_raw_spectrum(self):
         """
-        High-level method to get the raw spectral data.
+        Lee el espectro crudo en formato de diccionario usando AS7265x_Manager.
+        :return: Diccionario con nombres de colores y valores.
         """
         try:
-            logging.debug("Reading raw spectrum...")
-            raw_data = self.sensor.read_raw_spectrum()  
-
-            for entry in raw_data:
-                logging.info(f"Device: {entry['device']}, Registers: {entry['registers']}, Value: {entry['value']}")
-            return raw_data
+            logging.debug("Leyendo espectro crudo desde AS7265x_Manager...")
+            raw_spectrum = self.sensor.read_raw_spectrum()  # Llama a la función del manager
+            logging.info(f"Espectro crudo leído: {raw_spectrum}")
+            return raw_spectrum
         except Exception as e:
-            raise RuntimeError(f"Error reading raw spectrum: {e}")
+            raise RuntimeError(f"Error leyendo el espectro crudo: {e}")
 
 
     def check_sensor_status(self):
