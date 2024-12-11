@@ -6,7 +6,7 @@ import logging
 from classes.TCA9548A_Manager import TCA9548AManager
 
 # Configurar logging para el manejo de nivel alto
-logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s", datefmt='%Y-%m-%d %H:%M:%S')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s", datefmt='%Y-%m-%d %H:%M:%S')
 
 class TCA9548AMUXHighLevel:
     """

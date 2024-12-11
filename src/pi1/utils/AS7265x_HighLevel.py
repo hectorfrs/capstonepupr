@@ -6,7 +6,7 @@ import logging
 from classes.AS7265x_Manager import AS7265xManager
 
 # Configurar logging para el manejo de nivel alto
-logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s", datefmt='%Y-%m-%d %H:%M:%S')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s", datefmt='%Y-%m-%d %H:%M:%S')
 
 class AS7265xSensorHighLevel:
     """

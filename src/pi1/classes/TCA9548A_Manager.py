@@ -9,7 +9,7 @@ import logging
 import sys
 
 # Configuración de logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 class TCA9548AManager:
     """Clase para manejar el MUX TCA9548A utilizando la librería Qwiic & SMBus."""
