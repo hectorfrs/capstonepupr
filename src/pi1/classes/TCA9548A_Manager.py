@@ -2,7 +2,6 @@
 # Desarrollado por Héctor F. Rivera Santiago
 # copyright (c) 2024
 
-import qwiic
 import qwiic_tca9548a
 import smbus2
 import time
@@ -22,7 +21,7 @@ class TCA9548AManager:
         :param i2c_bus: Número del bus I2C (por defecto: 1).
         """
         self.address = address
-        self.bus = smbus2.SMBus(i2c_bus)
+        self.bus = SMBus(i2c_bus)
 
         try:
             self.bus.read_byte(self.address)
