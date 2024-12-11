@@ -153,7 +153,12 @@ class AS7265xManager:
                 high_byte = self._read_register(reg_pair[0])
                 low_byte = self._read_register(reg_pair[1])
                 raw_values.append((high_byte << 8) | low_byte)
-        #logging.info(f"Espectro crudo leído: {raw_values}")
+            raw_values.append({
+                "device": device,
+                "registers": reg_pair,
+                "value": value
+            })
+            logging.debug(f"Device: {device}, Registers: {reg_pair}, Value: {value}")
         return raw_values
 
     def reorder_data(self, data):
