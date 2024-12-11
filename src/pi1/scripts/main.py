@@ -121,6 +121,7 @@ def main():
             time.sleep(0.5)
 
             # Realizar la lectura
+            logging.info(f"Capturando datos del sensor {idx} en canal {mux_channels[idx]}")
             spectrum = sensor.read_calibrated_spectrum()
             logging.info(f"Espectro calibrado del sensor {idx} en canal {mux_channels[idx]}: {spectrum}")
         except Exception as e:
