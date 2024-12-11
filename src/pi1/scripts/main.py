@@ -74,9 +74,17 @@ def main():
 
         logging.info(f"Inicializando sensor en canal {channel}...")
         mux.enable_channel(channel)
-        logging.info("Canal {channel} habilitado. Esperando estabilización...")
-        mux.get_active_channel(channel)
+        logging.info(f"Canal {channel} habilitado. Esperando estabilización...")
+        #tiempo de espera de 500 ms
         time.sleep(0.5)
+        
+        # Verificar qué canal está activo
+        active_channels = mux.get_active_channel()
+        if 0 not in active_channels:
+            logging.error(f"El canal {channel} no está activo después de habilitarlo.")
+            return
+        logging.info(f"Canal activo verificado: {active_channels}")
+        
         # Crea instancia High Level para el sensor
         sensor = AS7265xSensorHighLevel(address=0x49)
 
@@ -84,7 +92,11 @@ def main():
             # Verificar el estado del sensor
             sensor.check_sensor_status()
             logging.info("El sensor está listo para ser configurado.")
-        
+        except Exception as e:
+            logging.error(f"Error en el estado del sensor: {e}")
+        return
+
+        try:
             sensor.configure(
             integration_time=config["sensors"]["integration_time"],
             gain=config["sensors"]["gain"],
