@@ -3,12 +3,12 @@
 # copyright (c) 2024
 
 import qwiic
-import smbus2
+from smbus2 import SMBus
 import time
 import logging
 
 # Configurar logging para el módulo
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 class AS7265xManager:
     """
@@ -33,7 +33,7 @@ class AS7265xManager:
         """
         self.address = address
         self.qwiic_device = qwiic.QwiicDevice()  # Inicializar dispositivo Qwiic
-        self.smbus = smbus2.SMBus(bus_num)  # Inicializar SMBus2
+        self.smbus = SMBus(bus_num)  # Inicializar SMBus2
 
         # Verificar conexión
         if not self.qwiic_device.connected:
