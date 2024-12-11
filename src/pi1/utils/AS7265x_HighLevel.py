@@ -50,7 +50,7 @@ class AS7265xSensorHighLevel:
         logging.info(f"Datos crudos leídos: {raw_data}")
         return raw_data
 
-    def check_sensor_status(sensor):
+    def check_sensor_status(self):
         """
         Verifica el estado inicial del sensor AS7265x.
         """
