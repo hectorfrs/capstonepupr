@@ -55,8 +55,11 @@ class AS7265xSensorHighLevel:
         Verifica el estado inicial del sensor AS7265x.
         """
         status = self.sensor._read_register(0x00)
-        if status == 0x80:
-            logging.info("El sensor está listo para recibir comandos.")
-        else:
-            logging.error(f"Estado inesperado del sensor: {status:#04x}")
+        if sensor_status & 0x80 == 0x80:
+            logging.error("El sensor está ocupado procesando datos.")
             raise Exception("El sensor no está en estado listo.")
+        elif sensor_status & 0x01 == 0x01:
+            logging.error(f"Estado inesperado del sensor: {hex(sensor_status)}")
+            raise Exception("El sensor no está en estado listo.")
+        else:
+            logging.info("El sensor está listo para recibir comandos.")

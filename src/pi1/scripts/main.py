@@ -78,11 +78,11 @@ def main():
         time.sleep(0.5)    # Tiempo de estabilización a 500 ms
         
         # Verificar qué canal está activo
-        active_channels = mux.get_active_channel()
-        if channel not in active_channels:
-            logging.error(f"El canal {channel} no está activo después de habilitarlo.")
-            continue
-        logging.info(f"Canal activo verificado: {active_channels}")
+        # active_channels = mux.get_active_channel()
+        # if channel not in active_channels:
+        #     logging.error(f"El canal {channel} no está activo después de habilitarlo.")
+        #     continue
+        # logging.info(f"Canal activo verificado: {active_channels}")
         
         try:
             # Crea instancia High Level para el sensor
@@ -102,6 +102,9 @@ def main():
                 mode=config["sensors"]["mode"]
             )
             sensors.append(sensor)
+            if not sensors:
+                logging.error("No se inicializaron sensores correctamente. Finalizando el programa.")
+                return
             logging.info(f"Sensor en canal {channel} configurado correctamente.")
 
             # Deshabilitar todos los canales después de configurar el sensor
@@ -115,11 +118,6 @@ def main():
 
     # Capturar datos de los sensores
     for idx, sensor in enumerate(sensors):
-
-        if not sensors:
-            logging.error("No se inicializaron sensores. Verifica la configuración y el hardware.")
-        return
-        
         try:
             # Habilitar el canal correspondiente
             mux.enable_channel(mux_channels[idx])
