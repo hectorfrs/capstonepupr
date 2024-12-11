@@ -88,9 +88,7 @@ def main():
         # Crea instancia High Level para el sensor
         sensor = AS7265xSensorHighLevel(address=0x49)
 
-        if not sensors:
-            logging.error("No se inicializaron sensores. Verifica la configuración y el hardware.")
-        return
+        
 
 
         try:
@@ -119,6 +117,11 @@ def main():
 
     # Capturar datos de los sensores
     for idx, sensor in enumerate(sensors):
+
+        if not sensors:
+            logging.error("No se inicializaron sensores. Verifica la configuración y el hardware.")
+        return
+        
         try:
             # Habilitar el canal correspondiente
             mux.enable_channel(mux_channels[idx])
