@@ -114,11 +114,13 @@ def main():
 
     # Capturar datos de los sensores
     for idx, sensor in enumerate(sensors):
-        mux.enable_channel(mux_channels[idx])
-        time.sleep(0.5)  # Tiempo para estabilización
-        logging.info(f"Canal {mux_channels[idx]} habilitado para lectura.")
-
         try:
+            # Habilitar el canal correspondiente
+            mux.enable_channel(mux_channels[idx])
+            logging.info(f"Canal {mux_channels[idx]} habilitado para lectura.")
+            time.sleep(0.5) # Tiempo de espera de 500 ms
+            
+            # Realizar la lectura
             logging.info(f"Capturando datos del sensor {idx} en canal {mux_channels[idx]}")
             spectrum = sensor.read_calibrated_spectrum()
             logging.info(f"Espectro calibrado del sensor {idx}: {spectrum}")
