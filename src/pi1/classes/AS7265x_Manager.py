@@ -116,13 +116,13 @@ class AS7265xManager:
         Selecciona el dispositivo interno del sensor.
         :param device: Dispositivo a seleccionar (AS72651, AS72652, AS72653).
         """
-        if device_name == "AS72651-NIR":
+        if device_name == "AS72651":
             # Cambia al dispositivo NIR
             self._write_register(0x4F, 0x00)
-        elif device_name == "AS72652-VIS":
+        elif device_name == "AS72652":
             # Cambia al dispositivo VIS
             self._write_register(0x4F, 0x01)
-        elif device_name == "AS72653-UV":
+        elif device_name == "AS72653":
             # Cambia al dispositivo UV
             self._write_register(0x4F, 0x02)
 
