@@ -175,12 +175,9 @@ class AS7265xManager:
                     })
 
                     logging.debug(f"Registro {reg}-{reg + 1} leído: MSB={msb=}, LSB={lsb=}, Valor calibrado: {calibrated_value}")
-
                 except Exception as reg_error:
                     logging.error(f"Error al leer los registros {reg}-{reg + 1}: {reg_error}")
                     raise
-
-            logging.info(f"Espectro calibrado leído: \n{spectrum}")
             return spectrum
 
         except Exception as e:
