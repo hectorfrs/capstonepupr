@@ -25,7 +25,7 @@ class AS7265xManager:
     RX_VALID = 0x01             # Datos disponibles para leer
     POLLING_DELAY = 0.05        # Retardo de espera para el buffer de escritura
 
-    DEVICES = {"AS72651-NIR": 0b00, "AS72652-VIS": 0b01, "AS72653-UV": 0b10}  # Selección de dispositivos internos
+    DEVICES = {"AS72651": 0b00, "AS72652": 0b01, "AS72653": 0b10}  # Selección de dispositivos internos
 
     def __init__(self, bus_num=1, address=I2C_ADDR):
         """
