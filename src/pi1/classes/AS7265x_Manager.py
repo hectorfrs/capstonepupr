@@ -23,7 +23,7 @@ class AS7265xManager:
 
     TX_VALID = 0x02             # Buffer de escritura ocupado
     RX_VALID = 0x01             # Datos disponibles para leer
-    POLLING_DELAY = 0.05        # Retardo de espera para el buffer de escritura
+    POLLING_DELAY = 1.00        # Retardo de espera para el buffer de escritura
 
     DEVICES = {"AS72651": 0b00, "AS72652": 0b01, "AS72653": 0b10}  # Selección de dispositivos internos
 
