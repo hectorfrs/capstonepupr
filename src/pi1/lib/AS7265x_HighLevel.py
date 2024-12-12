@@ -2,6 +2,7 @@
 # Desarrollado por Héctor F. Rivera Santiago
 # Copyright (c) 2024
 
+import json
 import logging
 from classes.AS7265x_Manager import AS7265xManager
 
@@ -48,8 +49,9 @@ class AS7265xSensorHighLevel:
         """
         try:
             logging.debug("Leyendo espectro crudo desde AS7265x_Manager...")
+            formatted_data = json.dumps(raw_spectrum, indent=4)
             raw_spectrum = self.sensor.read_raw_spectrum()  # Llama a la función del manager
-            logging.info(f"Espectro crudo leído: {raw_spectrum}")
+            logging.info(f"Espectro crudo leído: \n{formatted_data}")
             return raw_spectrum
         except Exception as e:
             raise RuntimeError(f"Error leyendo el espectro crudo: {e}")
