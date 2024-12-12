@@ -87,7 +87,7 @@ class AS7265xManager:
         while not (self._read_status() & self.RX_VALID):
             time.sleep(0.01)                                # Esperar hasta que haya datos disponibles
         value = self._read_register(self.REG_READ)          # Leer valor
-        #logging.debug(f"Registro virtual {hex(reg)} leído con valor {value}.")
+        logging.debug(f"Registro virtual {hex(reg)} leído con valor {value}.")
         return value
 
     def _read_status(self):
@@ -153,9 +153,9 @@ class AS7265xManager:
             for i, reg in enumerate(range(0x14, 0x2C, 2)):
                 try:
                     # Leer MSB y LSB del registro
-                    msb = self._read_virtual_register(0x14)
-                    lsb = self._read_virtual_register(0x15)
-                    print(f"Leído MSB={msb}, LSB={lsb}")
+                    #msb = self._read_virtual_register(0x14)
+                    #lsb = self._read_virtual_register(0x15)
+                    #print(f"Leído MSB={msb}, LSB={lsb}")
 
                     msb = self._read_virtual_register(reg)
                     lsb = self._read_virtual_register(reg + 1)
