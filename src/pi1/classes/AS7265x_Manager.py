@@ -138,12 +138,24 @@ class AS7265xManager:
         Lee y devuelve el espectro calibrado del sensor.
         :return: Lista de valores calibrados para los 18 canales.
         """
+
+        # Define las longitudes de onda correspondientes a los 18 canales
+        wavelengths_nm = [
+            410, 435, 460, 485, 510, 535, 560, 585, 610,
+            645, 680, 705, 730, 760, 810, 860, 900, 940
+        ]
+
         spectrum = []
         for reg in range(0x14, 0x2C, 2):
             msb = self._read_virtual_register(reg)
             lsb = self._read_virtual_register(reg + 1)
             value = (msb << 8) | lsb
-            spectrum.append(value / 1000.0)  # Convertir a flotante
+            # Calibración en flotante y longitud de onda asociada
+            calibrated_value = value / 1000.0  # Convertir a flotante
+            spectrum.append({
+            "wavelength_nm": wavelengths_nm[i],
+            "calibrated_value": calibrated_value
+        })
         logging.info(f"Espectro calibrado leído: {spectrum}")
         return spectrum
 
@@ -194,6 +206,10 @@ class AS7265xManager:
                     logging.error(f"Error al leer los registros {reg_pair} para {device_name}")
                 value = (high_byte << 8) | low_byte
                 spectral_data[device][wavelengths[i]] = value
+
+                # value = (self._read_register(0x10) << 8) | self._read_register(0x11)
+                # logging.info(f"Registro Orange leído directamente: {value}")
+
 
         return spectral_data
 
