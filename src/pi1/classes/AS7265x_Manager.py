@@ -180,7 +180,7 @@ class AS7265xManager:
                     logging.error(f"Error al leer los registros {reg}-{reg + 1}: {reg_error}")
                     raise
 
-            logging.info(f"Espectro calibrado leído: {spectrum}")
+            logging.info(f"Espectro calibrado leído: \n{spectrum}")
             return spectrum
 
         except Exception as e:
