@@ -125,6 +125,8 @@ class AS7265xManager:
         elif device_name == "AS72653":
             # Cambia al dispositivo UV
             self._write_register(0x4F, 0x02)
+        else:
+            raise ValueError(f"Dispositivo no válido: {device_name}")
 
         if device not in self.DEVICES:
             raise ValueError(f"Dispositivo {device} no válido. Seleccione entre {list(self.DEVICES.keys())}.")
