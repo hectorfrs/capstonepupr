@@ -156,7 +156,7 @@ class AS7265xManager:
                     msb = self._read_virtual_register(0x14)
                     lsb = self._read_virtual_register(0x15)
                     print(f"Leído MSB={msb}, LSB={lsb}")
-                    
+
                     msb = self._read_virtual_register(reg)
                     lsb = self._read_virtual_register(reg + 1)
 
@@ -174,7 +174,7 @@ class AS7265xManager:
                         "calibrated_value": calibrated_value
                     })
 
-                    logging.debug(f"Registro {reg}-{reg + 1} leído: {msb=}, {lsb=}, Valor calibrado: {calibrated_value}")
+                    logging.debug(f"Registro {reg}-{reg + 1} leído: MSB={msb=}, LSB={lsb=}, Valor calibrado: {calibrated_value}")
 
                 except Exception as reg_error:
                     logging.error(f"Error al leer los registros {reg}-{reg + 1}: {reg_error}")
