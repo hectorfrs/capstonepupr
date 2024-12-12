@@ -49,7 +49,7 @@ class AS7265xSensorHighLevel:
         """
         try:
             logging.debug("Leyendo espectro crudo desde AS7265x_Manager...")
-            formatted_data = json.dumps(raw_spectrum, indent=4)
+            formatted_data = json.dumps(spectral_data, indent=4)
             raw_spectrum = self.sensor.read_raw_spectrum()  # Llama a la función del manager
             logging.info(f"Espectro crudo leído: \n{formatted_data}")
             return raw_spectrum
