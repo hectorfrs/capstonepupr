@@ -35,7 +35,7 @@ class AS7265xManager:
         """
         self.address = address
         self.bus = SMBus(bus_num)
-        logging.info(f"Sensor AS7265x inicializado en la dirección {hex(address)}.")
+        #logging.info(f"Sensor AS7265x inicializado en la dirección {hex(address)}.")
 
     def _write_register(self, reg, value):
         """
@@ -44,7 +44,7 @@ class AS7265xManager:
         :param value: Valor a escribir.
         """
         self.bus.write_byte_data(self.address, reg, value)
-        logging.debug(f"Escrito {value} en el registro {hex(reg)}.")
+        #logging.debug(f"Escrito {value} en el registro {hex(reg)}.")
 
     def _read_register(self, reg):
         """
@@ -56,7 +56,7 @@ class AS7265xManager:
         for attempt in range(attempts):
             try:
                 value = self.bus.read_byte_data(self.address, reg)
-                logging.debug(f"Leído {value} del registro {hex(reg)}.")
+                #logging.debug(f"Leído {value} del registro {hex(reg)}.")
                 return value
             except OSError as e:
                 logging.warning(f"Error de I2C al leer el registro {hex(reg)} (Intento {attempt + 1}/{attempts}): {e}")
@@ -73,7 +73,7 @@ class AS7265xManager:
             time.sleep(0.05)                                # Esperar hasta que el buffer de escritura esté listo
         self._write_register(self.REG_WRITE, reg | 0x80)    # Escribir dirección del registro
         self._write_register(self.REG_WRITE, value)         # Escribir valor
-        logging.debug(f"Registro virtual {hex(reg)} configurado con {value}.")
+        #logging.debug(f"Registro virtual {hex(reg)} configurado con {value}.")
 
     def _read_virtual_register(self, reg):
         """
@@ -87,7 +87,7 @@ class AS7265xManager:
         while not (self._read_status() & self.RX_VALID):
             time.sleep(0.01)                                # Esperar hasta que haya datos disponibles
         value = self._read_register(self.REG_READ)          # Leer valor
-        logging.debug(f"Registro virtual {hex(reg)} leído con valor {value}.")
+        #logging.debug(f"Registro virtual {hex(reg)} leído con valor {value}.")
         return value
 
     def _read_status(self):
@@ -132,7 +132,7 @@ class AS7265xManager:
             lsb = self._read_virtual_register(reg + 1)
             value = (msb << 8) | lsb
             spectrum.append(value / 1000.0)  # Convertir a flotante
-        logging.info(f"Espectro calibrado leído: {spectrum}")
+        #logging.info(f"Espectro calibrado leído: {spectrum}")
         return spectrum
 
     def read_raw_spectrum(self):
@@ -175,7 +175,7 @@ class AS7265xManager:
         reordered = [0] * 18
         for src, dest in mappings:
             reordered[dest - 1] = data[src - 1]
-        logging.info(f"Datos reordenados: {reordered}")
+        #logging.info(f"Datos reordenados: {reordered}")
         return reordered
     
     def set_integration_time(self, time):
@@ -197,7 +197,7 @@ class AS7265xManager:
         try:
             self._write_virtual_register(0x04, 0x02)  # Registro de control: bit de reinicio
             time.sleep(1)  # Esperar 1 segundo para que el sensor se reinicie
-            logging.info("El sensor ha sido reiniciado.")
+            #logging.info("El sensor ha sido reiniciado.")
         except Exception as e:
             logging.error(f"Error al intentar reiniciar el sensor: {e}")
             raise

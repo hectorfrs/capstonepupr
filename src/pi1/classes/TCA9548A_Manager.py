@@ -25,7 +25,7 @@ class TCA9548AManager:
 
         try:
             self.bus.read_byte(self.address)
-            logging.info(f"MUX TCA9548A conectado en la dirección {hex(self.address)}.")
+            #logging.info(f"MUX TCA9548A conectado en la dirección {hex(self.address)}.")
         except Exception as e:
             logging.error(f"No se puede conectar al MUX en {hex(self.address)}: {e}")
             raise
@@ -39,7 +39,7 @@ class TCA9548AManager:
             raise ValueError("El canal debe estar entre 0 y 7.")
         try:
             self.bus.write_byte(self.address, 1 << channel)
-            logging.info(f"Canal {channel} habilitado en el MUX.")
+            #logging.info(f"Canal {channel} habilitado en el MUX.")
         except Exception as e:
             logging.error(f"Error al habilitar el canal {channel} en el MUX: {e}")
             raise
@@ -49,7 +49,7 @@ class TCA9548AManager:
         Deshabilita un canal en el MUX escribiendo 0 en su máscara.
         :param channel: Canal a deshabilitar (0-7).
         """
-        logging.warning("No es posible deshabilitar un canal individual. Deshabilita todos los canales.")
+        #logging.warning("No es posible deshabilitar un canal individual. Deshabilita todos los canales.")
         raise NotImplementedError("La deshabilitación individual no es soportada por el MUX TCA9548A.")
     
     def enable_multiple_channels(self, channels):
@@ -64,7 +64,7 @@ class TCA9548AManager:
             mask |= 1 << channel  # Agregar el canal a la máscara
         try:
             self.bus.write_byte(self.address, mask)  # Escribir la máscara en el MUX
-            logging.info(f"Canales {channels} habilitados en el MUX con máscara {bin(mask)}.")
+            #logging.info(f"Canales {channels} habilitados en el MUX con máscara {bin(mask)}.")
         except Exception as e:
             logging.error(f"Error al habilitar múltiples canales {channels} en el MUX: {e}")
             raise
@@ -76,7 +76,7 @@ class TCA9548AManager:
         """
         try:
             self.bus.write_byte(self.address, 0x00)
-            logging.info("Todos los canales deshabilitados en el MUX.")
+            #logging.info("Todos los canales deshabilitados en el MUX.")
         except Exception as e:
             logging.error(f"Error al deshabilitar todos los canales en el MUX: {e}")
             raise
@@ -88,7 +88,7 @@ class TCA9548AManager:
         """
         status = self.read_control_register()
         active_channels = [i for i in range(8) if status & (1 << i)]
-        logging.info(f"Canales activos: {active_channels}")
+        #logging.info(f"Canales activos: {active_channels}")
         return active_channels
 
     def read_control_register(self):
@@ -98,7 +98,7 @@ class TCA9548AManager:
         """
         try:
             status = self.bus.read_byte(self.address)  # Dirección del MUX
-            logging.info(f"Registro de control leído: {bin(status)}")
+            #logging.info(f"Registro de control leído: {bin(status)}")
             return status
         except Exception as e:
             logging.error(f"Error al leer el registro de control del MUX: {e}")
@@ -110,7 +110,7 @@ class TCA9548AManager:
         """
         try:
             self.bus.write_byte(self.address, 0x00)
-            logging.info("MUX reseteado y todos los canales deshabilitados.")
+            #logging.info("MUX reseteado y todos los canales deshabilitados.")
         except Exception as e:
             logging.error(f"Error al resetear el MUX: {e}")
             raise
