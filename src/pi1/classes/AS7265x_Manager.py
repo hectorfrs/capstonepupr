@@ -179,7 +179,7 @@ class AS7265xManager:
             (0x0E, 0x0F), (0x10, 0x11), (0x12, 0x13)
         ]
         wavelengths = ["Violet", "Blue", "Green", "Yellow", "Orange", "Red"]
-        devices = ["AS72651-NIR", "AS72652-VIS", "AS72653-UV"]
+        devices = ["AS72651", "AS72652", "AS72653"]
 
         spectral_data = {device: {color: 0 for color in wavelengths} for device in devices}
 
