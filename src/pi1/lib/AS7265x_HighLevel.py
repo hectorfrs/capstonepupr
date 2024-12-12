@@ -39,7 +39,8 @@ class AS7265xSensorHighLevel:
         :return: Lista de valores calibrados.
         """
         spectrum = self.sensor.read_calibrated_spectrum()
-        logging.info(f"Espectro calibrado leído: {spectrum}")
+        formatted_spectrum = json.dumps(spectrum, indent=4)
+        logging.info(f"Espectro calibrado leído: \n{formatted_spectrum}")
         return spectrum
 
     def read_raw_spectrum(self):
