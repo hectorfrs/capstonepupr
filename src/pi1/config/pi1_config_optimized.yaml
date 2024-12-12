@@ -1,3 +1,21 @@
+system:
+  enable_camera: false                # Raspberry Pi #1 no tiene cámara
+  enable_sensors: true                # Sensores espectroscópicos AS7265x habilitados
+  enable_sensor_leds: false           # Apagar LEDs de los sensores AS7265x
+  enable_touch_screen: false          # No aplica a Raspberry Pi #1
+  enable_mqtt: true                   # MQTT habilitado
+  enable_greengrass: true             # AWS Greengrass habilitado
+  enable_aws: true                    # Conexión a AWS habilitada
+  enable_logging: true                # Logs habilitados
+  enable_sensor_diagnostics: true     # Diagnósticos de sensores habilitados
+  enable_mux_diagnostics: true        # Diagnósticos del MUX habilitados
+  enable_auto_restart: false          # Reinicio automático habilitado
+  enable_network_monitoring: true     # Monitoreo de red habilitado
+  enable_detailed_logging: true       # Nivel detallado de logs
+  enable_power_saving: true           # Modo de ahorro de energía
+  read_calibrated_data: false         # Set to true to read calibrated data
+  process_with_conveyor: true         # Procesar datos con cinta transportadora
+
 logging:
   file: pi1.log
   level: DEBUG
@@ -19,3 +37,48 @@ sensors:
   integration_time: 200
   mode: 0
   read_calibrated_data: false   # Set to true to read calibrated data
+  process_with_conveyor: true
+
+plastic_spectra:
+  PET:
+    Violet: 500
+    Blue: 600
+    Green: 700
+    Yellow: 800
+    Orange: 900
+    Red: 1000
+  HDPE:
+    Violet: 450
+    Blue: 550
+    Green: 650
+    Yellow: 750
+    Orange: 850
+    Red: 950
+  LDPE:
+    Violet: 480
+    Blue: 580
+    Green: 680
+    Yellow: 780
+    Orange: 880
+    Red: 980
+  PP:
+    Violet: 430
+    Blue: 530
+    Green: 630
+    Yellow: 730
+    Orange: 830
+    Red: 930
+  PS:
+    Violet: 470
+    Blue: 570
+    Green: 670
+    Yellow: 770
+    Orange: 870
+    Red: 970
+  PVC:
+    Violet: 420
+    Blue: 520
+    Green: 620
+    Yellow: 720
+    Orange: 820
+    Red: 920

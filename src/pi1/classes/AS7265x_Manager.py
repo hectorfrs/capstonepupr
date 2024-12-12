@@ -135,19 +135,43 @@ class AS7265xManager:
         #logging.info(f"Espectro calibrado leído: {spectrum}")
         return spectrum
 
+    # def read_raw_spectrum(self):
+    #     """
+    #     Lee y devuelve los valores crudos del espectro en un formato de diccionario.
+    #     :return: Diccionario con nombres de colores y valores.
+    #     """
+    #     raw_registers = [
+    #         (0x08, 0x09), (0x0A, 0x0B), (0x0C, 0x0D),
+    #         (0x0E, 0x0F), (0x10, 0x11), (0x12, 0x13)
+    #     ]
+    #     wavelengths = ["Violet", "Blue", "Green", "Yellow", "Orange", "Red"]
+    #     devices = ["AS72651", "AS72652", "AS72653"]
+
+    #     spectral_data = {color: 0 for color in wavelengths}
+
+    #     for device in devices:
+    #         self.set_devsel(device)  # Selecciona el dispositivo
+    #         for i, reg_pair in enumerate(raw_registers):
+    #             high_byte = self._read_register(reg_pair[0])
+    #             low_byte = self._read_register(reg_pair[1])
+    #             value = (high_byte << 8) | low_byte
+    #             spectral_data[wavelengths[i]] += value
+
+    #     return spectral_data
+
     def read_raw_spectrum(self):
         """
-        Lee y devuelve los valores crudos del espectro en un formato de diccionario.
-        :return: Diccionario con nombres de colores y valores.
+        Lee y devuelve los valores crudos del espectro para los 18 registros de cada dispositivo.
+        :return: Diccionario con los valores crudos organizados por dispositivo y longitud de onda.
         """
         raw_registers = [
             (0x08, 0x09), (0x0A, 0x0B), (0x0C, 0x0D),
             (0x0E, 0x0F), (0x10, 0x11), (0x12, 0x13)
         ]
         wavelengths = ["Violet", "Blue", "Green", "Yellow", "Orange", "Red"]
-        devices = ["AS72651", "AS72652", "AS72653"]
+        devices = ["AS72651(NIR)", "AS72652(VIS)", "AS72653(UV)"]
 
-        spectral_data = {color: 0 for color in wavelengths}
+        spectral_data = {device: {color: 0 for color in wavelengths} for device in devices}
 
         for device in devices:
             self.set_devsel(device)  # Selecciona el dispositivo
@@ -155,9 +179,10 @@ class AS7265xManager:
                 high_byte = self._read_register(reg_pair[0])
                 low_byte = self._read_register(reg_pair[1])
                 value = (high_byte << 8) | low_byte
-                spectral_data[wavelengths[i]] += value
+                spectral_data[device][wavelengths[i]] = value
 
         return spectral_data
+
 
 
 
