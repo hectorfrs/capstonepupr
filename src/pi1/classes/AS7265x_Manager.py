@@ -144,7 +144,7 @@ class AS7265xManager:
             lsb = self._read_virtual_register(reg + 1)
             value = (msb << 8) | lsb
             spectrum.append(value / 1000.0)  # Convertir a flotante
-        #logging.info(f"Espectro calibrado leído: {spectrum}")
+        logging.info(f"Espectro calibrado leído: {spectrum}")
         return spectrum
 
     # def read_raw_spectrum(self):

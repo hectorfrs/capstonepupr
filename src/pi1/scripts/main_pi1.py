@@ -128,7 +128,7 @@ def main():
             time.sleep(0.5)
 
              # Determinar el tipo de lectura según la configuración
-            read_calibrated = config["sensors"].get("read_calibrated_data", True)
+            read_calibrated = config["system"].get("read_calibrated_data", True)
 
             # Realizar la lectura
             if read_calibrated:
