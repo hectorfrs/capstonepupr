@@ -116,6 +116,16 @@ class AS7265xManager:
         Selecciona el dispositivo interno del sensor.
         :param device: Dispositivo a seleccionar (AS72651, AS72652, AS72653).
         """
+        if device_name == "AS72651-NIR":
+            # Cambia al dispositivo NIR
+            self._write_register(0x4F, 0x00)
+        elif device_name == "AS72652-VIS":
+            # Cambia al dispositivo VIS
+            self._write_register(0x4F, 0x01)
+        elif device_name == "AS72653-UV":
+            # Cambia al dispositivo UV
+            self._write_register(0x4F, 0x02)
+
         if device not in self.DEVICES:
             raise ValueError(f"Dispositivo {device} no válido. Seleccione entre {list(self.DEVICES.keys())}.")
         self._write_virtual_register(0x4F, self.DEVICES[device])
@@ -178,6 +188,8 @@ class AS7265xManager:
             for i, reg_pair in enumerate(raw_registers):
                 high_byte = self._read_register(reg_pair[0])
                 low_byte = self._read_register(reg_pair[1])
+                if high_byte is None or low_byte is None:
+                    logging.error(f"Error al leer los registros {reg_pair} para {device_name}")
                 value = (high_byte << 8) | low_byte
                 spectral_data[device][wavelengths[i]] = value
 
