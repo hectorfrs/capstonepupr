@@ -146,7 +146,7 @@ class AS7265xManager:
         ]
 
         spectrum = []
-        for reg in range(0x14, 0x2C, 2):
+        for i, reg in range(0x14, 0x2C, 2):
             msb = self._read_virtual_register(reg)
             lsb = self._read_virtual_register(reg + 1)
             value = (msb << 8) | lsb
