@@ -53,7 +53,7 @@ mux:
 sensors:
   mode: 1
   integration_time: 300             # Tiempo de integración en ms
-  gain: 3                           # Ganancia (0: 1x, 1: 3.7x, 2: 16x, 3: 64x)
+  gain: 2                           # Ganancia (0: 1x, 1: 3.7x, 2: 16x, 3: 64x)
   led_intensity: 128                # Intensidad de los LEDs (0-255)
   read_interval: 1                  # Intervalo de lectura en segundos
   enable_interrupts: true           # Habilitar interrupciones
