@@ -145,29 +145,43 @@ class AS7265xManager:
                 645, 680, 705, 730, 760, 810, 860, 900, 940
             ]
 
+            # Asegúrate de que la longitud de wavelengths_nm coincida con los registros
+            if len(wavelengths_nm) != 18:
+                raise ValueError("El número de longitudes de onda no coincide con los canales esperados.")
+
             spectrum = []
             for i, reg in range(0x14, 0x2C, 2):
-                msb = self._read_virtual_register(reg)
-                lsb = self._read_virtual_register(reg + 1)
-                # Verificar que msb y lsb son valores válidos
-                if not isinstance(msb, int) or not isinstance(lsb, int):
-                    raise ValueError(f"Registro {reg} o {reg + 1} devolvió un valor no válido: msb={msb}, lsb={lsb}")
+                # Leer MSB y LSB del registro
+                try:
+                    msb = self._read_virtual_register(reg)
+                    lsb = self._read_virtual_register(reg + 1)
                 
-                # Calcular el valor combinado, calibración en flotante y longitud de onda asociada
-                value = (msb << 8) | lsb
-                calibrated_value = value / 1000.0  # Convertir a flotante
+                # Validar que msb y lsb son enteros
+                    if not isinstance(msb, int) or not isinstance(lsb, int):
+                        raise ValueError(f"Registro {reg} o {reg + 1} devolvió un valor no válido: msb={msb}, lsb={lsb}")
                 
-                #Agregar datos al espectro
-                spectrum.append({
-                "wavelength_nm": wavelengths_nm[i],
-                "calibrated_value": calibrated_value
-            })
-            logging.info(f"Espectro calibrado leído: {spectrum}")
-            return spectrum
+                    # Calcular el valor combinado, calibración en flotante y longitud de onda asociada
+                    value = (msb << 8) | lsb
+                    calibrated_value = value / 1000.0  # Convertir a flotante
+                
+                    #Agregar datos al espectro
+                    spectrum.append({
+                    "wavelength_nm": wavelengths_nm[i],
+                    "calibrated_value": calibrated_value
+                    })
+                    # Debugging adicional para cada registro leído
+                    logging.debug(f"Registro {reg}-{reg + 1} leído. Valor combinado: {value}, Valor calibrado: {calibrated_value}")
+                
+                except Exception as reg_error:
+                    logging.error(f"Error al leer el registro {reg}-{reg + 1}: {reg_error}")
+                    raise
+                logging.info(f"Espectro calibrado leído: {spectrum}")
+                return spectrum
+
         except Exception as e:
             logging.error(f"Error al leer el espectro calibrado: {e}")
             raise
-        
+
     # def read_raw_spectrum(self):
     #     """
     #     Lee y devuelve los valores crudos del espectro en un formato de diccionario.
