@@ -16,9 +16,27 @@ system:
   read_calibrated_data: true         # Set to true to read calibrated data
   process_with_conveyor: true         # Procesar datos con cinta transportadora
 
+network:
+  ethernet:
+    ip: "192.168.1.145"           # Dirección IP estática para Ethernet
+    gateway: "192.168.1.1"        # Puerta de enlace para Ethernet
+  wifi:
+    ssid: "Capstone"              # Nombre de la red Wi-Fi
+    password: "Elefante"          # Contraseña de la red Wi-Fi
+    ip: "192.168.2.145"           # Dirección IP estática para Wi-Fi
+    gateway: "192.168.2.1"        # Puerta de enlace para Wi-Fi
+
+data_queue:
+  max_size: 10                  # Tamaño máximo de la cola de datos
+  save_interval: 60              # Intervalo de guardado de datos en segundos
+
 logging:
-  file: pi1.log
   level: DEBUG
+  log_file: "/home/raspberry-1/logs/pi1_logs.log"               # Archivo de logs para registrar las operaciones
+  error_log_file: "/home/raspberry-1/logs/pi1_error_logs.log"   # Logs de errores
+  max_size_mb: 5                                                # Tamaño máximo del archivo de logs en MB
+  backup_count: 5                                               # Número de archivos de logs de respaldo
+
 mqtt:
   broker: localhost
   port: 1883
@@ -33,11 +51,42 @@ mux:
   - channel: 7
     sensor_name: AS7265x_3
 sensors:
-  gain: 2
-  integration_time: 200
   mode: 0
-  read_calibrated_data: false   # Set to true to read calibrated data
-  process_with_conveyor: true
+  integration_time: 100             # Tiempo de integración en ms
+  gain: 3                           # Ganancia (0: 1x, 1: 3.7x, 2: 16x, 3: 64x)
+  led_intensity: 128                # Intensidad de los LEDs (0-255)
+  read_interval: 1                  # Intervalo de lectura en segundos
+  enable_interrupts: true           # Habilitar interrupciones
+  critical_temperature: 85          # Temperatura crítica en °C para el sensor
+  power_saving: true                # Activar modo de ahorro de energía
+
+greengrass:
+  group_name: "Capstone-Group"   # Nombre del grupo de Greengrass
+  functions:
+    - name: "DetectPlasticType"   # Nombre de la función Lambda local
+      arn: "arn:aws:lambda:region:account-id:function:DetectPlasticType"
+
+aws:
+  region: "us-east-1"                             # Cambia según tu región
+  iot_core_endpoint: "your_aws_iot_core_endpoint" # Endpoint de AWS IoT Core
+  iot_topics:
+    sensor_data: "raspberry-1/sensor_data"                # Tópico para enviar datos de los sensores
+    settings_update: "raspberry-1/settings_update"        # Tópico para recibir actualizaciones de configuración
+  cert_path: "/certs/certificate.pem.crt"         # Certificado del cliente
+  key_path: "/certs/private.pem.key"              # Llave privada
+  ca_path: "/certs/AmazonRootCA1.pem"             # Certificado raíz de Amazon
+
+mqtt:
+  broker_address: 
+  - "192.168.1.147"                               # Dirección IP del broker MQTT local (Ethernet Raspberry Pi #3)
+  - "192.168.2.147"                               # Dirección IP del broker MQTT local (Wi-Fi Raspberry Pi #3)
+  port: 1883                                      # Puerto del broker MQTT
+  username: "raspberry-1"                                  # Usuario para el broker local
+  password: "Elefante"                       # Contraseña para el broker local
+  topics:
+    sensor_data: "raspberry-1/sensor_data"                # Tópico para publicar datos de sensores
+    settings_update: "raspberry-1/settings_update"        # Tópico para recibir actualizaciones de configuración
+    alerts: "raspberry-1/alerts"                          # Tópico para enviar alertas
 
 plastic_spectra:
   PET:
