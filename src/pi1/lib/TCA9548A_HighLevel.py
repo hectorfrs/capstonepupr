@@ -21,7 +21,7 @@ class TCA9548A_Manager:
         :param address: Dirección I²C del MUX.
         """
         self.address = address
-        self.mux = MUX_TCA9548A(address, i2c_bus)
+        self.mux = MUX_TCA9548A(address=address, i2c_bus=i2c_bus)
         logging.info(f"[MUX] TCA9548A inicializado en la dirección {hex(address)}.")
 
     def enable_channel(self, channel):

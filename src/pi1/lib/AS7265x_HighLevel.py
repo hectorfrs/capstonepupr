@@ -28,7 +28,7 @@ class AS7265x_Manager:
         self.config = config
         self.address = address
         self.i2c_bus = i2c_bus
-        self.sensor = SENSOR_AS7265x(address, i2c_bus)
+        self.sensor = SENSOR_AS7265x(i2c_bus=i2c_bus, address=address)
         logging.info(f"[SENSOR] AS7265x inicializado en la dirección {hex(address)}.")
     
     def configure(self):
