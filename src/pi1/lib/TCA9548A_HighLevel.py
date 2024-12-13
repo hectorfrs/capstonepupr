@@ -4,7 +4,7 @@
 
 import logging
 import time
-from classes.TCA9548A_Manager import TCA9548AManager
+from classes.TCA9548A_Controller import TCA9548A
 
 # Configurar logging para el manejo de nivel alto
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s", datefmt='%Y-%m-%d %H:%M:%S')
