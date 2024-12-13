@@ -109,7 +109,6 @@ class AS7265xManager:
         config = (config & 0b11001111) | (gain << 4)                    # Ajustar ganancia
         self._write_virtual_register(0x04, config)                      # Escribir nueva configuración
         self._write_virtual_register(0x07, mode)                        # Configurar modo de operación
-        logging.info(f"Sensor configurado: integración={integration_time}, ganancia={gain}, modo={mode}.")
         pass
 
     def set_devsel(self, device):
