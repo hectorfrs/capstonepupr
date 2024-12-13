@@ -9,7 +9,7 @@ from classes.TCA9548A_Controller import TCA9548A
 # Configurar logging para el manejo de nivel alto
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s", datefmt='%Y-%m-%d %H:%M:%S')
 
-class TCA9548AMUXHighLevel:
+class TCA9548A:
     """
     Manejo de alto nivel para el MUX TCA9548A.
     Este archivo abstrae las operaciones comunes como habilitar/deshabilitar canales.
@@ -20,7 +20,7 @@ class TCA9548AMUXHighLevel:
         Inicializa el controlador de alto nivel para el MUX TCA9548A.
         :param address: Dirección I²C del MUX.
         """
-        self.mux = TCA9548AManager(address=address)
+        self.mux = TCA9548A(address=address)
         logging.info(f"[MUX] TCA9548A inicializado en la dirección {hex(address)}.")
 
     def enable_channel(self, channel):
