@@ -14,7 +14,7 @@ with open("/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config_optimized.ya
 # Configurar logging para el manejo de nivel alto
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s", datefmt='%Y-%m-%d %H:%M:%S')
 
-class AS7265xSensorHighLevel:
+class AS7265x:
     """
     Manejo de alto nivel para un sensor AS7265x.
     Este archivo abstrae las operaciones comunes como configuración y lectura de espectros.
