@@ -5,6 +5,10 @@
 import json
 import logging
 from classes.AS7265x_Manager import AS7265xManager
+import yaml
+
+with open("/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config_optimized.yaml", "r") as file:
+    config = yaml.safe_load(file)
 
 # Configurar logging para el manejo de nivel alto
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s", datefmt='%Y-%m-%d %H:%M:%S')
@@ -15,7 +19,7 @@ class AS7265xSensorHighLevel:
     Este archivo abstrae las operaciones comunes como configuración y lectura de espectros.
     """
 
-    def __init__(self, address=0x49, config="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config_optimized.yaml"):
+    def __init__(self, address=0x49, config=config):
         """
         Inicializa el controlador de alto nivel para el sensor AS7265x.
         :param address: Dirección I²C del sensor.
