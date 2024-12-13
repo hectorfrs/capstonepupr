@@ -107,6 +107,12 @@ class AS7265xSensorHighLevel:
         Lee el estado del sensor AS7265x.
         :return: Valor del estado del sensor.
         """
+        sensor_status = self.sensor.read_status()
+        if sensor_status & 0x80:  # Bit ocupado
+            logging.warning("El sensor está ocupado. Intentando nuevamente...")
+            time.sleep(1)  # Esperar antes de reintentar
+        else:
+            logging.info("El sensor está listo para leer datos.")
         return self.sensor._read_status()
 
     def _diagnostic_check(self, spectrum):
@@ -123,5 +129,30 @@ class AS7265xSensorHighLevel:
             logging.info("[SENSOR] Diagnóstico completado exitosamente.")
         except Exception as e:
             logging.error(f"[SENSOR] Error en diagnóstico del espectro: {e}")
+
+    def generate_summary(successful_reads, failed_reads, error_details):
+        """
+        Genera un resumen mejorado al final del proceso.
+        :param successful_reads: Número total de lecturas exitosas.
+        :param failed_reads: Número total de fallos.
+        :param error_details: Lista de detalles de errores.
+        """
+        logging.info("=========== RESUMEN FINAL ===========")
+        logging.info(f"Lecturas exitosas: {successful_reads}")
+        logging.info(f"Fallos totales: {failed_reads}")
+        
+        if error_details:
+            logging.info("Detalles de los fallos por canal:")
+            for detail in error_details:
+                channel = detail.get("channel", "Desconocido")
+                error_message = detail.get("error_message", "Sin detalles")
+                logging.error(f" - Canal {channel}: {error_message}")
+        
+        if failed_reads > 0:
+            logging.warning("Se detectaron fallos durante la operación. Por favor, verifique las conexiones I2C, parámetros de configuración y el estado del hardware.")
+        else:
+            logging.info("Todos los sensores operaron correctamente.")
+        
+        logging.info("=====================================")
 
 

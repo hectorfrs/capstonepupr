@@ -100,7 +100,10 @@ def main():
     print("===============================================")
     print("        Iniciando Sistema de Acopio...")
     print("===============================================")
-
+    # Variables de estado
+    successful_reads = 0
+    failed_reads = 0
+    error_details = []
     # Cargar configuración
     config = load_config()
 
@@ -174,6 +177,7 @@ def main():
             mux.disable_all_channels()
 
     # Capturar datos de los sensores
+    start_time = time.time()
     for idx, sensor in enumerate(sensors):
         try:
             # Habilitar el canal correspondiente
@@ -188,6 +192,7 @@ def main():
             if read_calibrated:
                 logging.info(f"[SENSOR] Realizando lectura calibrada del sensor {idx} en canal {mux_channels[idx]}")
                 spectrum = sensor.read_calibrated_spectrum()
+                successful_reads += 1
             else:
                 logging.info(f"[SENSOR] Realizando lectura datos crudos del sensor {idx} en canal {mux_channels[idx]}")
                 spectrum = sensor.read_raw_spectrum()
@@ -195,16 +200,20 @@ def main():
             #logging.info(f"Datos leidos de sensor {idx} en canal {mux_channels[idx]}: {spectrum}")
 
         except Exception as e:
+            failed_reads += 1
+            error_details.append({"channel": current_channel, "error_message": str(e)})
             logging.error(
                 f"[SENSOR] Error en función 'read_calibrated_spectrum' al procesar el sensor {idx} en canal {mux_channels[idx]}: {e}"
                 f"Verifique la conexion I2C y los parametros de configuración.")
         finally:
             mux.disable_all_channels()
+            elapsed_time = time.time() - start_time
             logging.info(
-                f"[SENSOR] Captura completada."
-                f"[MUX] Todos los canales deshabilitados."
+                f"[SENSOR] Captura completada.\n"
+                f"[MUX] Todos los canales deshabilitados.\n"
+                f"Tiempos de ejecución: {elapsed_time:.2f} segundos."
                 )
-
+generate_summary(successful_reads, failed_reads, error_details)
     # Deshabilitar todos los canales del MUX al finalizar
     #logging.debug(f"Sensores inicializados: {sensors}")
     #logging.debug(f"Canales del MUX: {mux_channels}")
