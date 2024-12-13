@@ -29,7 +29,7 @@ class MUX_TCA9548A:
             self.bus.read_byte(self.address)
             #logging.info(f"MUX TCA9548A conectado en la dirección {hex(self.address)}.")
         except Exception as e:
-            logging.error(f"[MUX] No se puede conectar a {hex(self.address)}: {e}")
+            logging.error(f"[CONTROLLER] [MUX] No se puede conectar a {hex(self.address)}: {e}")
             raise
 
     def enable_channel(self, channel):
@@ -68,7 +68,7 @@ class MUX_TCA9548A:
             self.bus.write_byte(self.address, mask)  # Escribir la máscara en el MUX
             #logging.info(f"Canales {channels} habilitados en el MUX con máscara {bin(mask)}.")
         except Exception as e:
-            logging.error(f"Error al habilitar múltiples canales {channels} en el MUX: {e}")
+            logging.error(f"[CONTROLLER] [MUX] Error al habilitar múltiples canales {channels} en el MUX: {e}")
             raise
     
     def select_channel(self, channel):
