@@ -8,7 +8,7 @@ import qwiic
 import time
 import sys
 import os
-from colorlog import ColoredFormatter
+#from colorlog import ColoredFormatter
 
 # Importar módulos criticos
 from lib.TCA9548A_HighLevel import TCA9548AMUXHighLevel
@@ -71,16 +71,16 @@ def configure_logging(config):
         format=LOG_FORMAT,                                                                                          # Formato del log                                         
         datefmt=DATE_FORMAT,                                                                                        # Formato de la fecha                                     
 )
-    formatter = ColoredFormatter(
-    "%(log_color)s%(levelname)s: %(message)s",
-    log_colors={
-        "DEBUG": "cyan",
-        "INFO": "green",
-        "WARNING": "yellow",
-        "ERROR": "red",
-        "CRITICAL": "bold_red",
-    },
-)
+#     formatter = ColoredFormatter(
+#     "%(log_color)s%(levelname)s: %(message)s",
+#     log_colors={
+#         "DEBUG": "cyan",
+#         "INFO": "green",
+#         "WARNING": "yellow",
+#         "ERROR": "red",
+#         "CRITICAL": "bold_red",
+#     },
+# )
     # Configuración del RotatingFileHandler
     handler = RotatingFileHandler(
         filename=log_file,
