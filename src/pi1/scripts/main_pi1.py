@@ -111,6 +111,7 @@ def main():
 
     # Configuración de logging
     configure_logging(config)
+    logging.info("=" * 50)
     logging.info("[MAIN] Sistema iniciado en Raspberry Pi #1...")
     logging.info("=" * 50)
 
