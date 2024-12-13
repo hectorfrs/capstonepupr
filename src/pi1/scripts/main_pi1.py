@@ -59,13 +59,9 @@ def main():
     
     # Inicializar MUX
     logging.info("Inicializando MUX...")
-    #mux_address = hex(config["mux"]["address"])
-    #mux = TCA9548AManager(int(mux_address, 16))
     mux = TCA9548AMUXHighLevel(address=config['mux']['address'])
 
     # Habilitar canales del MUX
-    #logging.info (f"Inicializando canales del MUX: {mux_address}")
-    #mux_channels = config["mux"]["channels"]
     mux_channels = [entry['channel'] for entry in config['mux']['channels']]
     mux.enable_multiple_channels(mux_channels)
 
@@ -81,19 +77,12 @@ def main():
         logging.info(f"Canal {channel} habilitado. Esperando estabilización...")
         time.sleep(2.0)    # Tiempo de estabilización a 500 ms
         
-        # Verificar qué canal está activo
-        # active_channels = mux.get_active_channel()
-        # if channel not in active_channels:
-        #     logging.error(f"El canal {channel} no está activo después de habilitarlo.")
-        #     continue
-        # logging.info(f"Canal activo verificado: {active_channels}")
-        
         try:
             # Crea instancia High Level para el sensor
             sensor = AS7265xSensorHighLevel(address=0x49)
             # Reset y Verificar el estado del sensor
             sensor.reset()
-            time.sleep(1)  # Esperar 1 segundo después de resetear
+            time.sleep(2)  # Esperar 2 segundo después de resetear
             status = sensor.read_status()
             logging.debug(f"Estado del sensor después del reinicio: {bin(status)}")
 
@@ -108,7 +97,7 @@ def main():
             if not sensors:
                 logging.error("No se inicializaron sensores correctamente. Finalizando el programa.")
                 return
-            logging.info(f"Sensor en canal {channel} configurado correctamente.")
+            logging.info(f"*** El Sensor en canal {channel} ha sido configurado correctamente. ***")
 
             # Deshabilitar todos los canales después de configurar el sensor
             mux.disable_all_channels()
