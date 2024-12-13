@@ -15,6 +15,11 @@ def process_individual(config, sensors, mux):
     error_details = []
     plastic_spectra = config.get("plastic_spectra", {})
     mux_channels = [entry['channel'] for entry in config['mux']['channels']]
+    sensor_names = {entry['channel']: entry['sensor_name'] for entry in config['mux']['channels']}  # Asociar sensores
+
+    if not plastic_spectra:
+        logging.error("[CONFIG] No se encontraron espectros de referencia para plásticos en la configuración.")
+        return
 
     for idx, sensor in enumerate(sensors):
         try:
