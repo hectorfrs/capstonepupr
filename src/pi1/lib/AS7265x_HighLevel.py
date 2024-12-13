@@ -131,6 +131,7 @@ class AS7265xSensorHighLevel:
         except Exception as e:
             logging.error(f"[SENSOR] Error en diagnóstico del espectro: {e}")
 
+# Al final de AS7265x_HighLevel.py, fuera de clases
 def generate_summary(successful_reads, failed_reads, error_details):
     """
     Genera un resumen mejorado al final del proceso.
@@ -155,5 +156,3 @@ def generate_summary(successful_reads, failed_reads, error_details):
         logging.info("Todos los sensores operaron correctamente.")
     
     logging.info("=====================================")
-
-
