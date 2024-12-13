@@ -142,8 +142,8 @@ def main():
         logging.info(f"[SENSOR] Inicializando sensor en canal {channel}...")
         mux.enable_channel(channel)
         logging.info(
-            f"[MUX] El canal {channel} ha sido habilitado\n."
-            f"[MUX] Esperando estabilización del sensor..."
+            f"[MUX] El canal {channel} ha sido habilitado. "
+            f"Esperando estabilización del sensor..."
             )
         time.sleep(0.5)    # Tiempo de estabilización a 500 ms
         
@@ -165,7 +165,7 @@ def main():
             )
             sensors.append(sensor)
             if not sensors:
-                logging.error("No se inicializaron sensores correctamente. Finalizando el programa.")
+                logging.error(f"[SENSOR] No se inicializaron sensores correctamente. Finalizando el programa.")
                 return
             logging.info(
                 f"[CANAL {channel} Sensor configurado: {sensor_name}] "
