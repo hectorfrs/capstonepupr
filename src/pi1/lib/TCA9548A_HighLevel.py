@@ -27,8 +27,13 @@ class TCA9548AMUXHighLevel:
         Habilita un canal específico en el MUX.
         :param channel: Canal a habilitar (0-7).
         """
-        self.mux.enable_channel(channel)
-        logging.info(f"[MUX] [CANAL {channel}] Habilitado.")
+        try:
+            self.mux.enable_channel(channel)
+            logging.info(f"[MUX] [CANAL {channel}] Habilitado.")
+            time.sleep(1.0)
+        except Exception as e:
+            logging.error(f"[MUX] Error al habilitar el canal {channel}: {e}")
+        raise
 
     def disable_channel(self, channel):
         """

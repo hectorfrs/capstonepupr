@@ -158,11 +158,7 @@ def main():
 
             # Configurar el sensor
             logging.info("[SENSOR] El sensor está listo para ser configurado.")
-            sensor.configure(
-                integration_time=config["sensors"]["integration_time"],
-                gain=config["sensors"]["gain"],
-                mode=config["sensors"]["mode"]
-            )
+            sensor.configure()
             sensors.append(sensor)
             if not sensors:
                 logging.error(f"[SENSOR] No se inicializaron sensores correctamente. Finalizando el programa.")
@@ -218,7 +214,7 @@ def main():
             logging.info(
                 f"[SENSOR] Captura completada.\n"
                 f"[MUX] Todos los canales deshabilitados.\n"
-                f"Tiempos de ejecución: {elapsed_time:.2f} segundos."
+                f"Tiempos de ejecución: {elapsed_time:.2f} segundos.\n"
                 )
     generate_summary(successful_reads, failed_reads, error_details)
     # Deshabilitar todos los canales del MUX al finalizar
