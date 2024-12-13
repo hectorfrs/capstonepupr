@@ -3,6 +3,8 @@ import time
 
 from classes.AS7265x_Manager import AS7265xManager
 from classes.TCA9548A_Manager import TCA9548AManager
+from utils.identify_plastic_type import identify_plastic_type
+
 
 def process_individual(config, sensors, mux):
     """
@@ -27,20 +29,25 @@ def process_individual(config, sensors, mux):
             if read_calibrated:
                 logging.info(f"[SENSOR] Realizando lectura calibrada del sensor {idx} en canal {mux_channels[idx]}")
                 spectrum = sensor.read_calibrated_spectrum()
-                successful_reads += 1
             else:
                 logging.info(f"[SENSOR] Realizando lectura datos crudos del sensor {idx} en canal {mux_channels[idx]}")
                 spectrum = sensor.read_raw_spectrum()
+
+            # Identificar el tipo de plástico
+            plastic_type = identify_plastic_type(spectrum)
+            logging.info(f"[INDIVIDUAL] [SENSOR] Tipo de plástico identificado: {plastic_type}")
+
+            successful_reads += 1        
 
         except Exception as e:
             failed_reads += 1
             error_details.append({"channel": mux_channels[idx], "error_message": str(e)})
             logging.error(
-                f"[SENSOR] Error al procesar el sensor {idx} en canal {mux_channels[idx]}: {e}")
+                f"[INDIVIDUAL] [SENSOR] Error al procesar el sensor {idx} en canal {mux_channels[idx]}: {e}")
         finally:
             mux.disable_all_channels()
             elapsed_time = time.time() - start_time
-            logging.info(f"[SENSOR] Captura completada. [MUX] Todos los canales deshabilitados.")
+            logging.info(f"[INDIVIDUAL] [SENSOR] Captura completada. [MUX] Todos los canales deshabilitados.")
             logging.info(f"Tiempos de ejecución: {elapsed_time:.2f} segundos.")
 
     return successful_reads, failed_reads, error_details
@@ -70,8 +77,14 @@ def process_with_conveyor(config, sensors, mux):
                     logging.info(f"[CONVEYOR] [SENSOR] Leyendo datos crudos del sensor {idx}.")
                     spectrum = sensor.read_raw_spectrum()
 
-                successful_reads += 1
                 logging.info(f"[CONVEYOR] [SENSOR] Datos obtenidos correctamente: {spectrum}")
+                
+                # Identificar el tipo de plástico
+                plastic_type = identify_plastic_type(spectrum)
+                logging.info(f"[CONVEYOR] [SENSOR] Tipo de plástico identificado: {plastic_type}")
+
+                successful_reads += 1
+                
 
             except KeyboardInterrupt:
                 logging.info("[CONVEYOR] Proceso detenido manualmente.")
