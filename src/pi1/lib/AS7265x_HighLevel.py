@@ -35,14 +35,14 @@ class AS7265xSensorHighLevel:
             mode=self.config['sensors']['mode']
         )
 
-    # def configure(self, integration_time, gain, mode):
-    #     """
-    #     Configura el sensor con los parámetros dados.
-    #     :param integration_time: Tiempo de integración (1-255).
-    #     :param gain: Ganancia (0=1x, 1=3.7x, 2=16x, 3=64x).
-    #     :param mode: Modo de operación (0-3).
-    #     """
-    #     self.sensor.configure(integration_time, gain, mode)
+    def configure(self, integration_time, gain, mode):
+         """
+         Configura el sensor con los parámetros dados.
+         :param integration_time: Tiempo de integración (1-255).
+         :param gain: Ganancia (0=1x, 1=3.7x, 2=16x, 3=64x).
+         :param mode: Modo de operación (0-3).
+         """
+         self.sensor.configure(integration_time, gain, mode)
     #     #logging.info(f"Sensor configurado: integración={integration_time}, ganancia={gain}, modo={mode}.")
 
     def read_calibrated_spectrum(self):
