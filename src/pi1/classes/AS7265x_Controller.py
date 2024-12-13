@@ -70,7 +70,7 @@ class SENSOR_AS7265x:
             try:
                 status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
                 if status & self.RX_VALID:
-                    self.i2c.read_byte_data(self.I2C_ADDR, self.READ_REG)
+                    self.i2c.read_byte_data(self.I2C_ADDR, self.REG_READ)
 
                 while True:
                     status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
@@ -85,7 +85,7 @@ class SENSOR_AS7265x:
                         break
                     time.sleep(self.POLLING_DELAY)
 
-                return self.i2c.read_byte_data(self.I2C_ADDR, self.READ_REG)
+                return self.i2c.read_byte_data(self.I2C_ADDR, self.REG_READ)
             except OSError as e:
                 logging.warning(f"Error de I2C al leer el registro {hex(reg)} (Intento {attempt + 1}/{attempts}): {e}")
                 time.sleep(self.POLLING_DELAY)  # Esperar antes de reintentar
