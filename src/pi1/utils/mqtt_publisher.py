@@ -3,6 +3,7 @@ import ssl
 import time
 import yaml
 from threading import Thread
+import logging
 
 
 class MQTTPublisher:
@@ -11,14 +12,15 @@ class MQTTPublisher:
     Soporta un broker local y AWS IoT Core.
     """
 
-    def __init__(self, config_path="config/pi1_config.yaml", local=True):
+    def __init__(self, config, local=True):
         """
         Inicializa el cliente MQTT usando la configuración YAML.
 
         :param config_path: Ruta al archivo de configuración YAML.
         :param local: Booleano que indica si se usará el broker local (True) o AWS IoT Core (False).
         """
-        self.config = self.load_config(config_path)
+        #self.config = self.load_config(config_path)
+        self.config = config
 
         # Configuración del broker MQTT
         if local:
@@ -56,22 +58,22 @@ class MQTTPublisher:
         """
         if local:
             self.client.username_pw_set(self.username, self.password)
-            print(f"Cliente MQTT configurado para broker local: {self.broker}")
+            logging.info(f"[MQTT] Cliente configurado para broker local: {self.broker}")
         else:
             self.client.tls_set(
                 ca_certs=self.ca_path,
                 certfile=self.cert_path,
                 keyfile=self.key_path
             )
-            print(f"Cliente MQTT configurado para AWS IoT Core: {self.broker}")
+            logging.info(f"[MQTT] Cliente configurado para AWS IoT Core: {self.broker}")
 
     def connect(self):
         try:
-            print(f"Intentando conectar al broker MQTT {self.broker} en el puerto {self.port}...")
+            logging.info(f"[MQTT] Intentando conectar al broker {self.broker} en el puerto {self.port}...")
             self.client.connect(self.broker, self.port, keepalive=60)
-            print("Conexión al broker MQTT exitosa.")
+            logging.info("[MQTT] Conexión al broker exitosa.")
         except Exception as e:
-            print(f"Error al conectar con el broker MQTT: {e}")
+            logging.info(f"[MQTT] Error al conectar con el broker: {e}")
             for i in range(3):  # Intenta reconectar hasta 3 veces
                 time.sleep(5)
                 try:

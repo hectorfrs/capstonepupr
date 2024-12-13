@@ -56,7 +56,7 @@ class NetworkManager:
         Configura los parámetros de red (IP estática, puerta de enlace).
         """
         try:
-            logging.info(f"Configurando red para la interfaz {self.current_interface}...")
+            logging.info(f"[NET] Configurando red para la interfaz {self.current_interface}...")
             ip = network_config["ip"]
             gateway = network_config["gateway"]
 
@@ -69,7 +69,7 @@ class NetworkManager:
                 ["sudo", "route", "add", "default", "gw", gateway, self.current_interface],
                 check=True
             )
-            logging.info(f"Red configurada con IP: {ip}, Gateway: {gateway}.")
+            logging.info(f"[NET] Red configurada con IP: {ip}, Gateway: {gateway}.")
         except subprocess.CalledProcessError as e:
             logging.error(f"Error configurando red: {e}")
 
@@ -77,7 +77,7 @@ class NetworkManager:
         """
         Monitorea la conexión de red y conmutación entre Ethernet y Wi-Fi.
         """
-        logging.info("Iniciando monitoreo de red...")
+        logging.info("[NET] Iniciando monitoreo de red...")
         self.keep_monitoring = True
         while self.keep_monitoring:
             if self.current_interface == "ethernet" and not self.is_connected():
@@ -95,7 +95,7 @@ class NetworkManager:
         if not self.monitoring_thread:
             self.monitoring_thread = Thread(target=self.monitor_network, daemon=True)
             self.monitoring_thread.start()
-            logging.info("Monitoreo de red iniciado.")
+            logging.info(f"[NET] Monitoreo de red iniciado.")
 
     def stop_monitoring(self):
         """
@@ -105,4 +105,4 @@ class NetworkManager:
         if self.monitoring_thread:
             self.monitoring_thread.join()
             self.monitoring_thread = None
-            logging.info("Monitoreo de red detenido.")
+            logging.info("[NET] Monitoreo de red detenido.")
