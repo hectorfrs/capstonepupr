@@ -38,7 +38,7 @@ class AS7265xSensorHighLevel:
         Lee y devuelve el espectro calibrado del sensor.
         :return: Lista de valores calibrados.
         """
-        spectrum = super().read_calibrated_spectrum()
+        spectrum = self.sensor.read_calibrated_spectrum()
         formatted_spectrum = json.dumps(spectrum, indent=4)
         if config['system']['enable_sensor_diagnostics']:
             diagnostic_check(spectrum)
