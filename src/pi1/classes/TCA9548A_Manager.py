@@ -27,7 +27,7 @@ class TCA9548AManager:
             self.bus.read_byte(self.address)
             #logging.info(f"MUX TCA9548A conectado en la dirección {hex(self.address)}.")
         except Exception as e:
-            logging.error(f"No se puede conectar al MUX en {hex(self.address)}: {e}")
+            logging.error(f"[MUX] No se puede conectar a {hex(self.address)}: {e}")
             raise
 
     def enable_channel(self, channel):

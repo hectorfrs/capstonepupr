@@ -115,13 +115,13 @@ class AS7265xSensorHighLevel:
         """
         try:
             if all(val == 0 for val in spectrum.values()):
-                logging.warning("Diagnóstico: Todos los valores del espectro son 0.")
+                logging.warning("[SENSOR] Diagnóstico: Todos los valores del espectro son 0.")
             if max(spectrum.values()) > 3000:
-                logging.warning("Diagnóstico: Valor excesivo detectado en el espectro.")
+                logging.warning("[SENSOR] Diagnóstico: Valor excesivo detectado en el espectro.")
             if self.config['system']['enable_detailed_logging']:
-                logging.debug(f"Datos espectrales detallados: {spectrum}")
-            logging.info("Diagnóstico completado exitosamente.")
+                logging.debug(f"[SENSOR] Datos espectrales detallados: {spectrum}")
+            logging.info("[SENSOR] Diagnóstico completado exitosamente.")
         except Exception as e:
-            logging.error(f"Error en diagnóstico del espectro: {e}")
+            logging.error(f"[SENSOR] Error en diagnóstico del espectro: {e}")
 
 
