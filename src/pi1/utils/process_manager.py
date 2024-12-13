@@ -77,11 +77,14 @@ def process_with_conveyor(config, sensors, mux):
                     logging.info(f"[CONVEYOR] [SENSOR] Leyendo datos crudos del sensor {idx}.")
                     spectrum = sensor.read_raw_spectrum()
 
-                logging.info(f"[CONVEYOR] [SENSOR] Datos obtenidos correctamente: {spectrum}")
-                
                 # Identificar el tipo de plástico
-                plastic_type = identify_plastic_type(spectrum)
-                logging.info(f"[CONVEYOR] [SENSOR] Tipo de plástico identificado: {plastic_type}")
+                if spectrum:
+                    logging.info(f"[CONVEYOR] [SENSOR] Datos obtenidos correctamente: {spectrum}")
+                    plastic_type = identify_plastic_type(spectrum)
+                    logging.info(f"[CONVEYOR] [SENSOR] Tipo de plástico identificado: {plastic_type}")
+                else:
+                    logging.info(f"[CONVEYOR] [SENSOR] No se obtuvieron datos del sensor {idx}.")
+                    plastic_type = "Desconocido"
 
                 successful_reads += 1
                 
