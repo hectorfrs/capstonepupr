@@ -13,6 +13,8 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 class MUX_TCA9548A:
     """Clase para manejar el MUX TCA9548A utilizando la librería Qwiic & SMBus."""
+    
+    POLLING_DELAY = 0.05 # Retardo de polling en segundos
 
     def __init__(self, address=0x70, i2c_bus=1):
         """
