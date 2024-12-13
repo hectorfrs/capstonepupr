@@ -183,7 +183,7 @@ def main():
     if not sensors:
         logging.error(f"[SENSOR] No se inicializaron sensores correctamente. Finalizando el programa.")
         return
-        
+
     for channel_entry in config["mux"]["channels"]:
         channel = channel_entry["channel"]
         sensor_name = channel_entry["sensor_name"]
@@ -206,6 +206,8 @@ def main():
             time.sleep(1)  # Esperar 5 segundo después de resetear
             status = sensor.read_status()
             logging.debug(f"[SENSOR] Estado del sensor después del reinicio: {bin(status)}")
+            if not self._read_status() & self.READY:  # Define un valor para READY si es necesario
+                raise RuntimeError("El sensor no está listo para configurarse.")
 
             # Configurar el sensor
             try:

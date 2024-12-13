@@ -132,12 +132,19 @@ class SENSOR_AS7265x:
         :param gain: Ganancia (0=1x, 1=3.7x, 2=16x, 3=64x).
         :param mode: Modo de operación (0-3).
         """
-        self._write_virtual_register(0x05, integration_time)            # Configurar tiempo de integración
-        config = self._read_virtual_register(0x04)                      # Leer configuración actual
-        config = (config & 0b11001111) | (gain << 4)                    # Ajustar ganancia
-        self._write_virtual_register(0x04, config)                      # Escribir nueva configuración
-        self._write_virtual_register(0x07, mode)                        # Configurar modo de operación
-        pass
+        if not (1 <= integration_time <= 255):
+            raise ValueError("[CONTROLLER] [SENSOR] El tiempo de integración debe estar entre 1 y 255.")
+        if gain not in [0, 1, 2, 3]:
+            raise ValueError("[CONTROLLER] [SENSOR] Ganancia no válida.")
+        if mode not in [0, 1, 2, 3]:
+            raise ValueError("[CONTROLLER] [SENSOR] Modo no válido.")
+
+        self._write_virtual_register(0x05, integration_time)  # Configurar tiempo de integración
+        config = self._read_virtual_register(0x04)           # Leer configuración actual
+        config = (config & 0b11001111) | (gain << 4)         # Ajustar ganancia
+        self._write_virtual_register(0x04, config)           # Escribir nueva configuración
+        self._write_virtual_register(0x07, mode)             # Configurar modo de operación
+
 
     def set_devsel(self, device):
         """
