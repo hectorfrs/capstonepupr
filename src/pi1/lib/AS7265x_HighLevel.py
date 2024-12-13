@@ -134,20 +134,24 @@ def generate_summary(successful_reads, failed_reads, error_details):
     :param failed_reads: Número total de fallos.
     :param error_details: Lista de detalles de errores.
     """
-    logging.info("")
-    logging.info("=========== RESUMEN FINAL ===========")
-    logging.info(f"Lecturas exitosas: {successful_reads}")
+    warnings = []  # Asegúrate de que esté inicializado
+
     if failed_reads > 0:
-        logging.info(f"Fallos totales: {failed_reads}")
+        warnings.append("Se detectaron fallos durante la operación.")
+
+    if successful_reads == 0:
+        warnings.append("No se completaron lecturas exitosas.")
+
+    logging.info("")
+    logging.info("=" * 50)
+    logging.info("========== RESUMEN FINAL ==========")
+    logging.info(f"Lecturas exitosas: {successful_reads}")
+    logging.info(f"Fallos totales: {failed_reads}")
+    if error_details:
         logging.info("Detalles de los fallos por canal:")
         for error in error_details:
-            channel = error.get("channel", "Desconocido")
-            message = error.get("error_message", "Sin detalles")
-            logging.error(f"  - Canal {channel}: {message}")
+            logging.error(f" - Canal {error['channel']}: {error['error_message']}")
     if warnings:
-        logging.warning("Advertencias detectadas durante la operación:")
         for warning in warnings:
-            logging.warning(f"  - {warning}")
-    else:
-        logging.info("Todos los sensores operaron correctamente.")
-    logging.info("=====================================")
+            logging.warning(warning)
+    logging.info("=" * 50)
