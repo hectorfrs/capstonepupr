@@ -134,7 +134,7 @@ def generate_summary(successful_reads, failed_reads, error_details):
     :param failed_reads: Número total de fallos.
     :param error_details: Lista de detalles de errores.
     """
-    logging.info ("")
+    logging.info("")
     logging.info("=========== RESUMEN FINAL ===========")
     logging.info(f"Lecturas exitosas: {successful_reads}")
     if failed_reads > 0:
