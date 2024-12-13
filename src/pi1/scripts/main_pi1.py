@@ -111,7 +111,7 @@ def main():
 
     # Configuración de logging
     configure_logging(config)
-    logging.info("[SYSTEM] Sistema iniciado en Raspberry Pi #1...")
+    logging.info("[MAIN] Sistema iniciado en Raspberry Pi #1...")
 
     # Escanear el bus I2C
     detected_devices = scan_i2c_bus()
