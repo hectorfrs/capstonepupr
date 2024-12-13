@@ -79,7 +79,7 @@ def main():
         logging.info(f"Inicializando sensor en canal {channel}...")
         mux.enable_channel(channel)
         logging.info(f"Canal {channel} habilitado. Esperando estabilización...")
-        time.sleep(1.0)    # Tiempo de estabilización a 500 ms
+        time.sleep(2.0)    # Tiempo de estabilización a 500 ms
         
         # Verificar qué canal está activo
         # active_channels = mux.get_active_channel()
