@@ -23,7 +23,6 @@ def process_individual(config, sensors, mux):
 
     if len(sensors) != len(mux_channels):
         logging.error(f"[INDIVIDUAL] Desalineación: {len(sensors)} sensores, {len(mux_channels)} canales configurados.")
-        return 0, len(sensors), [{"error_message": "Desalineación entre sensores y canales configurados."}]
 
     for idx, sensor in enumerate(sensors):
         start_time = time.time()  # Inicio del tiempo para este sensor
@@ -45,7 +44,11 @@ def process_individual(config, sensors, mux):
         except IndexError as ie:
             logging.error(f"[INDIVIDUAL] [SENSOR] Índice fuera de rango: {ie}")
             failed_reads += 1
-            error_details.append({"channel": "Desconocido", "error_message": str(ie)})
+            #error_details.append({"channel": "Desconocido", "error_message": str(ie)})
+            error_details.append({
+            "channel": mux_channels[idx] if idx < len(mux_channels) else "Desconocido",
+            "error_message": str(e)
+            })
         except Exception as e:
             logging.error(f"[INDIVIDUAL] [SENSOR] Error en sensor {idx}: {e}")
             failed_reads += 1
@@ -117,7 +120,11 @@ def process_with_conveyor(config, sensors, mux):
         except Exception as e:
             logging.error(f"[CONVEYOR] [SENSOR] Error en sensor {channel}: {e}")
             failed_reads += 1
-            error_details.append({"channel": channel, "error_message": str(e)})
+            #error_details.append({"channel": channel, "error_message": str(e)})
+            error_details.append({
+            "channel": mux_channels[idx] if idx < len(mux_channels) else "Desconocido",
+            "error_message": str(e)
+            })
 
         finally:
             mux.disable_all_channels()
