@@ -37,14 +37,14 @@ class AS7265xSensorHighLevel:
         )
 
     def configure(self, integration_time, gain, mode):
-         """
-         Configura el sensor con los parámetros dados.
-         :param integration_time: Tiempo de integración (1-255).
-         :param gain: Ganancia (0=1x, 1=3.7x, 2=16x, 3=64x).
-         :param mode: Modo de operación (0-3).
-         """
-         self.sensor.configure(integration_time, gain, mode)
-    #     #logging.info(f"Sensor configurado: integración={integration_time}, ganancia={gain}, modo={mode}.")
+        """
+        Configura el sensor con los parámetros dados.
+        :param integration_time: Tiempo de integración (1-255).
+        :param gain: Ganancia (0=1x, 1=3.7x, 2=16x, 3=64x).
+        :param mode: Modo de operación (0-3).
+        """
+        self.sensor.configure(integration_time, gain, mode)
+#     #logging.info(f"Sensor configurado: integración={integration_time}, ganancia={gain}, modo={mode}.")
 
     def read_calibrated_spectrum(self):
         """
@@ -131,29 +131,29 @@ class AS7265xSensorHighLevel:
         except Exception as e:
             logging.error(f"[SENSOR] Error en diagnóstico del espectro: {e}")
 
-    def generate_summary(successful_reads, failed_reads, error_details):
-        """
-        Genera un resumen mejorado al final del proceso.
-        :param successful_reads: Número total de lecturas exitosas.
-        :param failed_reads: Número total de fallos.
-        :param error_details: Lista de detalles de errores.
-        """
-        logging.info("=========== RESUMEN FINAL ===========")
-        logging.info(f"Lecturas exitosas: {successful_reads}")
-        logging.info(f"Fallos totales: {failed_reads}")
-        
-        if error_details:
-            logging.info("Detalles de los fallos por canal:")
-            for detail in error_details:
-                channel = detail.get("channel", "Desconocido")
-                error_message = detail.get("error_message", "Sin detalles")
-                logging.error(f" - Canal {channel}: {error_message}")
-        
-        if failed_reads > 0:
-            logging.warning("Se detectaron fallos durante la operación. Por favor, verifique las conexiones I2C, parámetros de configuración y el estado del hardware.")
-        else:
-            logging.info("Todos los sensores operaron correctamente.")
-        
-        logging.info("=====================================")
+def generate_summary(successful_reads, failed_reads, error_details):
+    """
+    Genera un resumen mejorado al final del proceso.
+    :param successful_reads: Número total de lecturas exitosas.
+    :param failed_reads: Número total de fallos.
+    :param error_details: Lista de detalles de errores.
+    """
+    logging.info("=========== RESUMEN FINAL ===========")
+    logging.info(f"Lecturas exitosas: {successful_reads}")
+    logging.info(f"Fallos totales: {failed_reads}")
+    
+    if error_details:
+        logging.info("Detalles de los fallos por canal:")
+        for detail in error_details:
+            channel = detail.get("channel", "Desconocido")
+            error_message = detail.get("error_message", "Sin detalles")
+            logging.error(f" - Canal {channel}: {error_message}")
+    
+    if failed_reads > 0:
+        logging.warning("Se detectaron fallos durante la operación. Por favor, verifique las conexiones I2C, parámetros de configuración y el estado del hardware.")
+    else:
+        logging.info("Todos los sensores operaron correctamente.")
+    
+    logging.info("=====================================")
 
 
