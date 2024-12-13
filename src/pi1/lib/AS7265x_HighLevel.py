@@ -46,7 +46,7 @@ class AS7265xSensorHighLevel:
         spectrum = self.sensor.read_calibrated_spectrum()
         formatted_spectrum = json.dumps(spectrum, indent=4)
         if config['system']['enable_sensor_diagnostics']:
-            diagnostic_check(spectrum, config)
+            diagnostic_check(spectrum, self.config)
         logging.info(f"Espectro calibrado leído: \n{formatted_spectrum}")
         return spectrum
 
