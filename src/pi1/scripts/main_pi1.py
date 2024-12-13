@@ -10,6 +10,7 @@ import sys
 import os
 from lib.TCA9548A_HighLevel import TCA9548AMUXHighLevel
 from lib.AS7265x_HighLevel import AS7265xSensorHighLevel
+from lib.AS7265x_HighLevel import generate_summary
 
 # Agregar la ruta del proyecto al PYTHONPATH
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
