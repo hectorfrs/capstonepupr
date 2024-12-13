@@ -118,12 +118,10 @@ class AS7265xSensorHighLevel:
         Verifica la calidad de los datos espectrales y genera alertas si son inconsistentes.
         """
         try:
-            if all(val == 0 for val in spectrum.values()):
+            if all(entry['calibrated_value'] == 0 for entry in spectrum):
                 logging.warning("[SENSOR] Diagnóstico: Todos los valores del espectro son 0.")
-            if max(spectrum.values()) > 3000:
+            if any(entry['calibrated_value'] > 3000 for entry in spectrum):
                 logging.warning("[SENSOR] Diagnóstico: Valor excesivo detectado en el espectro.")
-            if self.config['system']['enable_detailed_logging']:
-                logging.debug(f"[SENSOR] Datos espectrales detallados: {spectrum}")
             logging.info("[SENSOR] Diagnóstico completado exitosamente.")
         except Exception as e:
             logging.error(f"[SENSOR] Error en diagnóstico del espectro: {e}")
@@ -136,20 +134,20 @@ def generate_summary(successful_reads, failed_reads, error_details):
     :param failed_reads: Número total de fallos.
     :param error_details: Lista de detalles de errores.
     """
+    logging.info ("")
     logging.info("=========== RESUMEN FINAL ===========")
     logging.info(f"Lecturas exitosas: {successful_reads}")
-    logging.info(f"Fallos totales: {failed_reads}")
-    
-    if error_details:
-        logging.info("Detalles de los fallos por canal:")
-        for detail in error_details:
-            channel = detail.get("channel", "Desconocido")
-            error_message = detail.get("error_message", "Sin detalles")
-            logging.error(f" - Canal {channel}: {error_message}")
-    
     if failed_reads > 0:
-        logging.warning("Se detectaron fallos durante la operación. Por favor, verifique las conexiones I2C, parámetros de configuración y el estado del hardware.")
+        logging.info(f"Fallos totales: {failed_reads}")
+        logging.info("Detalles de los fallos por canal:")
+        for error in error_details:
+            channel = error.get("channel", "Desconocido")
+            message = error.get("error_message", "Sin detalles")
+            logging.error(f"  - Canal {channel}: {message}")
+    if warnings:
+        logging.warning("Advertencias detectadas durante la operación:")
+        for warning in warnings:
+            logging.warning(f"  - {warning}")
     else:
         logging.info("Todos los sensores operaron correctamente.")
-    
     logging.info("=====================================")

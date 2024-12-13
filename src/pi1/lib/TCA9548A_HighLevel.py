@@ -31,7 +31,7 @@ class TCA9548AMUXHighLevel:
         try:
             self.mux.enable_channel(channel)
             logging.info(f"[MUX] [CANAL {channel}] Habilitado.")
-            time.sleep(1.0)
+            time.sleep(1.5)
         except Exception as e:
             logging.error(f"[MUX] Error al habilitar el canal {channel}: {e}")
 
