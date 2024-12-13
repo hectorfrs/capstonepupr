@@ -26,6 +26,16 @@ from utils.performance_tracker import PerformanceTracker
 from utils.real_time_config import RealTimeConfigManager
 from utils.config_manager import ConfigManager
 
+try:
+    from qwiic import QwiicKx13X, QwiicAs6212
+except ImportError:
+    print("QwiicKx13X y QwiicAs6212 no están disponibles. Ignorando...")
+
+try:
+    import spidev
+except ImportError:
+    print("El módulo spidev no está disponible. Ignorando...")
+
 # Agregar la ruta del proyecto al PYTHONPATH
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
