@@ -29,10 +29,10 @@ def load_config(file_path=config_path):
     try:
         with open(file_path, "r") as file:
             config = yaml.safe_load(file)
-            logging.info("Archivo de configuración cargado correctamente.")
+            logging.info("[CONFIG] Archivo de configuración cargado correctamente.")
             return config
     except Exception as e:
-        logging.error(f"Error al cargar el archivo de configuración: {e}")
+        logging.error(f"[CONFIG] Error al cargar el archivo de configuración: {e}")
         raise
 
 # Configuración de los logs
@@ -95,9 +95,9 @@ def scan_i2c_bus():
     """
     devices = qwiic.scan()
     if devices:
-        logging.info(f"Dispositivos detectados en el bus I2C: {[hex(addr) for addr in devices]}")
+        logging.info(f"[SCAN] Dispositivos detectados en el bus I2C: {[hex(addr) for addr in devices]}")
     else:
-        logging.warning("No se detectaron dispositivos en el bus I2C.")
+        logging.warning("[SCAN] No se detectaron dispositivos en el bus I2C.")
     return devices
 
 # Función principal
@@ -111,7 +111,7 @@ def main():
 
     # Configuración de logging
     configure_logging(config)
-    logging.info("Sistema iniciado en Raspberry Pi #1...")
+    logging.info("[SYSTEM] Sistema iniciado en Raspberry Pi #1...")
 
     # Escanear el bus I2C
     detected_devices = scan_i2c_bus()
