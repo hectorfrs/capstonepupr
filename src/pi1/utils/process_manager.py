@@ -2,7 +2,7 @@ import logging
 import time
 
 from classes.AS7265x_Manager import AS7265xManager
-from classes.TCA9548A_Manager import AS7265xManager
+from classes.TCA9548A_Manager import TCA9548AManager
 
 def process_individual(config, sensors, mux):
     """
