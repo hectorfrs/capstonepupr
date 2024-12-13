@@ -112,6 +112,7 @@ def main():
     # Configuración de logging
     configure_logging(config)
     logging.info("[MAIN] Sistema iniciado en Raspberry Pi #1...")
+    logging.info("=" * 50)
 
     # Escanear el bus I2C
     detected_devices = scan_i2c_bus()
@@ -125,7 +126,7 @@ def main():
             logging.info(f"[SCAN] Dispositivo con dirección {hex(device)} detectado correctamente.")
     
     # Inicializar MUX
-    logging.info("[MUX] Inicializando...")
+    logging.info("[MUX] Inicializando...\n")
     mux = TCA9548AMUXHighLevel(address=config['mux']['address'])
 
     # Habilitar canales del MUX
@@ -133,12 +134,13 @@ def main():
     mux.enable_multiple_channels(mux_channels)
 
     # Inicializar sensores en los canales
-    logging.info("[SENSOR] Inicializando...")
+    logging.info("[SENSOR] Inicializando...\n")
     sensors = []
     for channel_entry in config["mux"]["channels"]:
         channel = channel_entry["channel"]
         sensor_name = channel_entry["sensor_name"]
 
+        logging.info("=" * 50)
         logging.info(f"[SENSOR] Inicializando sensor en canal {channel}...")
         mux.enable_channel(channel)
         logging.info(
@@ -176,6 +178,7 @@ def main():
         finally:
             # Deshabilitar todos los canales después de configurar el sensor
             mux.disable_all_channels()
+            logging.info("=" * 50)
 
     # Capturar datos de los sensores
     start_time = time.time()
