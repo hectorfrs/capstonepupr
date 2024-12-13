@@ -178,7 +178,7 @@ def main():
     # Inicializar sensores en los canales
     logging.info("[SENSOR] Inicializando...")
     sensors = [
-    SENSOR_AS7265x(i2c_bus=1, address=0x49),
+    AS7265x_Manager(i2c_bus=1, address=0x49),
 ]
 
     for channel_entry in config["mux"]["channels"]:
@@ -196,7 +196,7 @@ def main():
         
         try:
             # Crea instancia High Level para el sensor
-            sensor = SENSOR_AS7265x(i2c_bus=1, address=0x49)
+            sensor = AS7265x_Manager(i2c_bus=1, address=0x49)
 
             # Reset y Verificar el estado del sensor
             sensor.reset()
