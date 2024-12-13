@@ -8,9 +8,20 @@ import qwiic
 import time
 import sys
 import os
+# Importar módulos criticos
 from lib.TCA9548A_HighLevel import TCA9548AMUXHighLevel
 from lib.AS7265x_HighLevel import AS7265xSensorHighLevel
 from lib.AS7265x_HighLevel import generate_summary
+
+# Importar módulos personalizados
+from utils.mqtt_publisher import MQTTPublisher
+from utils.greengrass import GreengrassManager
+from utils.network_manager import NetworkManager
+from utils.json_logger import log_detection
+from utils.alert_manager import AlertManager
+from utils.performance_tracker import PerformanceTracker
+from utils.real_time_config import RealTimeConfigManager
+from utils.config_manager import ConfigManager
 
 # Agregar la ruta del proyecto al PYTHONPATH
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
