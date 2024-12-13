@@ -200,49 +200,13 @@ def main():
             mux.disable_all_channels()
             logging.info("=" * 50)
 
-    # Capturar datos de los sensores
-    
-    for idx, sensor in enumerate(sensors):
-        try:
-            start_time = time.time()
-            # Habilitar el canal correspondiente
-            mux.enable_channel(mux_channels[idx])
-            logging.info("=" * 50)
-            logging.info(f"[CANAL {mux_channels[idx]}] Habilitado para lectura.")
+     # Seleccionar flujo según configuración
+    if config["system"].get("process_with_conveyor", False):
+        successful_reads, failed_reads, error_details = process_with_conveyor(config, sensors, mux)
+    else:
+        successful_reads, failed_reads, error_details = process_individual(config, sensors, mux)
 
-            # Determinar el tipo de lectura según la configuración
-            read_calibrated = config["system"].get("read_calibrated_data", True)
-
-            # Realizar la lectura
-            if read_calibrated:
-                logging.info(f"[SENSOR] Realizando lectura calibrada del sensor {idx} en canal {mux_channels[idx]}")
-                spectrum = sensor.read_calibrated_spectrum()
-                successful_reads += 1
-            else:
-                logging.info(f"[SENSOR] Realizando lectura datos crudos del sensor {idx} en canal {mux_channels[idx]}")
-                spectrum = sensor.read_raw_spectrum()
-
-            #logging.info(f"Datos leidos de sensor {idx} en canal {mux_channels[idx]}: {spectrum}")
-
-        except Exception as e:
-            failed_reads += 1
-            error_details.append({"channel": {mux_channels[idx]}, "error_message": str(e)})
-            logging.error(
-                f"[SENSOR] Error en función 'read_calibrated_spectrum' al procesar el sensor {idx} en canal {mux_channels[idx]}: {e}"
-                f"Verifique la conexion I2C y los parametros de configuración.")
-        except Exception as main_error:
-            print (f"Error general en el programa: {main_error}")
-        finally:
-            mux.disable_all_channels()
-            elapsed_time = time.time() - start_time
-            logging.info(f"[SENSOR] Captura completada. [MUX] Todos los canales deshabilitados.")
-            logging.info("=" * 50)
-            logging.info (f"Tiempos de ejecución: {elapsed_time:.2f} segundos.")
     generate_summary(successful_reads, failed_reads, error_details)
-    # Deshabilitar todos los canales del MUX al finalizar
-    #logging.debug(f"Sensores inicializados: {sensors}")
-    #logging.debug(f"Canales del MUX: {mux_channels}")
-
     
 
 if __name__ == "__main__":

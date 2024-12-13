@@ -1,3 +1,7 @@
+# network_manager.py - Clase para manejar la conexión de red en Raspberry Pi.
+# Desarrollado por Héctor F. Rivera Santiago
+# copyright (c) 2024
+
 import os
 import time
 import logging
