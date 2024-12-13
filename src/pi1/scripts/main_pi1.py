@@ -125,7 +125,7 @@ def main():
             logging.info(f"Dispositivo con dirección {hex(device)} detectado correctamente.")
     
     # Inicializar MUX
-    logging.info("Inicializando MUX...")
+    logging.info("[MUX] Inicializando...")
     mux = TCA9548AMUXHighLevel(address=config['mux']['address'])
 
     # Habilitar canales del MUX
@@ -133,15 +133,18 @@ def main():
     mux.enable_multiple_channels(mux_channels)
 
     # Inicializar sensores en los canales
-    logging.info("Inicializando sensores en los canales del MUX...")
+    logging.info("[SENSOR] Inicializando...")
     sensors = []
     for channel_entry in config["mux"]["channels"]:
         channel = channel_entry["channel"]
         sensor_name = channel_entry["sensor_name"]
 
-        logging.info(f"Inicializando sensor en canal {channel}...")
+        logging.info(f"[SENSOR] Inicializando sensor en canal {channel}...")
         mux.enable_channel(channel)
-        logging.info(f"[MUX] El canal {channel} ha sido habilitado. Esperando estabilización del sensor...")
+        logging.info(
+            f"[MUX] El canal {channel} ha sido habilitado\n."
+            f"[MUX] Esperando estabilización del sensor..."
+            )
         time.sleep(0.5)    # Tiempo de estabilización a 500 ms
         
         try:
@@ -215,7 +218,7 @@ def main():
                 f"[MUX] Todos los canales deshabilitados.\n"
                 f"Tiempos de ejecución: {elapsed_time:.2f} segundos."
                 )
-generate_summary(successful_reads, failed_reads, error_details)
+    generate_summary(successful_reads, failed_reads, error_details)
     # Deshabilitar todos los canales del MUX al finalizar
     #logging.debug(f"Sensores inicializados: {sensors}")
     #logging.debug(f"Canales del MUX: {mux_channels}")
