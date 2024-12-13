@@ -27,13 +27,12 @@ class SENSOR_AS7265x:
 
     DEVICES = {"AS72651": 0b00, "AS72652": 0b01, "AS72653": 0b10}  # Selección de dispositivos internos
 
-    def __init__(self, i2c_bus=1, address=I2C_ADDR):
+    def __init__(self, i2c_bus=1):
         """
         Inicializa el sensor en el bus I²C.
         :param i2c_bus: Número del bus I²C.
         :param address: Dirección I²C del sensor.
         """
-        self.address = address
         self.i2c = SMBus(i2c_bus)
 
         logging.info(f"[CONTROLLER] [SENSOR] AS7265x inicializado.")
