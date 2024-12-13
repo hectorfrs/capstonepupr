@@ -35,7 +35,7 @@ class MUX_TCA9548A:
         Habilita un canal en el MUX.
         :param channel: Canal a habilitar (0-7).
         """
-        if not 0 <= channel <= 7:
+        if not (0 <= channel <= 7):
             raise ValueError("El canal debe estar entre 0 y 7.")
         try:
             self.bus.write_byte(self.address, 1 << channel)
