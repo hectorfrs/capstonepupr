@@ -44,14 +44,14 @@ class AS7265xController:
         :param value: Valor a escribir.
         """
         while True:
-            status = self.i2c.read_byte_data(self.I2C_ADDR, self.STATUS_REG)
+            status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
             if not (status & self.TX_VALID):
                 break
             time.sleep(self.POLLING_DELAY)
 
         self.i2c.write_byte_data(self.I2C_ADDR, self.WRITE_REG, addr | 0x80)
         while True:
-            status = self.i2c.read_byte_data(self.I2C_ADDR, self.STATUS_REG)
+            status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
             if not (status & self.TX_VALID):
                 break
             time.sleep(self.POLLING_DELAY)
@@ -67,19 +67,19 @@ class AS7265xController:
         attempts = 3
         for attempt in range(attempts):
             try:
-                status = self.i2c.read_byte_data(self.I2C_ADDR, self.STATUS_REG)
+                status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
                 if status & self.RX_VALID:
                     self.i2c.read_byte_data(self.I2C_ADDR, self.READ_REG)
 
                 while True:
-                    status = self.i2c.read_byte_data(self.I2C_ADDR, self.STATUS_REG)
+                    status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
                     if not (status & self.TX_VALID):
                         break 
                     time.sleep(self.POLLING_DELAY)
 
                 self.i2c.write_byte_data(self.I2C_ADDR, self.WRITE_REG, addr)
                 while True:
-                    status = self.i2c.read_byte_data(self.I2C_ADDR, self.STATUS_REG)
+                    status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
                     if status & self.RX_VALID:
                         break
                     time.sleep(self.POLLING_DELAY)
