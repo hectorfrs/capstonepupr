@@ -28,10 +28,10 @@ class AS7265xSensorHighLevel:
         self.sensor = AS7265xManager(address=address)
         self.config = config
         logging.info(f"[SENSOR] AS7265x inicializado en la dirección {hex(address)}.")
-
-    def configure_sensor(self):
+    
+    def configure(self):
         """
-        Configura el sensor con parámetros desde config.yaml.
+        Configura el sensor usando los parámetros de configuración desde config.yaml.
         """
         try:
             integration_time = self.config['sensors']['integration_time']
@@ -40,9 +40,8 @@ class AS7265xSensorHighLevel:
             self.sensor.configure(integration_time, gain, mode)
             logging.info(f"[SENSOR] Configuración completada: integración={integration_time}, ganancia={gain}, modo={mode}.")
         except KeyError as e:
-            logging.error(f"[SENSOR] Error en configuración. Clave faltante en config.yaml: {e}")
+            logging.error(f"[SENSOR] Clave de configuración faltante: {e}")
             raise
-
 
     def read_calibrated_spectrum(self):
         """
