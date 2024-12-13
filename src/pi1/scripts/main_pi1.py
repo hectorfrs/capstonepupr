@@ -168,7 +168,7 @@ def main():
             logging.info(f"[SCAN] Dispositivo con dirección {hex(device)} detectado correctamente.")
     
     # Inicializar MUX
-    logging.info("[MUX] Inicializando...")
+    logging.info("[MAIN] [MUX] Inicializando...")
     mux = TCA9548A_Manager(address=config['mux']['address'])
 
     # Habilitar canales del MUX
@@ -176,12 +176,12 @@ def main():
     mux.enable_multiple_channels(mux_channels)
 
     # Inicializar sensores en los canales
-    logging.info("[SENSOR] Inicializando...")
+    logging.info("[MAIN] [SENSOR] Inicializando...")
     sensors = [
     AS7265x_Manager(i2c_bus=1, address=0x49),
 ]
     if not sensors:
-        logging.error(f"[SENSOR] No se inicializaron sensores correctamente. Finalizando el programa.")
+        logging.error(f"[MAIN] [SENSOR] No se inicializaron sensores correctamente. Finalizando el programa.")
         return
 
     for channel_entry in config["mux"]["channels"]:
@@ -189,10 +189,10 @@ def main():
         sensor_name = channel_entry["sensor_name"]
 
         logging.info("=" * 50)
-        logging.info(f"[SENSOR] Inicializando sensor en canal {channel}...")
+        logging.info(f"[MAIN] [SENSOR] Inicializando sensor en canal {channel}...")
         mux.enable_channel(channel)
         logging.info(
-            f"[MUX] El canal {channel} ha sido habilitado. "
+            f"[MAIN] [MUX] El canal {channel} ha sido habilitado. "
             f"Esperando estabilización del sensor..."
             )
         time.sleep(0.5)    # Tiempo de estabilización a 500 ms
@@ -205,17 +205,17 @@ def main():
             sensor.reset()
             time.sleep(2)  # Esperar 5 segundo después de resetear
             status = sensor.read_status()
-            logging.debug(f"[SENSOR] Estado del sensor después del reinicio: {bin(status)}")
+            logging.debug(f"[MAIN] [SENSOR] Estado del sensor después del reinicio: {bin(status)}")
             if not self._read_status() & self.READY:  # Define un valor para READY si es necesario
                 raise RuntimeError("El sensor no está listo para configurarse.")
 
             # Configurar el sensor
             try:
-                logging.info("[SENSOR] El sensor está listo para ser configurado.")
+                logging.info("[MAIN] [SENSOR] El sensor está listo para ser configurado.")
                 sensor.configure()
                 sensors.append(sensor)
             except Exception as e:
-                logging.error(f"[SENSOR] Error al configurar el sensor: {e}")
+                logging.error(f"[MAIN] [SENSOR] Error al configurar el sensor: {e}")
                 continue
             
             # logging.info(
@@ -226,7 +226,7 @@ def main():
             # Deshabilitar todos los canales después de configurar el sensor
             mux.disable_all_channels()
         except Exception as e:
-            logging.error(f"[SENSOR] Error con el sensor en canal {channel}: {e}")
+            logging.error(f"[MAIN] [SENSOR] Error con el sensor en canal {channel}: {e}")
             continue
         finally:
             # Deshabilitar todos los canales después de configurar el sensor
