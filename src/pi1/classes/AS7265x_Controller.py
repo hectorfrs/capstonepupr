@@ -45,19 +45,19 @@ class SENSOR_AS7265x:
         :param value: Valor a escribir.
         """
         while True:
-            status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
+            status = self.i2c.read_byte_value(self.I2C_ADDR, self.REG_STATUS)
             if not (status & self.TX_VALID):
                 break
             time.sleep(self.POLLING_DELAY)
 
-        self.i2c.write_byte_data(self.I2C_ADDR, self.REG_WRITE, reg | 0x80)
+        self.i2c.write_byte_value(self.I2C_ADDR, self.REG_WRITE, reg | 0x80)
         while True:
-            status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
+            status = self.i2c.read_byte_value(self.I2C_ADDR, self.REG_STATUS)
             if not (status & self.TX_VALID):
                 break
             time.sleep(self.POLLING_DELAY)
 
-        self.i2c.write_byte_data(self.I2C_ADDR, self.REG_WRITE, data)
+        self.i2c.write_byte_valu(self.I2C_ADDR, self.REG_WRITE, value)
 
     def _read_register(self, reg):
         """
@@ -68,24 +68,24 @@ class SENSOR_AS7265x:
         attempts = 3
         for attempt in range(attempts):
             try:
-                status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
+                status = self.i2c.read_byte_value(self.I2C_ADDR, self.REG_STATUS)
                 if status & self.RX_VALID:
-                    self.i2c.read_byte_data(self.I2C_ADDR, self.REG_READ)
+                    self.i2c.read_byte_value(self.I2C_ADDR, self.REG_READ)
 
                 while True:
-                    status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
+                    status = self.i2c.read_byte_value(self.I2C_ADDR, self.REG_STATUS)
                     if not (status & self.TX_VALID):
                         break 
                     time.sleep(self.POLLING_DELAY)
 
-                self.i2c.write_byte_data(self.I2C_ADDR, self.REG_WRITE, reg)
+                self.i2c.write_byte_value(self.I2C_ADDR, self.REG_WRITE, reg)
                 while True:
-                    status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
+                    status = self.i2c.read_byte_value(self.I2C_ADDR, self.REG_STATUS)
                     if status & self.RX_VALID:
                         break
                     time.sleep(self.POLLING_DELAY)
 
-                return self.i2c.read_byte_data(self.I2C_ADDR, self.REG_READ)
+                return self.i2c.read_byte_value(self.I2C_ADDR, self.REG_READ)
             except OSError as e:
                 logging.warning(f"Error de I2C al leer el registro {hex(reg)} (Intento {attempt + 1}/{attempts}): {e}")
                 time.sleep(self.POLLING_DELAY)  # Esperar antes de reintentar
@@ -251,7 +251,7 @@ class SENSOR_AS7265x:
         return spectral_data
         pass
 
-    def reorder_data(self, data):
+    def reorder_data(self, value):
         """
         Reordena los datos según las especificaciones del sensor.
         :param data: Lista de datos espectrales.
@@ -264,7 +264,7 @@ class SENSOR_AS7265x:
         ]
         reordered = [0] * 18
         for src, dest in mappings:
-            reordered[dest - 1] = data[src - 1]
+            reordered[dest - 1] = value[src - 1]
         #logging.info(f"Datos reordenados: {reordered}")
         return reordered
     
