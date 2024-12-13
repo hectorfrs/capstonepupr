@@ -4,7 +4,7 @@
 
 import logging
 import yaml
-import qwiic
+import qwiic_tca9548a
 import time
 import sys
 import os
