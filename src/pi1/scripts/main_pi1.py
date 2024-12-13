@@ -97,7 +97,9 @@ def scan_i2c_bus():
 
 # Función principal
 def main():
-    print("Iniciando Sistema de Acopio...")
+    print("===============================================")
+    print("        Iniciando Sistema de Acopio...")
+    print("===============================================")
 
     # Cargar configuración
     config = load_config()
