@@ -1,4 +1,4 @@
-# AS7265xManager.py - Clase para manejar el sensor AS7265x utilizando la biblioteca Qwiic I2C.
+# AS7265x_Controller.py - Clase para manejar el sensor AS7265x utilizando la biblioteca Qwiic I2C.
 # Desarrollado por Héctor F. Rivera Santiago
 # copyright (c) 2024
 
@@ -27,15 +27,16 @@ class SENSOR_AS7265x:
 
     DEVICES = {"AS72651": 0b00, "AS72652": 0b01, "AS72653": 0b10}  # Selección de dispositivos internos
 
-    def __init__(self, i2c_bus=1):
+    def __init__(self, i2c_bus=1, address=0x49):
         """
         Inicializa el sensor en el bus I²C.
         :param i2c_bus: Número del bus I²C.
         :param address: Dirección I²C del sensor.
         """
         self.i2c = SMBus(i2c_bus)
+        self.address = address
 
-        logging.info(f"[CONTROLLER] [SENSOR] AS7265x inicializado.")
+        logging.info(f"[CONTROLLER] [SENSOR] AS7265x inicializado en dirección {hex(self.address)} en el bus I2C {i2c_bus}.")
 
     def _write_register(self, reg, value):
         """
