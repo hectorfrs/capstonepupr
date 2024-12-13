@@ -179,7 +179,8 @@ def main():
     logging.info("[SENSOR] Inicializando...")
     sensors = [
         AS7265x_Manager(config=config)
-        for _ in config["mux"]["channels"]]
+        for _ in config["mux"]["channels"]
+        ]
 
     for channel_entry in config["mux"]["channels"]:
         channel = channel_entry["channel"]
