@@ -46,7 +46,7 @@ def process_individual(config, sensors, mux):
     return successful_reads, failed_reads, error_details
 
 
-def process_with_conveyor(config, mux, sensors):
+def process_with_conveyor(config, sensors, mux):
     """
     Procesa los datos en modo continuo utilizando una cinta transportadora.
     """
@@ -57,7 +57,7 @@ def process_with_conveyor(config, mux, sensors):
     error_details = []
 
     while conveyor_active:
-        for idx, sensor in enumerate(sensors):
+        for idx, sensor in enumerate(sensors):  # sensors debe ser una lista
             try:
                 start_time = time.time()
                 mux.enable_channel(idx)
@@ -73,13 +73,13 @@ def process_with_conveyor(config, mux, sensors):
                 successful_reads += 1
                 logging.info(f"[CONVEYOR] [SENSOR] Datos obtenidos correctamente: {spectrum}")
 
+            except KeyboardInterrupt:
+                logging.info("[CONVEYOR] Proceso detenido manualmente.")
+
             except Exception as e:
                 failed_reads += 1
                 error_details.append({"channel": idx, "error_message": str(e)})
                 logging.error(f"[CONVEYOR] [SENSOR] Error en sensor {idx}: {e}")
-            
-            except KeyboardInterrupt:
-                logging.info("[CONVEYOR] Proceso detenido manualmente.")
 
             finally:
                 mux.disable_all_channels()
@@ -89,5 +89,5 @@ def process_with_conveyor(config, mux, sensors):
 
         # Simular condición de parada del conveyor (reemplazar por la lógica real)
         conveyor_active = config["system"].get("stop_conveyor", False)
-                
+
     return successful_reads, failed_reads, error_details
