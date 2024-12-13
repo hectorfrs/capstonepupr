@@ -115,6 +115,14 @@ def main():
     logging.info("[MAIN] Sistema iniciado en Raspberry Pi #1...")
     logging.info("=" * 50)
 
+    # Configuración de red
+    network_manager = NetworkManager(config)
+    network_manager.start_monitoring()
+
+    # Inicialización de MQTT Client
+    mqtt_client = MQTTPublisher(config_path)
+    mqtt_client.connect()
+
     # Escanear el bus I2C
     detected_devices = scan_i2c_bus()
 
