@@ -98,7 +98,7 @@ class SENSOR_AS7265x:
         :param value: Valor a escribir.
         """
         while self._read_status() & self.TX_VALID:
-            time.sleep(0.05)                                # Esperar hasta que el buffer de escritura esté listo
+            time.sleep(self.POLLING_DELAY)                                # Esperar hasta que el buffer de escritura esté listo
         self._write_register(self.REG_WRITE, reg | 0x80)    # Escribir dirección del registro
         self._write_register(self.REG_WRITE, value)         # Escribir valor
         #logging.debug(f"Registro virtual {hex(reg)} configurado con {value}.")
@@ -110,10 +110,10 @@ class SENSOR_AS7265x:
         :return: Valor leído del registro.
         """
         while self._read_status() & self.TX_VALID:
-            time.sleep(0.01)                                # Esperar hasta que el buffer de escritura esté listo
+            time.sleep(self.POLLING_DELAY)                                # Esperar hasta que el buffer de escritura esté listo
         self._write_register(self.REG_WRITE, reg)           # Escribir dirección para leer
         while not (self._read_status() & self.RX_VALID):
-            time.sleep(0.01)                                # Esperar hasta que haya datos disponibles
+            time.sleep(self.POLLING_DELAY)                                # Esperar hasta que haya datos disponibles
         value = self._read_register(self.REG_READ)          # Leer valor
         logging.debug(f"Registro virtual {hex(reg)} leído con valor {value}.")
         return value
