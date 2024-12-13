@@ -163,10 +163,10 @@ def main():
             if not sensors:
                 logging.error(f"[SENSOR] No se inicializaron sensores correctamente. Finalizando el programa.")
                 return
-            logging.info(
-                f"[CANAL {channel} Sensor configurado: {sensor_name}] "
-                f"Integración={integration_time}ms, Ganancia={gain}x, Modo={mode}."
-                )
+            # logging.info(
+            #     f"[CANAL {channel} Sensor configurado: {sensor_name}] "
+            #     f"Integración={integration_time}ms, Ganancia={gain}x, Modo={mode}."
+            #    )
 
             # Deshabilitar todos los canales después de configurar el sensor
             mux.disable_all_channels()

@@ -144,9 +144,9 @@ def generate_summary(successful_reads, failed_reads, error_details):
             channel = error.get("channel", "Desconocido")
             message = error.get("error_message", "Sin detalles")
             logging.error(f"  - Canal {channel}: {message}")
-    if warnings:
+    if warning:
         logging.warning("Advertencias detectadas durante la operación:")
-        for warning in warnings:
+        for warning in warning:
             logging.warning(f"  - {warning}")
     else:
         logging.info("Todos los sensores operaron correctamente.")
