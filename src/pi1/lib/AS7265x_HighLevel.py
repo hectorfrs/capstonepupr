@@ -4,7 +4,7 @@
 
 import json
 import logging
-from classes.AS7265x_Manager import AS7265xManager
+from classes.AS7265x_Controller import AS7265xController
 
 import yaml
 
