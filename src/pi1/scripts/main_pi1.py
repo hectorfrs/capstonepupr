@@ -12,7 +12,7 @@ import os
 from lib.TCA9548A_HighLevel import TCA9548AMUXHighLevel
 from lib.AS7265x_HighLevel import AS7265xSensorHighLevel
 from lib.AS7265x_HighLevel import generate_summary
-from process_manager import process_individual, process_with_conveyor
+from utils.process_manager import process_individual, process_with_conveyor
 
 # Importar módulos personalizados
 from utils.mqtt_publisher import MQTTPublisher
