@@ -169,7 +169,7 @@ def main():
     
     # Inicializar MUX
     logging.info("[MUX] Inicializando...")
-    mux = TCA9548AMUXHighLevel(address=config['mux']['address'])
+    mux_controller = TCA9548A(address=config['mux']['address'])
 
     # Habilitar canales del MUX
     mux_channels = [entry['channel'] for entry in config['mux']['channels']]
@@ -178,7 +178,7 @@ def main():
     # Inicializar sensores en los canales
     logging.info("[SENSOR] Inicializando...")
     sensors = [
-        AS7265xSensorHighLevel(config=config)
+        AS7265x(config=config)
         for _ in config["mux"]["channels"]]
 
     for channel_entry in config["mux"]["channels"]:
@@ -196,7 +196,7 @@ def main():
         
         try:
             # Crea instancia High Level para el sensor
-            sensor = AS7265xSensorHighLevel()
+            sensor = AS7265x()
             # Reset y Verificar el estado del sensor
             sensor.reset()
             time.sleep(5)  # Esperar 5 segundo después de resetear
