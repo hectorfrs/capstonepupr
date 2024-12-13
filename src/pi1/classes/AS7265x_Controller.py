@@ -33,6 +33,7 @@ class SENSOR_AS7265x:
         :param i2c_bus: Número del bus I²C.
         :param address: Dirección I²C del sensor.
         """
+        self.address = address
         self.i2c = SMBus(i2c_bus)
 
         logging.info(f"[CONTROLLER] [SENSOR] AS7265x inicializado.")

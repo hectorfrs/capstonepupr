@@ -68,6 +68,12 @@ class MUX_TCA9548A:
         except Exception as e:
             logging.error(f"Error al habilitar múltiples canales {channels} en el MUX: {e}")
             raise
+    
+    def select_channel(self, channel):
+        if channel < 0 or channel > 7:
+            raise ValueError("El canal debe estar entre 0 y 7.")
+        self.i2c_bus.write_byte(self.address, 1 << channel)
+        logging.info(f"Canal {channel} seleccionado.")
 
 
     def disable_all_channels(self):
