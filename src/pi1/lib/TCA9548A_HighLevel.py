@@ -28,7 +28,7 @@ class TCA9548AMUXHighLevel:
         :param channel: Canal a habilitar (0-7).
         """
         self.mux.enable_channel(channel)
-        logging.info(f"Canal {channel} habilitado.")
+        logging.info(f"Canal {channel} habilitado desde MUX.")
 
     def disable_channel(self, channel):
         """
@@ -36,7 +36,7 @@ class TCA9548AMUXHighLevel:
         :param channel: Canal a deshabilitar (0-7).
         """
         self.mux.disable_channel(channel)
-        logging.info(f"Canal {channel} deshabilitado.")
+        logging.info(f"Canal {channel} deshabilitado desde MUX.")
 
     def enable_multiple_channels(self, channels):
         """
@@ -44,7 +44,7 @@ class TCA9548AMUXHighLevel:
         :param channels: Lista de canales a habilitar (0-7).
         """
         self.mux.enable_multiple_channels(channels)
-        logging.info(f"Canales {channels} habilitados.")
+        logging.info(f"Canales {channels} habilitados en MUX.")
 
     def disable_all_channels(self):
         """
