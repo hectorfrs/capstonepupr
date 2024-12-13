@@ -282,3 +282,21 @@ class AS7265xManager:
         except Exception as e:
             logging.error(f"Error al intentar reiniciar el sensor: {e}")
             raise
+
+    def adjust_sensor_settings(self):
+        """
+        Ajusta el tiempo de integración y la ganancia dinámicamente según los datos actuales.
+        """
+        try:
+            raw_data = self.read_raw_spectrum()
+            max_value = max(raw_data.values())
+            if max_value < 100:
+                self.set_integration_time(500)  # Aumenta el tiempo de integración
+                self.set_gain(4)  # Incrementa la ganancia
+            elif max_value > 2000:
+                self.set_integration_time(100)  # Reduce el tiempo de integración
+                self.set_gain(1)  # Reduce la ganancia
+            logging.info("Configuraciones ajustadas dinámicamente según los datos.")
+        except Exception as e:
+            logging.error(f"Error ajustando configuraciones del sensor: {e}")
+

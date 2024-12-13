@@ -38,8 +38,10 @@ class AS7265xSensorHighLevel:
         Lee y devuelve el espectro calibrado del sensor.
         :return: Lista de valores calibrados.
         """
-        spectrum = self.sensor.read_calibrated_spectrum()
+        spectrum = super().read_calibrated_spectrum()
         formatted_spectrum = json.dumps(spectrum, indent=4)
+        if config['system']['enable_sensor_diagnostics']:
+            diagnostic_check(spectrum)
         logging.info(f"Espectro calibrado leído: \n{formatted_spectrum}")
         return spectrum
 
@@ -95,5 +97,15 @@ class AS7265xSensorHighLevel:
         """
         return self.sensor._read_status()
 
-    
-
+    def diagnostic_check(spectrum):
+        """
+        Verifica la calidad de los datos espectrales y genera alertas si son inconsistentes.
+        """
+        try:
+            if all(val == 0 for val in spectrum.values()):
+                logging.warning("Diagnóstico: Todos los valores del espectro son 0.")
+            if max(spectrum.values()) > 3000:
+                logging.warning("Diagnóstico: Valor excesivo detectado en el espectro.")
+            logging.info("Diagnóstico completado exitosamente.")
+        except Exception as e:
+            logging.error(f"Error en diagnóstico del espectro: {e}")

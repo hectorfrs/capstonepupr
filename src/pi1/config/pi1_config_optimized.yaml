@@ -13,8 +13,9 @@ system:
   enable_network_monitoring: true     # Monitoreo de red habilitado
   enable_detailed_logging: true       # Nivel detallado de logs
   enable_power_saving: true           # Modo de ahorro de energía
-  read_calibrated_data: true         # Set to true to read calibrated data
+  read_calibrated_data: true          # Set to true to read calibrated data
   process_with_conveyor: true         # Procesar datos con cinta transportadora
+  enable_conveyor_sync: true          # Sincronización con el conveyor habilitada
 
 network:
   ethernet:
@@ -51,9 +52,9 @@ mux:
   - channel: 7
     sensor_name: AS7265x_3
 sensors:
-  mode: 1
-  integration_time: 300             # Tiempo de integración en ms
-  gain: 2                           # Ganancia (0: 1x, 1: 3.7x, 2: 16x, 3: 64x)
+  mode: 1                           # Modo de operación (0: Modo 0, 1: Modo 1, 2: Modo 2)
+  integration_time: 350             # Tiempo de integración en ms
+  gain: 3                           # Ganancia (0: 1x, 1: 3.7x, 2: 16x, 3: 64x)
   led_intensity: 128                # Intensidad de los LEDs (0-255)
   read_interval: 1                  # Intervalo de lectura en segundos
   enable_interrupts: true           # Habilitar interrupciones
