@@ -4,12 +4,12 @@
 
 import logging
 import time
-from classes.TCA9548A_Controller import TCA9548A
+from classes.TCA9548A_Controller import MUX_TCA9548A
 
 # Configurar logging para el manejo de nivel alto
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s", datefmt='%Y-%m-%d %H:%M:%S')
 
-class TCA9548A:
+class TCA9548A_Manager:
     """
     Manejo de alto nivel para el MUX TCA9548A.
     Este archivo abstrae las operaciones comunes como habilitar/deshabilitar canales.

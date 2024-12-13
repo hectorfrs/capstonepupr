@@ -11,8 +11,8 @@ import os
 #from colorlog import ColoredFormatter
 
 # Importar módulos criticos
-from lib.TCA9548A_HighLevel import TCA9548A
-from lib.AS7265x_HighLevel import AS7265x
+from lib.TCA9548A_HighLevel import TCA9548A_Manager
+from lib.AS7265x_HighLevel import AS7265x_Manager
 from lib.AS7265x_HighLevel import generate_summary
 from utils.process_manager import process_individual, process_with_conveyor
 
@@ -169,7 +169,7 @@ def main():
     
     # Inicializar MUX
     logging.info("[MUX] Inicializando...")
-    mux = TCA9548A(address=config['mux']['address'])
+    mux = TCA9548A_Manager(address=config['mux']['address'])
 
     # Habilitar canales del MUX
     mux_channels = [entry['channel'] for entry in config['mux']['channels']]
@@ -178,7 +178,7 @@ def main():
     # Inicializar sensores en los canales
     logging.info("[SENSOR] Inicializando...")
     sensors = [
-        AS7265x(config=config)
+        AS7265x_Manager(config=config)
         for _ in config["mux"]["channels"]]
 
     for channel_entry in config["mux"]["channels"]:
@@ -196,7 +196,7 @@ def main():
         
         try:
             # Crea instancia High Level para el sensor
-            sensor = AS7265x()
+            sensor = AS7265x_Manager()
             # Reset y Verificar el estado del sensor
             sensor.reset()
             time.sleep(5)  # Esperar 5 segundo después de resetear
