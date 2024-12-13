@@ -120,9 +120,9 @@ def main():
     expected_devices = [0x70, 0x49]  # Dirección del MUX y del sensor AS7265x
     for device in expected_devices:
         if device not in detected_devices:
-            logging.error(f"Dispositivo con dirección {hex(device)} no encontrado.")
+            logging.error(f"[SCAN] Dispositivo con dirección {hex(device)} no encontrado.")
         else:
-            logging.info(f"Dispositivo con dirección {hex(device)} detectado correctamente.")
+            logging.info(f"[SCAN] Dispositivo con dirección {hex(device)} detectado correctamente.")
     
     # Inicializar MUX
     logging.info("[MUX] Inicializando...")
@@ -157,7 +157,7 @@ def main():
             logging.debug(f"[SENSOR] Estado del sensor después del reinicio: {bin(status)}")
 
             # Configurar el sensor
-            logging.info("El sensor está listo para ser configurado.")
+            logging.info("[SENSOR] El sensor está listo para ser configurado.")
             sensor.configure(
                 integration_time=config["sensors"]["integration_time"],
                 gain=config["sensors"]["gain"],
@@ -210,6 +210,8 @@ def main():
             logging.error(
                 f"[SENSOR] Error en función 'read_calibrated_spectrum' al procesar el sensor {idx} en canal {mux_channels[idx]}: {e}"
                 f"Verifique la conexion I2C y los parametros de configuración.")
+        except Exception as main_error:
+            print (f"Error general en el programa: {main_error}")
         finally:
             mux.disable_all_channels()
             elapsed_time = time.time() - start_time
@@ -218,7 +220,7 @@ def main():
                 f"[MUX] Todos los canales deshabilitados.\n"
                 f"Tiempos de ejecución: {elapsed_time:.2f} segundos."
                 )
-    generate_summary(successful_reads, failed_reads, error_details)
+        generate_summary(successful_reads, failed_reads, error_details)
     # Deshabilitar todos los canales del MUX al finalizar
     #logging.debug(f"Sensores inicializados: {sensors}")
     #logging.debug(f"Canales del MUX: {mux_channels}")
