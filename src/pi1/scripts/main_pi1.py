@@ -175,7 +175,7 @@ def main():
             # Deshabilitar todos los canales después de configurar el sensor
             mux.disable_all_channels()
         except Exception as e:
-            logging.error(f"Error con el sensor en canal {channel}: {e}")
+            logging.error(f"[SENSOR] Error con el sensor en canal {channel}: {e}")
             continue
         finally:
             # Deshabilitar todos los canales después de configurar el sensor
