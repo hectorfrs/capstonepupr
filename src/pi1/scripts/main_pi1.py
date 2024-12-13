@@ -8,6 +8,8 @@ import qwiic
 import time
 import sys
 import os
+from colorlog import ColoredFormatter
+
 # Importar módulos criticos
 from lib.TCA9548A_HighLevel import TCA9548AMUXHighLevel
 from lib.AS7265x_HighLevel import AS7265xSensorHighLevel
@@ -69,7 +71,16 @@ def configure_logging(config):
         format=LOG_FORMAT,                                                                                          # Formato del log                                         
         datefmt=DATE_FORMAT,                                                                                        # Formato de la fecha                                     
 )
-    
+    formatter = ColoredFormatter(
+    "%(log_color)s%(levelname)s: %(message)s",
+    log_colors={
+        "DEBUG": "cyan",
+        "INFO": "green",
+        "WARNING": "yellow",
+        "ERROR": "red",
+        "CRITICAL": "bold_red",
+    },
+)
     # Configuración del RotatingFileHandler
     handler = RotatingFileHandler(
         filename=log_file,
@@ -85,7 +96,7 @@ def configure_logging(config):
     error_handler.setFormatter(logging.Formatter(fmt=LOG_FORMAT, datefmt=DATE_FORMAT))
 
     # Agregar manejadores al logger
-    logger = logging.getLogger()
+    logger = logging.getLogger(ColorLogger)
     logger.setLevel(logging.DEBUG if config.get("enable_detailed_logging", False) else logging.INFO)
     logger.addHandler(handler)
     logger.addHandler(error_handler)
