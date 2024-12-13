@@ -62,7 +62,11 @@ def process_with_conveyor(config, sensors, mux):
     sensor_names = {entry['channel']: entry['sensor_name'] for entry in config['mux']['channels']}  # Asociar sensores
 
     for channel in mux_channels:
+        if channel >= len(sensors) or sensors[channel] is None:
+            logging.warning(f"[CONVEYOR] [CANAL {channel}] No se encontró un sensor configurado.")
+            continue
         try:
+            start_time = time.time()
             if channel >= len(sensors) or sensors[channel] is None:
                 logging.warning(f"[CONVEYOR] [CANAL {channel}] No se encontró un sensor configurado.")
                 continue
@@ -110,7 +114,7 @@ def process_with_conveyor(config, sensors, mux):
         finally:
             mux.disable_all_channels()
             logging.info("[MUX] Todos los canales deshabilitados.")
-            elapsed_time = time.time()
+            elapsed_time = time.time() - start_time
             logging.info(f"[CONVEYOR] [MUX] Todos los canales deshabilitados. Tiempo de ejecución: {elapsed_time:.2f} segundos.")
             logging.info("=" * 50)
 
