@@ -186,6 +186,7 @@ def main():
         try:
             # Habilitar el canal correspondiente
             mux.enable_channel(mux_channels[idx])
+            logging.info("=" * 50)
             logging.info(f"[CANAL {mux_channels[idx]}] Habilitado para lectura.")
 
             # Determinar el tipo de lectura según la configuración
@@ -213,11 +214,9 @@ def main():
         finally:
             mux.disable_all_channels()
             elapsed_time = time.time() - start_time
-            logging.info(
-                f"[SENSOR] Captura completada.\n"
-                f"[MUX] Todos los canales deshabilitados.\n"
-                f"Tiempos de ejecución: {elapsed_time:.2f} segundos.\n"
-                )
+            logging.info(f"[SENSOR] Captura completada. [MUX] Todos los canales deshabilitados.")
+            logging.info("=" * 50)
+            logging.info (f"Tiempos de ejecución: {elapsed_time:.2f} segundos.")
     generate_summary(successful_reads, failed_reads, error_details)
     # Deshabilitar todos los canales del MUX al finalizar
     #logging.debug(f"Sensores inicializados: {sensors}")
