@@ -169,11 +169,11 @@ def main():
     
     # Inicializar MUX
     logging.info("[MUX] Inicializando...")
-    mux_controller = TCA9548A(address=config['mux']['address'])
+    mux = TCA9548A(address=config['mux']['address'])
 
     # Habilitar canales del MUX
     mux_channels = [entry['channel'] for entry in config['mux']['channels']]
-    mux_controller.enable_multiple_channels(mux_channels)
+    mux.enable_multiple_channels(mux_channels)
 
     # Inicializar sensores en los canales
     logging.info("[SENSOR] Inicializando...")
@@ -187,7 +187,7 @@ def main():
 
         logging.info("=" * 50)
         logging.info(f"[SENSOR] Inicializando sensor en canal {channel}...")
-        mux_controller.enable_channel(channel)
+        mux.enable_channel(channel)
         logging.info(
             f"[MUX] El canal {channel} ha sido habilitado. "
             f"Esperando estabilización del sensor..."
@@ -216,13 +216,13 @@ def main():
             #    )
 
             # Deshabilitar todos los canales después de configurar el sensor
-            mux_controller.disable_all_channels()
+            mux.disable_all_channels()
         except Exception as e:
             logging.error(f"[SENSOR] Error con el sensor en canal {channel}: {e}")
             continue
         finally:
             # Deshabilitar todos los canales después de configurar el sensor
-            mux_controller.disable_all_channels()
+            mux.disable_all_channels()
             logging.info("=" * 50)
 
      # Seleccionar flujo según configuración
