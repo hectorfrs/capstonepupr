@@ -126,7 +126,7 @@ def main():
             logging.info(f"[SCAN] Dispositivo con dirección {hex(device)} detectado correctamente.")
     
     # Inicializar MUX
-    logging.info("[MUX] Inicializando...\n")
+    logging.info("[MUX] Inicializando...")
     mux = TCA9548AMUXHighLevel(address=config['mux']['address'])
 
     # Habilitar canales del MUX
@@ -134,7 +134,7 @@ def main():
     mux.enable_multiple_channels(mux_channels)
 
     # Inicializar sensores en los canales
-    logging.info("[SENSOR] Inicializando...\n")
+    logging.info("[SENSOR] Inicializando...")
     sensors = []
     for channel_entry in config["mux"]["channels"]:
         channel = channel_entry["channel"]
@@ -181,9 +181,10 @@ def main():
             logging.info("=" * 50)
 
     # Capturar datos de los sensores
-    start_time = time.time()
+    
     for idx, sensor in enumerate(sensors):
         try:
+            start_time = time.time()
             # Habilitar el canal correspondiente
             mux.enable_channel(mux_channels[idx])
             logging.info("=" * 50)

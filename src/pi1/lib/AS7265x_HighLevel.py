@@ -142,7 +142,6 @@ def generate_summary(successful_reads, failed_reads, error_details):
     if successful_reads == 0:
         warnings.append("No se completaron lecturas exitosas.")
 
-    logging.info("")
     logging.info("=" * 50)
     logging.info("========== RESUMEN FINAL ==========")
     logging.info(f"Lecturas exitosas: {successful_reads}")
