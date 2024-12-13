@@ -184,7 +184,6 @@ def main():
             # Habilitar el canal correspondiente
             mux.enable_channel(mux_channels[idx])
             logging.info(f"[CANAL {mux_channels[idx]}] Habilitado para lectura.")
-            time.sleep(1.0)
 
             # Determinar el tipo de lectura según la configuración
             read_calibrated = config["system"].get("read_calibrated_data", True)
