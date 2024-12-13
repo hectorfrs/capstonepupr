@@ -194,7 +194,7 @@ def main():
 
         except Exception as e:
             logging.error(
-                f"Error en fución 'read_calibrated_spectrum' al procesar el sensor {idx} en canal {mux_channels[idx]}: {e}"
+                f"[SENSOR] Error en función 'read_calibrated_spectrum' al procesar el sensor {idx} en canal {mux_channels[idx]}: {e}"
                 f"Verifique la conexion I2C y los parametros de configuración.")
         finally:
             mux.disable_all_channels()
