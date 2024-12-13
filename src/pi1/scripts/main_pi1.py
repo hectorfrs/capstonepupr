@@ -220,7 +220,7 @@ def main():
                 f"[MUX] Todos los canales deshabilitados.\n"
                 f"Tiempos de ejecución: {elapsed_time:.2f} segundos."
                 )
-        generate_summary(successful_reads, failed_reads, error_details)
+    generate_summary(successful_reads, failed_reads, error_details)
     # Deshabilitar todos los canales del MUX al finalizar
     #logging.debug(f"Sensores inicializados: {sensors}")
     #logging.debug(f"Canales del MUX: {mux_channels}")
