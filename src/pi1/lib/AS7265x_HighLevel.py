@@ -108,12 +108,8 @@ class AS7265xSensorHighLevel:
         Lee el estado del sensor AS7265x.
         :return: Valor del estado del sensor.
         """
-        sensor_status = self.sensor.read_status()
-        if sensor_status & 0x80:  # Bit ocupado
-            logging.warning("El sensor está ocupado. Intentando nuevamente...")
-            time.sleep(1)  # Esperar antes de reintentar
-        else:
-            logging.info("El sensor está listo para leer datos.")
+
+        logging.info(f"[SENSOR] El sensor está listo para leer datos.")
         return self.sensor._read_status()
 
     def _diagnostic_check(self, spectrum):
