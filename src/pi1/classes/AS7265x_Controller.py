@@ -49,14 +49,14 @@ class AS7265xController:
                 break
             time.sleep(self.POLLING_DELAY)
 
-        self.i2c.write_byte_data(self.I2C_ADDR, self.WRITE_REG, addr | 0x80)
+        self.i2c.write_byte_data(self.I2C_ADDR, self.REG_WRITE, addr | 0x80)
         while True:
             status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
             if not (status & self.TX_VALID):
                 break
             time.sleep(self.POLLING_DELAY)
 
-        self.i2c.write_byte_data(self.I2C_ADDR, self.WRITE_REG, data)
+        self.i2c.write_byte_data(self.I2C_ADDR, self.REG_WRITE, data)
 
     def _read_register(self, reg):
         """
@@ -77,7 +77,7 @@ class AS7265xController:
                         break 
                     time.sleep(self.POLLING_DELAY)
 
-                self.i2c.write_byte_data(self.I2C_ADDR, self.WRITE_REG, addr)
+                self.i2c.write_byte_data(self.I2C_ADDR, self.REG_WRITE, addr)
                 while True:
                     status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
                     if status & self.RX_VALID:
