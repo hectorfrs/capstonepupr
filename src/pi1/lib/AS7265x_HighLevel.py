@@ -45,8 +45,8 @@ class AS7265xSensorHighLevel:
         """
         spectrum = self.sensor.read_calibrated_spectrum()
         formatted_spectrum = json.dumps(spectrum, indent=4)
-        if config['system']['enable_sensor_diagnostics']:
-            diagnostic_check(spectrum, self.config)
+        if self.config['system']['enable_sensor_diagnostics']:
+            self.diagnostic_check(spectrum, self.config)
         logging.info(f"Espectro calibrado leído: \n{formatted_spectrum}")
         return spectrum
 
@@ -102,7 +102,7 @@ class AS7265xSensorHighLevel:
         """
         return self.sensor._read_status()
 
-    def diagnostic_check(spectrum, config):
+    def diagnostic_check(spectrum, self):
         """
         Verifica la calidad de los datos espectrales y genera alertas si son inconsistentes.
         """
