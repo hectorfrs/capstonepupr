@@ -21,6 +21,7 @@ class AS7265xSensorHighLevel:
         :param address: Dirección I²C del sensor.
         """
         self.sensor = AS7265xManager(address=address)
+        self.config = config
         logging.info(f"Sensor AS7265x inicializado en la dirección {hex(address)}.")
 
     def configure(self, integration_time=100, gain=2, mode=3):
