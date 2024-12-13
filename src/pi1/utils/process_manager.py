@@ -13,7 +13,7 @@ def process_individual(config, sensors, mux):
     successful_reads = 0
     failed_reads = 0
     error_details = []
-
+    plastic_spectra = config.get("plastic_spectra", {})
     mux_channels = [entry['channel'] for entry in config['mux']['channels']]
 
     for idx, sensor in enumerate(sensors):
@@ -57,6 +57,7 @@ def process_with_conveyor(config, sensors, mux):
     """
     Procesa los datos en modo continuo utilizando una cinta transportadora.
     """
+    plastic_spectra = config.get("plastic_spectra", {})
     read_calibrated = config["system"].get("read_calibrated_data", True)
     conveyor_active = True
     successful_reads = 0
