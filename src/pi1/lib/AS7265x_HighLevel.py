@@ -25,8 +25,9 @@ class AS7265x_Manager:
         Inicializa el controlador de alto nivel para el sensor AS7265x.
         :param address: Dirección I²C del sensor.
         """
-        self.sensor = AS7265x_Manager(address=address)
         self.config = config
+        self.address = address
+        self.sensor = SENSOR_AS7265x(address)
         logging.info(f"[SENSOR] AS7265x inicializado en la dirección {hex(address)}.")
     
     def configure(self):
