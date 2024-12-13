@@ -136,17 +136,17 @@ def main():
 
         logging.info(f"Inicializando sensor en canal {channel}...")
         mux.enable_channel(channel)
-        logging.info(f"Canal {channel} habilitado. Esperando estabilización...")
-        time.sleep(2)    # Tiempo de estabilización a 500 ms
+        logging.info(f"[MUX] El canal {channel} ha sido habilitado. Esperando estabilización del sensor...")
+        time.sleep(0.5)    # Tiempo de estabilización a 500 ms
         
         try:
             # Crea instancia High Level para el sensor
             sensor = AS7265xSensorHighLevel()
             # Reset y Verificar el estado del sensor
             sensor.reset()
-            time.sleep(2)  # Esperar 2 segundo después de resetear
+            time.sleep(5)  # Esperar 5 segundo después de resetear
             status = sensor.read_status()
-            logging.debug(f"Estado del sensor después del reinicio: {bin(status)}")
+            logging.debug(f"[SENSOR] Estado del sensor después del reinicio: {bin(status)}")
 
             # Configurar el sensor
             logging.info("El sensor está listo para ser configurado.")
