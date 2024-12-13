@@ -50,7 +50,7 @@ class SENSOR_AS7265x:
                 break
             time.sleep(self.POLLING_DELAY)
 
-        self.i2c.write_byte_data(self.I2C_ADDR, self.REG_WRITE, value | 0x80)
+        self.i2c.write_byte_data(self.I2C_ADDR, self.REG_WRITE, reg | 0x80)
         while True:
             status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
             if not (status & self.TX_VALID):
@@ -78,7 +78,7 @@ class SENSOR_AS7265x:
                         break 
                     time.sleep(self.POLLING_DELAY)
 
-                self.i2c.write_byte_data(self.I2C_ADDR, self.REG_WRITE, value)
+                self.i2c.write_byte_data(self.I2C_ADDR, self.REG_WRITE, reg)
                 while True:
                     status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
                     if status & self.RX_VALID:
