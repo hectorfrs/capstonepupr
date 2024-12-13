@@ -3,6 +3,7 @@
 # Copyright (c) 2024
 
 import logging
+import time
 from classes.TCA9548A_Manager import TCA9548AManager
 
 # Configurar logging para el manejo de nivel alto
