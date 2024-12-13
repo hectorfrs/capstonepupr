@@ -135,7 +135,7 @@ def main():
         logging.info(f"Inicializando sensor en canal {channel}...")
         mux.enable_channel(channel)
         logging.info(f"Canal {channel} habilitado. Esperando estabilización...")
-        time.sleep(2.0)    # Tiempo de estabilización a 500 ms
+        time.sleep(2)    # Tiempo de estabilización a 500 ms
         
         try:
             # Crea instancia High Level para el sensor
@@ -157,7 +157,10 @@ def main():
             if not sensors:
                 logging.error("No se inicializaron sensores correctamente. Finalizando el programa.")
                 return
-            logging.info(f"*** El Sensor en canal {channel} ha sido configurado correctamente. ***")
+            logging.info(
+                f"[CANAL {channel} Sensor configurado: {sensor_name}] "
+                f"Integración={integration_time}ms, Ganancia={gain}x, Modo={mode}."
+                )
 
             # Deshabilitar todos los canales después de configurar el sensor
             mux.disable_all_channels()
@@ -173,7 +176,7 @@ def main():
         try:
             # Habilitar el canal correspondiente
             mux.enable_channel(mux_channels[idx])
-            logging.info(f"Canal {mux_channels[idx]} habilitado para lectura.")
+            logging.info(f"[CANAL {mux_channels[idx]}] Habilitado para lectura.")
             time.sleep(1.0)
 
              # Determinar el tipo de lectura según la configuración
@@ -190,7 +193,9 @@ def main():
             #logging.info(f"Datos leidos de sensor {idx} en canal {mux_channels[idx]}: {spectrum}")
 
         except Exception as e:
-            logging.error(f"Error al procesar el sensor {idx} en canal {mux_channels[idx]}: {e}")
+            logging.error(
+                f"Error en fución 'read_calibrated_spectrum' al procesar el sensor {idx} en canal {mux_channels[idx]}: {e}"
+                f"Verifique la conexion I2C y los parametros de configuración.")
         finally:
             mux.disable_all_channels()
             logging.info("Captura completada. Todos los canales deshabilitados.")
