@@ -15,11 +15,6 @@ from lib.AS7265x_HighLevel import generate_summary
 # Agregar la ruta del proyecto al PYTHONPATH
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
-# Variables de estado
-successful_reads = 0
-failed_reads = 0
-error_details = []
-
 # Configuración de logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
@@ -105,7 +100,12 @@ def main():
     print("===============================================")
     print("        Iniciando Sistema de Acopio...")
     print("===============================================")
-  
+    
+    # Variables de estado
+    successful_reads = 0
+    failed_reads = 0
+    error_details = []
+
     # Cargar configuración
     config = load_config()
 
