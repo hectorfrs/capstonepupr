@@ -27,7 +27,7 @@ class AS7265xSensorHighLevel:
         """
         self.sensor = AS7265xManager(address=address)
         self.config = config
-        logging.info(f"Sensor AS7265x inicializado en la dirección {hex(address)}.")
+        logging.info(f"[SENSOR] AS7265x inicializado en la dirección {hex(address)}.")
 
         # Configurar el sensor automáticamente desde el config.yaml
         self.configure(
@@ -98,9 +98,9 @@ class AS7265xSensorHighLevel:
         """
         try:
             self.sensor.reset()
-            logging.info("El sensor ha sido reiniciado correctamente.")
+            logging.info(f"[SENSOR] El sensor ha sido reiniciado correctamente.")
         except Exception as e:
-            logging.error(f"Error al reiniciar el sensor: {e}")
+            logging.error(f"[SENSOR] Error al reiniciar el sensor: {e}")
             raise
 
     def read_status(self):

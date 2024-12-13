@@ -230,7 +230,7 @@ class AS7265xManager:
                 high_byte = self._read_register(reg_pair[0])
                 low_byte = self._read_register(reg_pair[1])
                 if high_byte is None or low_byte is None:
-                    logging.error(f"Error al leer los registros {reg_pair} para {device_name}")
+                    logging.error(f"[SENSOR] Error al leer los registros {reg_pair} para {device_name}")
                 value = (high_byte << 8) | low_byte
                 spectral_data[device][wavelengths[i]] = value
 
@@ -277,7 +277,7 @@ class AS7265xManager:
             time.sleep(1)  # Esperar 1 segundo para que el sensor se reinicie
             #logging.info("El sensor ha sido reiniciado.")
         except Exception as e:
-            logging.error(f"Error al intentar reiniciar el sensor: {e}")
+            logging.error(f"[SENSOR] Error al intentar reiniciar el sensor: {e}")
             raise
         pass
 
@@ -294,7 +294,7 @@ class AS7265xManager:
             elif max_value > 2000:
                 self.set_integration_time(100)  # Reduce el tiempo de integración
                 self.set_gain(1)  # Reduce la ganancia
-            logging.info("Configuraciones ajustadas dinámicamente según los datos.")
+            logging.info("[SENSOR] Configuraciones ajustadas dinámicamente según los datos.")
         except Exception as e:
-            logging.error(f"Error ajustando configuraciones del sensor: {e}")
+            logging.error(f"[SENSOR] Error ajustando configuraciones del sensor: {e}")
 
