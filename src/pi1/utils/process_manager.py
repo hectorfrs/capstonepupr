@@ -1,7 +1,7 @@
 import logging
 import time
 
-from classes.AS7265x_Manager import AS7265xManager
+from classes.AS7265x_Controller import AS7265xController
 from classes.TCA9548A_Manager import TCA9548AManager
 from utils.identify_plastic_type import identify_plastic_type
 

@@ -23,19 +23,19 @@ class AS7265xManager:
 
     TX_VALID = 0x02             # Buffer de escritura ocupado
     RX_VALID = 0x01             # Datos disponibles para leer
-    POLLING_DELAY = 1.00        # Retardo de espera para el buffer de escritura
+    POLLING_DELAY = 0.05        # Retardo de espera para el buffer de escritura
 
     DEVICES = {"AS72651": 0b00, "AS72652": 0b01, "AS72653": 0b10}  # Selección de dispositivos internos
 
-    def __init__(self, bus_num=1, address=I2C_ADDR):
+    def __init__(self, i2c_bus=1, address=I2C_ADDR):
         """
         Inicializa el sensor en el bus I²C.
-        :param bus_num: Número del bus I²C.
+        :param i2c_bus: Número del bus I²C.
         :param address: Dirección I²C del sensor.
         """
         self.address = address
-        self.bus = SMBus(bus_num)
-        #logging.info(f"Sensor AS7265x inicializado en la dirección {hex(address)}.")
+        self.i2c = SMBus(i2c_bus)
+        logging.info(f"[CONTROLLER] [SENSOR] AS7265x inicializado.")
 
     def _write_register(self, reg, value):
         """
@@ -43,7 +43,7 @@ class AS7265xManager:
         :param reg: Dirección del registro.
         :param value: Valor a escribir.
         """
-        self.bus.write_byte_data(self.address, reg, value)
+        self.i2c.write_byte_data(self.address, reg, value)
         #logging.debug(f"Escrito {value} en el registro {hex(reg)}.")
 
     def _read_register(self, reg):
@@ -55,7 +55,7 @@ class AS7265xManager:
         attempts = 3
         for attempt in range(attempts):
             try:
-                value = self.bus.read_byte_data(self.address, reg)
+                value = self.i2c.read_byte_data(self.address, reg)
                 #logging.debug(f"Leído {value} del registro {hex(reg)}.")
                 return value
             except OSError as e:
