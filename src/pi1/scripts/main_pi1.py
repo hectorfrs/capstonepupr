@@ -11,8 +11,8 @@ import os
 #from colorlog import ColoredFormatter
 
 # Importar módulos criticos
-from lib.TCA9548A_HighLevel import TCA9548AMUXHighLevel
-from lib.AS7265x_HighLevel import AS7265xSensorHighLevel
+from lib.TCA9548A_HighLevel import TCA9548A
+from lib.AS7265x_HighLevel import AS7265x
 from lib.AS7265x_HighLevel import generate_summary
 from utils.process_manager import process_individual, process_with_conveyor
 
