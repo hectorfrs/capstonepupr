@@ -180,7 +180,10 @@ def main():
     sensors = [
     AS7265x_Manager(i2c_bus=1, address=0x49),
 ]
-
+    if not sensors:
+        logging.error(f"[SENSOR] No se inicializaron sensores correctamente. Finalizando el programa.")
+        return
+        
     for channel_entry in config["mux"]["channels"]:
         channel = channel_entry["channel"]
         sensor_name = channel_entry["sensor_name"]
@@ -200,17 +203,19 @@ def main():
 
             # Reset y Verificar el estado del sensor
             sensor.reset()
-            time.sleep(5)  # Esperar 5 segundo después de resetear
+            time.sleep(1)  # Esperar 5 segundo después de resetear
             status = sensor.read_status()
             logging.debug(f"[SENSOR] Estado del sensor después del reinicio: {bin(status)}")
 
             # Configurar el sensor
-            logging.info("[SENSOR] El sensor está listo para ser configurado.")
-            sensor.configure()
-            sensors.append(sensor)
-            if not sensors:
-                logging.error(f"[SENSOR] No se inicializaron sensores correctamente. Finalizando el programa.")
-                return
+            try:
+                logging.info("[SENSOR] El sensor está listo para ser configurado.")
+                sensor.configure()
+                sensors.append(sensor)
+            except Exception as e:
+                logging.error(f"[SENSOR] Error al configurar el sensor: {e}")
+                continue
+            
             # logging.info(
             #     f"[CANAL {channel} Sensor configurado: {sensor_name}] "
             #     f"Integración={integration_time}ms, Ganancia={gain}x, Modo={mode}."
