@@ -13,7 +13,7 @@ system:
   enable_network_monitoring: true     # Monitoreo de red habilitado
   enable_detailed_logging: true       # Nivel detallado de logs
   enable_power_saving: true           # Modo de ahorro de energía
-  read_calibrated_data: false          # Set to true to read calibrated data
+  read_calibrated_data: true          # Set to true to read calibrated data
   process_with_conveyor: true         # Procesar datos con cinta transportadora
   enable_conveyor_sync: true          # Sincronización con el conveyor habilitada
   stop_conveyor: false                # Detener la cinta transportadora (conveyor)
