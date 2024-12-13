@@ -20,7 +20,8 @@ def process_individual(config, sensors, mux):
             mux.enable_channel(mux_channels[idx])
             logging.info("=" * 50)
             logging.info(f"[CANAL {mux_channels[idx]}] Habilitado para lectura.")
-
+            
+            # Leer configuración para datos calibrados o crudos
             read_calibrated = config["system"].get("read_calibrated_data", True)
 
             if read_calibrated:
@@ -45,38 +46,48 @@ def process_individual(config, sensors, mux):
     return successful_reads, failed_reads, error_details
 
 
-def process_with_conveyor(config, sensors, mux):
+def process_with_conveyor(config, mux, sensors):
     """
-    Proceso continuo con conveyor para leer datos de los sensores.
+    Procesa los datos en modo continuo utilizando una cinta transportadora.
     """
-    logging.info("[CONVEYOR] Iniciando proceso continuo...")
+    read_calibrated = config["system"].get("read_calibrated_data", True)
+    conveyor_active = True
     successful_reads = 0
     failed_reads = 0
     error_details = []
 
-    mux_channels = [entry['channel'] for entry in config['mux']['channels']]
-    try:
-        while True:
-            for idx, sensor in enumerate(sensors):
+    while conveyor_active:
+        for idx, sensor in enumerate(sensors):
+            try:
                 start_time = time.time()
-                mux.enable_channel(mux_channels[idx])
-                logging.info(f"[CONVEYOR][CANAL {mux_channels[idx]}] Habilitado para lectura.")
+                mux.enable_channel(idx)
+                logging.info(f"[CONVEYOR] [CANAL {idx}] Habilitado para lectura.")
 
-                try:
+                if read_calibrated:
+                    logging.info(f"[CONVEYOR] [SENSOR] Leyendo datos calibrados del sensor {idx}.")
                     spectrum = sensor.read_calibrated_spectrum()
-                    successful_reads += 1
-                except Exception as e:
-                    failed_reads += 1
-                    error_details.append({"channel": mux_channels[idx], "error_message": str(e)})
-                    logging.error(
-                        f"[CONVEYOR][SENSOR] Error al procesar el sensor {idx} en canal {mux_channels[idx]}: {e}")
-                finally:
-                    mux.disable_all_channels()
-                    elapsed_time = time.time() - start_time
-                    logging.info(f"[CONVEYOR][SENSOR] Captura completada. [MUX] Todos los canales deshabilitados.")
-                    logging.info(f"Tiempos de ejecución: {elapsed_time:.2f} segundos.")
+                else:
+                    logging.info(f"[CONVEYOR] [SENSOR] Leyendo datos crudos del sensor {idx}.")
+                    spectrum = sensor.read_raw_spectrum()
 
-    except KeyboardInterrupt:
-        logging.info("[CONVEYOR] Proceso detenido manualmente.")
-    
+                successful_reads += 1
+                logging.info(f"[CONVEYOR] [SENSOR] Datos obtenidos correctamente: {spectrum}")
+
+            except Exception as e:
+                failed_reads += 1
+                error_details.append({"channel": idx, "error_message": str(e)})
+                logging.error(f"[CONVEYOR] [SENSOR] Error en sensor {idx}: {e}")
+            
+            except KeyboardInterrupt:
+                logging.info("[CONVEYOR] Proceso detenido manualmente.")
+
+            finally:
+                mux.disable_all_channels()
+                elapsed_time = time.time() - start_time
+                logging.info(f"[CONVEYOR] [MUX] Todos los canales deshabilitados. Tiempo de ejecución: {elapsed_time:.2f} segundos.")
+                logging.info("=" * 50)
+
+        # Simular condición de parada del conveyor (reemplazar por la lógica real)
+        conveyor_active = config["system"].get("stop_conveyor", False)
+                
     return successful_reads, failed_reads, error_details

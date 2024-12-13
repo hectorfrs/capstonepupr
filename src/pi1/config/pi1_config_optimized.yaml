@@ -16,6 +16,7 @@ system:
   read_calibrated_data: false          # Set to true to read calibrated data
   process_with_conveyor: true         # Procesar datos con cinta transportadora
   enable_conveyor_sync: true          # Sincronización con el conveyor habilitada
+  stop_conveyor: false                # Detener la cinta transportadora (conveyor)
 
 network:
   ethernet:
