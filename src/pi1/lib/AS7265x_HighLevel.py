@@ -15,7 +15,7 @@ class AS7265xSensorHighLevel:
     Este archivo abstrae las operaciones comunes como configuración y lectura de espectros.
     """
 
-    def __init__(self, address=0x49, config=None):
+    def __init__(self, address=0x49, config="/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config_optimized.yaml"):
         """
         Inicializa el controlador de alto nivel para el sensor AS7265x.
         :param address: Dirección I²C del sensor.

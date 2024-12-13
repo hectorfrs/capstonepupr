@@ -30,6 +30,60 @@ def load_config(file_path=config_path):
         logging.error(f"Error al cargar el archivo de configuración: {e}")
         raise
 
+# Configuración de los logs
+def configure_logging(config):
+    """
+    Configura el sistema de logging.
+    """
+    log_file = os.path.expanduser(config['logging']['log_file'])    
+    log_dir = os.path.dirname(log_file)
+    error_log_file = config["logging"]["error_log_file"]
+    max_log_size = config.get("logging", {}).get("max_size_mb", 5) * 1024 * 1024                # Tamaño máximo en bytes
+    backup_count = config.get("logging", {}).get("backup_count", 3)                             # Número de archivos de respaldo
+
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+
+    if len(logging.getLogger().handlers):
+        return  # Evitar múltiples configuraciones
+    
+    # Configuración del formato de los logs con fecha y hora
+    LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
+    DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+
+    logging.basicConfig(
+        filename=log_file,                                                                                          # Archivo de logs
+        level=logging.DEBUG if config.get("system", {}).get("enable_detailed_logging", False) else logging.INFO,    # Nivel de logs
+        format=LOG_FORMAT,                                                                                          # Formato del log                                         
+        datefmt=DATE_FORMAT,                                                                                        # Formato de la fecha                                     
+)
+    
+    # Configuración del RotatingFileHandler
+    handler = RotatingFileHandler(
+        filename=log_file,
+        maxBytes=max_log_size,  # Tamaño máximo del archivo en bytes
+        backupCount=backup_count,  # Número de archivos de respaldo
+    )
+    handler.setFormatter(logging.Formatter(fmt=LOG_FORMAT, datefmt=DATE_FORMAT))
+    logging.getLogger().addHandler(handler)
+
+    # Configuración del manejador para logs de errores
+    error_handler = logging.FileHandler(error_log_file)
+    error_handler.setLevel(logging.ERROR)
+    error_handler.setFormatter(logging.Formatter(fmt=LOG_FORMAT, datefmt=DATE_FORMAT))
+
+    # Agregar manejadores al logger
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG if config.get("enable_detailed_logging", False) else logging.INFO)
+    logger.addHandler(handler)
+    logger.addHandler(error_handler)
+
+    # Redirigir stdout y stderr al logger
+    sys.stdout = StreamToLogger(logging.getLogger(), logging.INFO)
+    sys.stderr = StreamToLogger(logging.getLogger(), logging.ERROR)
+
+    print(f"Logging configurado en {log_file}.")
+
 def scan_i2c_bus():
     """
     Escanea el bus I2C y devuelve una lista de dispositivos detectados.
@@ -43,8 +97,14 @@ def scan_i2c_bus():
 
 # Función principal
 def main():
+    print("Iniciando Sistema de Acopio...")
+
     # Cargar configuración
     config = load_config()
+
+    # Configuración de logging
+    configure_logging(config)
+    logging.info("Sistema iniciado en Raspberry Pi #1...")
 
     # Escanear el bus I2C
     detected_devices = scan_i2c_bus()
