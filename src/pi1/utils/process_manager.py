@@ -13,8 +13,9 @@ def process_individual(config, sensors, mux):
     successful_reads = 0
     failed_reads = 0
     error_details = []
-    plastic_spectra = config.get("plastic_spectra", {})
-    mux_channels = config["mux"].get("channels", [])
+    plastic_spectra = config.get("plastic_spectra", {})                                             # Cargar espectros desde config.yaml
+    mux_channels = [entry['channel'] for entry in config['mux']['channels']]                        # Cargar solo canales configurados
+    sensor_names = {entry['channel']: entry['sensor_name'] for entry in config['mux']['channels']}  # Asociar sensores
     
     if not mux_channels:
         logging.error("[MUX] No se configuraron canales en mux_channels.")
