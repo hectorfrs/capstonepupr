@@ -41,7 +41,7 @@ class AS7265xSensorHighLevel:
         spectrum = self.sensor.read_calibrated_spectrum()
         formatted_spectrum = json.dumps(spectrum, indent=4)
         if config['system']['enable_sensor_diagnostics']:
-            diagnostic_check(spectrum)
+            diagnostic_check(spectrum, config)
         logging.info(f"Espectro calibrado leído: \n{formatted_spectrum}")
         return spectrum
 
@@ -97,7 +97,7 @@ class AS7265xSensorHighLevel:
         """
         return self.sensor._read_status()
 
-    def diagnostic_check(spectrum):
+    def diagnostic_check(spectrum, config):
         """
         Verifica la calidad de los datos espectrales y genera alertas si son inconsistentes.
         """
@@ -106,6 +106,9 @@ class AS7265xSensorHighLevel:
                 logging.warning("Diagnóstico: Todos los valores del espectro son 0.")
             if max(spectrum.values()) > 3000:
                 logging.warning("Diagnóstico: Valor excesivo detectado en el espectro.")
+            if config['system']['enable_detailed_logging']:
+                logging.debug(f"Datos espectrales detallados: {spectrum}")
             logging.info("Diagnóstico completado exitosamente.")
         except Exception as e:
             logging.error(f"Error en diagnóstico del espectro: {e}")
+
