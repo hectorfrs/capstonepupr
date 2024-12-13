@@ -24,11 +24,18 @@ class AS7265xSensorHighLevel:
         Inicializa el controlador de alto nivel para el sensor AS7265x.
         :param address: Dirección I²C del sensor.
         """
-        self.sensor = AS7265xManager(address=address, config=config)
+        self.sensor = AS7265xManager(address=address)
         self.config = config
         logging.info(f"Sensor AS7265x inicializado en la dirección {hex(address)}.")
 
-    def configure(self, integration_time=100, gain=2, mode=3):
+        # Configurar el sensor automáticamente desde el config.yaml
+        self.configure(
+            integration_time=self.config['sensors']['integration_time'],
+            gain=self.config['sensors']['gain'],
+            mode=self.config['sensors']['mode']
+        )
+
+    def configure(self, integration_time, gain, mode):
         """
         Configura el sensor con los parámetros dados.
         :param integration_time: Tiempo de integración (1-255).

@@ -110,6 +110,7 @@ class AS7265xManager:
         self._write_virtual_register(0x04, config)                      # Escribir nueva configuración
         self._write_virtual_register(0x07, mode)                        # Configurar modo de operación
         logging.info(f"Sensor configurado: integración={integration_time}, ganancia={gain}, modo={mode}.")
+        pass
 
     def set_devsel(self, device):
         """
@@ -183,6 +184,7 @@ class AS7265xManager:
         except Exception as e:
             logging.error(f"Error al leer el espectro calibrado: {e}")
             raise
+        pass
 
 
     # def read_raw_spectrum(self):
@@ -235,12 +237,8 @@ class AS7265xManager:
 
                 # value = (self._read_register(0x10) << 8) | self._read_register(0x11)
                 # logging.info(f"Registro Orange leído directamente: {value}")
-
-
         return spectral_data
-
-
-
+        pass
 
     def reorder_data(self, data):
         """
@@ -282,6 +280,7 @@ class AS7265xManager:
         except Exception as e:
             logging.error(f"Error al intentar reiniciar el sensor: {e}")
             raise
+        pass
 
     def adjust_sensor_settings(self):
         """

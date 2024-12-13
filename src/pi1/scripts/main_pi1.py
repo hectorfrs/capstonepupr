@@ -139,7 +139,7 @@ def main():
         
         try:
             # Crea instancia High Level para el sensor
-            sensor = AS7265xSensorHighLevel(address=0x49)
+            sensor = AS7265xSensorHighLevel()
             # Reset y Verificar el estado del sensor
             sensor.reset()
             time.sleep(2)  # Esperar 2 segundo después de resetear
