@@ -20,7 +20,7 @@ class TCA9548A_Manager:
         Inicializa el controlador de alto nivel para el MUX TCA9548A.
         :param address: Dirección I²C del MUX.
         """
-        self.mux = TCA9548A(address=address)
+        self.mux = TCA9548A_Manager(address=address)
         logging.info(f"[MUX] TCA9548A inicializado en la dirección {hex(address)}.")
 
     def enable_channel(self, channel):
