@@ -131,7 +131,7 @@ def main():
     network_manager.start_monitoring()
 
     # Inicialización de MQTT Client
-    mqtt_client = MQTTPublisher(config_path)
+    mqtt_client = MQTTPublisher(config)
     mqtt_client.connect()
 
     # Escanear el bus I2C
