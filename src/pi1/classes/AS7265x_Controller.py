@@ -164,9 +164,9 @@ class SENSOR_AS7265x:
             raise ValueError(f"Dispositivo no válido: {device}")
 
         if device not in self.DEVICES:
-            raise ValueError(f"Dispositivo {device} no válido. Seleccione entre {list(self.DEVICES.keys())}.")
+            raise ValueError(f"[CONTROLLER] [SENSOR] Dispositivo {device} no válido. Seleccione entre {list(self.DEVICES.keys())}.")
         self._write_virtual_register(0x4F, self.DEVICES[device])
-        logging.info(f"Dispositivo seleccionado: {device}.")
+        logging.info(f"[CONTROLLER] [SENSOR] Dispositivo seleccionado: {device}.")
 
     def read_calibrated_spectrum(self):
         """
@@ -249,7 +249,7 @@ class SENSOR_AS7265x:
                 high_byte = self._read_register(reg_pair[0])
                 low_byte = self._read_register(reg_pair[1])
                 if high_byte is None or low_byte is None:
-                    logging.error(f"[SENSOR] Error al leer los registros {reg_pair} para {device_name}")
+                    logging.error(f"[CONTROLLER] [SENSOR] Error al leer los registros {reg_pair} para {device_name}")
                 value = (high_byte << 8) | low_byte
                 spectral_data[device][wavelengths[i]] = value
 

@@ -203,7 +203,7 @@ def main():
 
             # Reset y Verificar el estado del sensor
             sensor.reset()
-            time.sleep(1)  # Esperar 5 segundo después de resetear
+            time.sleep(2)  # Esperar 5 segundo después de resetear
             status = sensor.read_status()
             logging.debug(f"[SENSOR] Estado del sensor después del reinicio: {bin(status)}")
             if not self._read_status() & self.READY:  # Define un valor para READY si es necesario
