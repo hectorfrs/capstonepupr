@@ -8,54 +8,56 @@ from utils.identify_plastic_type import identify_plastic_type
 
 def process_individual(config, sensors, mux):
     """
-    Proceso individual para leer datos de los sensores.
+    Procesa los sensores individualmente en modo individual.
     """
     successful_reads = 0
     failed_reads = 0
     error_details = []
     plastic_spectra = config.get("plastic_spectra", {})
-    mux_channels = [entry['channel'] for entry in config['mux']['channels']]
-    sensor_names = {entry['channel']: entry['sensor_name'] for entry in config['mux']['channels']}  # Asociar sensores
+    mux_channels = config["mux"].get("channels", [])
+    
+    if not mux_channels:
+        logging.error("[MUX] No se configuraron canales en mux_channels.")
+        return 0, 0, [{"error_message": "mux_channels no configurado en config.yaml."}]
 
-    if not plastic_spectra:
-        logging.error("[CONFIG] No se encontraron espectros de referencia para plásticos en la configuración.")
-        return
+    if len(sensors) != len(mux_channels):
+        logging.error(f"[INDIVIDUAL] Desalineación: {len(sensors)} sensores, {len(mux_channels)} canales configurados.")
+        return 0, len(sensors), [{"error_message": "Desalineación entre sensores y canales configurados."}]
 
     for idx, sensor in enumerate(sensors):
+        start_time = time.time()  # Inicio del tiempo para este sensor
         try:
-            start_time = time.time()
-            mux.enable_channel(mux_channels[idx])
-            logging.info("=" * 50)
-            logging.info(f"[CANAL {mux_channels[idx]}] Habilitado para lectura.")
+            if idx >= len(mux_channels):
+                raise IndexError(f"El índice {idx} excede el tamaño de mux_channels ({len(mux_channels)}).")
             
-            # Leer configuración para datos calibrados o crudos
-            read_calibrated = config["system"].get("read_calibrated_data", True)
+            channel = mux_channels[idx]
+            mux.enable_channel(channel)
+            logging.info(f"[INDIVIDUAL] [SENSOR] Leyendo datos del sensor en canal {channel}...")
 
-            if read_calibrated:
-                logging.info(f"[SENSOR] Realizando lectura calibrada del sensor {idx} en canal {mux_channels[idx]}")
-                spectrum = sensor.read_calibrated_spectrum()
-            else:
-                logging.info(f"[SENSOR] Realizando lectura datos crudos del sensor {idx} en canal {mux_channels[idx]}")
-                spectrum = sensor.read_raw_spectrum()
-
-            # Identificar el tipo de plástico
-            plastic_type = identify_plastic_type(spectrum)
-            logging.info(f"[INDIVIDUAL] [SENSOR] Tipo de plástico identificado: {plastic_type}")
-
-            successful_reads += 1        
-
-        except Exception as e:
+            # Realizar lectura calibrada o cruda
+            spectrum = sensor.read_calibrated_spectrum()
+            raw_data = extract_spectrum_values(spectrum)
+            identified_plastic, distance = identify_plastic_type(raw_data, plastic_spectra)
+            logging.info(f"[INDIVIDUAL] [SENSOR] Plástico identificado en canal {channel}: {identified_plastic} (distancia: {distance:.2f})")
+            
+            successful_reads += 1
+        except IndexError as ie:
+            logging.error(f"[INDIVIDUAL] [SENSOR] Índice fuera de rango: {ie}")
             failed_reads += 1
-            error_details.append({"channel": mux_channels[idx], "error_message": str(e)})
-            logging.error(
-                f"[INDIVIDUAL] [SENSOR] Error al procesar el sensor {idx} en canal {mux_channels[idx]}: {e}")
+            error_details.append({"channel": "Desconocido", "error_message": str(ie)})
+        except Exception as e:
+            logging.error(f"[INDIVIDUAL] [SENSOR] Error en sensor {idx}: {e}")
+            failed_reads += 1
+            error_details.append({"channel": idx, "error_message": str(e)})
         finally:
             mux.disable_all_channels()
-            elapsed_time = time.time() - start_time
+            elapsed_time = time.time() - start_time  # Fin del tiempo para este sensor
+            logging.info("[MUX] Todos los canales deshabilitados.")
             logging.info(f"[INDIVIDUAL] [SENSOR] Captura completada. [MUX] Todos los canales deshabilitados.")
             logging.info(f"Tiempos de ejecución: {elapsed_time:.2f} segundos.")
 
     return successful_reads, failed_reads, error_details
+
 
 
 def process_with_conveyor(config, sensors, mux):
