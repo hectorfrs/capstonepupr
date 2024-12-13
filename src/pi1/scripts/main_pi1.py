@@ -206,7 +206,7 @@ def main():
 
         except Exception as e:
             failed_reads += 1
-            error_details.append({"channel": current_channel, "error_message": str(e)})
+            error_details.append({"channel": {mux_channels[idx]}, "error_message": str(e)})
             logging.error(
                 f"[SENSOR] Error en función 'read_calibrated_spectrum' al procesar el sensor {idx} en canal {mux_channels[idx]}: {e}"
                 f"Verifique la conexion I2C y los parametros de configuración.")
