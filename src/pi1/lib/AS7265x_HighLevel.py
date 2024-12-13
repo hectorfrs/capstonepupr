@@ -29,34 +29,36 @@ class AS7265xSensorHighLevel:
         self.config = config
         logging.info(f"[SENSOR] AS7265x inicializado en la dirección {hex(address)}.")
 
-        # Configurar el sensor automáticamente desde el config.yaml
-        self.configure(
-            integration_time=self.config['sensors']['integration_time'],
-            gain=self.config['sensors']['gain'],
-            mode=self.config['sensors']['mode']
-        )
+    def configure_sensor(self):
+        """
+        Configura el sensor con parámetros desde config.yaml.
+        """
+        try:
+            integration_time = self.config['sensors']['integration_time']
+            gain = self.config['sensors']['gain']
+            mode = self.config['sensors']['mode']
+            self.sensor.configure(integration_time, gain, mode)
+            logging.info(f"[SENSOR] Configuración completada: integración={integration_time}, ganancia={gain}, modo={mode}.")
+        except KeyError as e:
+            logging.error(f"[SENSOR] Error en configuración. Clave faltante en config.yaml: {e}")
+            raise
 
-    def configure(self, integration_time, gain, mode):
-        """
-        Configura el sensor con los parámetros dados.
-        :param integration_time: Tiempo de integración (1-255).
-        :param gain: Ganancia (0=1x, 1=3.7x, 2=16x, 3=64x).
-        :param mode: Modo de operación (0-3).
-        """
-        self.sensor.configure(integration_time, gain, mode)
-#     #logging.info(f"Sensor configurado: integración={integration_time}, ganancia={gain}, modo={mode}.")
 
     def read_calibrated_spectrum(self):
         """
         Lee y devuelve el espectro calibrado del sensor.
         :return: Lista de valores calibrados.
         """
-        spectrum = self.sensor.read_calibrated_spectrum()
-        formatted_spectrum = json.dumps(spectrum, indent=4)
-        if self.config['system']['enable_sensor_diagnostics']:
-            self.diagnostic_check(spectrum)
-        logging.info(f"Espectro calibrado leído: \n{formatted_spectrum}")
-        return spectrum
+        try:
+            spectrum = self.sensor.read_calibrated_spectrum()
+            formatted_spectrum = json.dumps(spectrum, indent=4)
+            if self.config['system']['enable_sensor_diagnostics']:
+                self._diagnostic_check(spectrum)
+            logging.info(f"[SENSOR] Espectro calibrado leído: \n{formatted_spectrum}")
+            return spectrum
+        except Exception as e:
+            logging.error(f"[SENSOR] Error leyendo el espectro calibrado: {e}")
+            raise
 
     def read_raw_spectrum(self):
         """
