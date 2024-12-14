@@ -173,16 +173,14 @@ class SENSOR_AS7265x:
     def _write_virtual_register(self, reg, value):
         """
         Escribe en un registro virtual del sensor.
-        :param reg: Dirección del registro virtual.
-        :param value: Valor a escribir.
         """
         for _ in range(5):  # Intentar un máximo de 5 veces
-            tx_valid, _, _ = self._read_status()  # Verifica TX_VALID
-            if not tx_valid:
+            tx_valid, rx_valid, ready = self._read_status()  # CORRECCIÓN: Obtén READY también
+            if not tx_valid and ready:
                 break
             time.sleep(self.POLLING_DELAY)
         else:
-            raise RuntimeError("[CONTROLLER] [SENSOR] Timeout al esperar TX_VALID.")
+            raise RuntimeError("[CONTROLLER] [SENSOR] Timeout al esperar TX_VALID o READY.")
         
         self._write_register(self.REG_WRITE, reg | 0x80)  # Escribir dirección del registro
         self._write_register(self.REG_WRITE, value)       # Escribir valor
@@ -271,6 +269,14 @@ class SENSOR_AS7265x:
         :param gain: Ganancia (0=1x, 1=3.7x, 2=16x, 3=64x).
         :param mode: Modo de operación (0-3).
         """
+        for _ in range(10):  # Intentar por un máximo de 10 segundos
+            _, _, ready = self._read_status()
+            if ready:
+                break
+            time.sleep(1)
+        else:
+            raise RuntimeError("[CONTROLLER] [SENSOR] El sensor no está listo para configurarse.")
+            
         if not (1 <= integration_time <= 255):
             raise ValueError("[CONTROLLER] [SENSOR] El tiempo de integración debe estar entre 1 y 255.")
         if gain not in [0, 1, 2, 3]:
@@ -453,11 +459,13 @@ class SENSOR_AS7265x:
         try:
             logging.debug("[CONTROLLER] [SENSOR] Ejecutando reinicio del sensor...")
             self.i2c.write_byte_data(self.I2C_ADDR, self.REG_CONFIGURATION, 0x01)  # Reinicio por software
+            time.sleep(1)  # Espera para que el reinicio surta efecto
             logging.debug("[CONTROLLER] [SENSOR] Comando de reinicio enviado al sensor.")
-            time.sleep(10)  # Esperar para que el reinicio surta efecto
+            time.sleep(5)  # Incrementa el tiempo de espera
         except Exception as e:
-            logging.error(f"[MANAGER] [SENSOR] Error durante el reinicio: {e}")
+            logging.error(f"[CONTROLLER] [SENSOR] Error durante el reinicio: {e}")
             raise
+
 
 
 
