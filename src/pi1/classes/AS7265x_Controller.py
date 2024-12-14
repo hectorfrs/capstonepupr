@@ -101,7 +101,7 @@ class SENSOR_AS7265x:
             time.sleep(self.POLLING_DELAY)                                # Esperar hasta que el buffer de escritura esté listo
         self._write_register(self.REG_WRITE, reg | 0x80)    # Escribir dirección del registro
         self._write_register(self.REG_WRITE, value)         # Escribir valor
-        #logging.debug(f"Registro virtual {hex(reg)} configurado con {value}.")
+        logging.debug(f"[CONTROLLER] [SENSOR] Registro virtual {hex(reg)} configurado con {value}.")
 
     def _read_virtual_register(self, reg):
         """
@@ -138,13 +138,19 @@ class SENSOR_AS7265x:
             raise ValueError("[CONTROLLER] [SENSOR] Ganancia no válida.")
         if mode not in [0, 1, 2, 3]:
             raise ValueError("[CONTROLLER] [SENSOR] Modo no válido.")
-
-        self._write_virtual_register(0x05, integration_time)  # Configurar tiempo de integración
-        config = self._read_virtual_register(0x04)           # Leer configuración actual
-        config = (config & 0b11001111) | (gain << 4)         # Ajustar ganancia
-        self._write_virtual_register(0x04, config)           # Escribir nueva configuración
-        self._write_virtual_register(0x07, mode)             # Configurar modo de operación
-
+        try:
+            self._write_virtual_register(0x05, integration_time) # Configurar tiempo de integración
+            config = self._read_virtual_register(0x04)           # Leer configuración actual
+            logging.info(f"[CONTROLLER] [SENSOR] Configuración actual: {bin(config)}")
+            config = (config & 0b11001111) | (gain << 4)         # Ajustar ganancia
+            logging.info(f"[CONTROLLER] [SENSOR] Configurando ganancia: {gain} (valor ajustado: {bin(config)}).")
+            self._write_virtual_register(0x04, config)           # Escribir nueva configuración
+            logging.info(f"[CONTROLLER] [SENSOR] Configurando modo de operación: {mode}.")
+            self._write_virtual_register(0x07, mode)             # Configurar modo de operación
+            logging.info("[CONTROLLER] [SENSOR] Configuración completada exitosamente.")
+        except Exception as e:
+            logging.error(f"[CONTROLLER] [SENSOR] Error durante la configuración: {e}")
+        raise
 
     def set_devsel(self, device):
         """
@@ -286,6 +292,17 @@ class SENSOR_AS7265x:
         for device in devices:
             self.set_devsel(device)
             self._write_register(0x05, time)
+
+    def set_gain(self, gain):
+        """
+        Configura la ganancia.
+        """
+        devices = ["AS72651", "AS72652", "AS72653"]
+        for device in devices:
+            self.set_devsel(device)
+            config_reg = self._read_register(0x04)
+            config_reg = (config_reg & 0b11001111) | (gain << 4)
+            self._write_register(0x04, config_reg)
 
     def ieee754_to_float(self, val_array):
         """

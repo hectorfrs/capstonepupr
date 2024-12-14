@@ -35,15 +35,38 @@ class AS7265x_Manager:
         """
         Configura el sensor usando los parámetros de configuración desde config.yaml.
         """
+        logging.info("[HIGH LEVEL] [SENSOR] Iniciando configuración del sensor...")
         try:
+            # Leer parámetros desde config.yaml
             integration_time = self.config['sensors']['integration_time']
             gain = self.config['sensors']['gain']
             mode = self.config['sensors']['mode']
+
+            logging.info(f"[HIGH LEVEL] [SENSOR] Parámetros leídos: integración={integration_time}, ganancia={gain}, modo={mode}.")
+
+            # Validar parámetros
+            if not (1 <= integration_time <= 255):
+                logging.error(f"[HIGH LEVEL] [SENSOR] Tiempo de integración inválido: {integration_time}. Debe estar entre 1 y 255.")
+                raise ValueError(f"[HIGH LEVEL] [SENSOR] Tiempo de integración inválido: {integration_time}.")
+
+            if gain not in [0, 1, 2, 3]:
+                logging.error(f"[HIGH LEVEL] [SENSOR] Ganancia inválida: {gain}. Valores permitidos: 0, 1, 2, 3.")
+                raise ValueError(f"[HIGH LEVEL] [SENSOR] Ganancia inválida: {gain}.")
+
+            if mode not in [0, 1, 2, 3]:
+                logging.error(f"[HIGH LEVEL] [SENSOR] Modo inválido: {mode}. Valores permitidos: 0, 1, 2, 3.")
+                raise ValueError(f"[HIGH LEVEL] [SENSOR] Modo inválido: {mode}.")
+
+            # Configurar el sensor
             self.sensor.configure(integration_time, gain, mode)
-            logging.info(f"[SENSOR] Configuración completada: integración={integration_time}, ganancia={gain}, modo={mode}.")
+            logging.info(f"[HIGH LEVEL] [SENSOR] Configuración completada exitosamente: integración={integration_time}, ganancia={gain}, modo={mode}.")
         except KeyError as e:
-            logging.error(f"[SENSOR] Clave de configuración faltante: {e}")
+            logging.error(f"[HIGH LEVEL] [SENSOR] Clave de configuración faltante: {e}")
             raise
+        except Exception as e:
+            logging.error(f"[HIGH LEVEL] [SENSOR] Error al configurar el sensor: {e}")
+            raise
+
 
     def read_calibrated_spectrum(self):
         """
