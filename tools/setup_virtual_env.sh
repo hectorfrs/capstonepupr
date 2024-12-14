@@ -4,7 +4,7 @@
 PI="1"
 RASPBERRY="raspberry-$PI"
 CAPSTONE="/home/$RASPBERRY/capstonepupr/src/pi$PI"
-VENV_DIR="/home/raspberry-1/venv"
+VENV_DIR="/home/$RASPBERRY/venv"
 PYTHON_PATH="/usr/bin/python3"
 
 # Crear ambiente virtual
@@ -20,6 +20,6 @@ $PYTHON_PATH -m venv "$VENV_DIR"
 source "$VENV_DIR/bin/activate"
 echo "Instalando dependencias..."
 pip install --upgrade pip
-pip install -r $CAPSTONE/requirements.txt
+pip install --break-system-packages -r $CAPSTONE/requirements.txt
 
 echo "Ambiente virtual configurado correctamente en $VENV_DIR."

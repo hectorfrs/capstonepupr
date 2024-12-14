@@ -46,25 +46,17 @@ class SENSOR_AS7265x:
     def verify_ready_state(self, retries=5, delay=2):
         """
         Verifica si el sensor está en estado READY después del reinicio.
-        Lee el registro REG_STATUS directamente del sensor y revisa si el bit READY está activo.
-
-        :param retries: Número máximo de intentos para verificar el estado READY.
-        :param delay: Tiempo (en segundos) entre intentos consecutivos.
-        :return: True si el sensor está listo, False en caso contrario.
         """
         for attempt in range(retries):
-            DELAY = min(self.POLLING_DELAY * attempt, 1)  # Retardo de espera para el buffer de escritura
-            reg_status = self._read_status()  # Llama a la función de lectura del estado
-            _, _, ready = reg_status
+            reg_status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)  # Lee directamente el estado
+            ready = (reg_status & self.READY) >> 3  # Extrae el bit READY
+            logging.debug(f"[CONTROLLER] [SENSOR] Intento {attempt + 1}: REG_STATUS leído: {bin(reg_status)} (READY={bool(ready)})")
             if ready:
                 logging.info("[CONTROLLER] [SENSOR] El sensor está listo para operar.")
                 return True
-            logging.debug(f"[CONTROLLER] [SENSOR] Intento {attempt + 1}: REG_STATUS leído: {bin(reg_status)} (READY=False)")
-            time.sleep(DELAY)
+            time.sleep(delay)  # Espera antes del siguiente intento
         logging.error("[CONTROLLER] [SENSOR] El sensor no alcanzó el estado READY después de varios intentos.")
         return False
-
-
 
     def _write_register(self, reg, value):
         """
@@ -153,14 +145,18 @@ class SENSOR_AS7265x:
         :param reg: Dirección del registro virtual.
         :param value: Valor a escribir.
         """
-        while True:
+        for _ in range(5):  # Intentar un máximo de 5 veces
             tx_valid, _, _ = self._read_status()  # Verifica TX_VALID
             if not tx_valid:
                 break
             time.sleep(self.POLLING_DELAY)
+        else:
+            raise RuntimeError("[CONTROLLER] [SENSOR] Timeout al esperar TX_VALID.")
+        
         self._write_register(self.REG_WRITE, reg | 0x80)  # Escribir dirección del registro
         self._write_register(self.REG_WRITE, value)       # Escribir valor
         logging.debug(f"[CONTROLLER] [SENSOR] Intentando escribir {value} en el registro virtual {hex(reg)}.")
+
 
     def _read_virtual_register(self, reg):
         """
@@ -168,35 +164,44 @@ class SENSOR_AS7265x:
         :param reg: Dirección del registro virtual.
         :return: Valor leído del registro.
         """
-        while True:
+        for _ in range(5):  # Intentar un máximo de 5 veces
             tx_valid, _, _ = self._read_status()  # Verifica TX_VALID
             if not tx_valid:
                 break
             time.sleep(self.POLLING_DELAY)
+        else:
+            raise RuntimeError("[CONTROLLER] [SENSOR] Timeout al esperar TX_VALID.")
+        
         self._write_register(self.REG_WRITE, reg)         # Escribir dirección para leer
-        while True:
+        
+        for _ in range(5):  # Intentar un máximo de 5 veces
             _, rx_valid, _ = self._read_status()  # Verifica RX_VALID
             if rx_valid:
                 break
             time.sleep(self.POLLING_DELAY)
+        else:
+            raise RuntimeError("[CONTROLLER] [SENSOR] Timeout al esperar RX_VALID.")
+        
         value = self._read_register(self.REG_READ)        # Leer valor
         logging.debug(f"[CONTROLLER] [SENSOR] Registro virtual {hex(reg)} leído con valor {value}.")
         return value
+
 
     def _read_status(self):
         """
         Lee el registro de estado y retorna detalles sobre TX_VALID, RX_VALID y READY.
         """
-        reg_status = self.verify_ready_state()  
-        tx_valid = (reg_status & self.TX_VALID) >> 1
-        rx_valid = reg_status & self.RX_VALID
-        ready = (reg_status & self.READY) >> 3
-        logging.debug(f"[CONTROLLER] [SENSOR] REG_STATUS leído: {bin(reg_status)} "
-                    f"(TX_VALID={tx_valid}, RX_VALID={rx_valid}, READY={ready})")
-        return tx_valid, rx_valid, ready 
-
-
-
+        try:
+            reg_status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
+            tx_valid = (reg_status & self.TX_VALID) >> 1
+            rx_valid = reg_status & self.RX_VALID
+            ready = (reg_status & self.READY) >> 3
+            logging.debug(f"[CONTROLLER] [SENSOR] REG_STATUS leído: {bin(reg_status)} "
+                        f"(TX_VALID={tx_valid}, RX_VALID={rx_valid}, READY={ready})")
+            return tx_valid, rx_valid, ready
+        except Exception as e:
+            logging.error(f"[CONTROLLER] [SENSOR] Error al leer REG_STATUS: {e}")
+            raise
 
     def is_ready(self):
         """
