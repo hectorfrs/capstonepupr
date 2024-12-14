@@ -5,7 +5,7 @@
 import json
 import logging
 from classes.AS7265x_Controller import SENSOR_AS7265x
-
+import time
 import yaml
 
 # with open("/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config_optimized.yaml", "r") as file:
