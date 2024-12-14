@@ -8,8 +8,8 @@ from classes.AS7265x_Controller import SENSOR_AS7265x
 
 import yaml
 
-with open("/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config_optimized.yaml", "r") as file:
-    config = yaml.safe_load(file)
+# with open("/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config_optimized.yaml", "r") as file:
+#     config = yaml.safe_load(file)
 
 # Configurar logging para el manejo de nivel alto
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s", datefmt='%Y-%m-%d %H:%M:%S')
@@ -29,7 +29,7 @@ class AS7265x_Manager:
         """
         if config is None:
             raise ValueError("[MANAGER] [SENSOR] La configuración no puede ser None.")
-            
+
         required_keys = ['sensors', 'system']
         missing_keys = [key for key in required_keys if key not in config]
         if missing_keys:
