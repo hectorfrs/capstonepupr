@@ -203,7 +203,7 @@ def main():
             # Crea instancia High Level para el sensor
             sensor = AS7265x_Manager(i2c_bus=1, address=0x49, config=config)
             sensor.reset()
-            time.sleep(5)  # Esperar después del reset.
+            time.sleep(10)  # Esperar después del reset.
             
             # Leer el estado del sensor desde el Manager
             try:

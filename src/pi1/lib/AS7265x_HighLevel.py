@@ -114,25 +114,28 @@ class AS7265x_Manager:
         Determina si el sensor está listo para operar.
         :return: True si el sensor está listo, False en caso contrario.
         """
-        try:
-            # Leer el registro de estado
-            reg_status = self.sensor._read_status()
+        for attempt in range(retries):
+            try:
+                reg_status = self.sensorer._read_status()
 
-            # Interpretar los bits relevantes
-            tx_valid = (reg_status & self.sensor.TX_VALID) >> 1  # Bit 1
-            rx_valid = reg_status & self.sensor.RX_VALID         # Bit 0
-            ready = (reg_status & self.sensor.READY) >> 3        # Bit 3
+                tx_valid = (reg_status & self.sensorer.TX_VALID) >> 1
+                rx_valid = reg_status & self.sensorer.RX_VALID
+                ready = (reg_status & self.sensorer.READY) >> 3
 
-            # Log para depuración
-            logging.debug(f"[MANAGER] [SENSOR] REG_STATUS leído: {bin(reg_status)} "
-                        f"(TX_VALID={tx_valid}, RX_VALID={rx_valid}, READY={ready})")
+                logging.debug(f"[MANAGER] [SENSOR] Intento {attempt + 1}: REG_STATUS leído: {bin(reg_status)} "
+                            f"(TX_VALID={tx_valid}, RX_VALID={rx_valid}, READY={ready})")
 
-            # Condición de "listo"
-            is_ready = tx_valid == 0 and rx_valid == 1 and ready == 1
-            return is_ready
-        except Exception as e:
-            logging.error(f"[MANAGER] [SENSOR] Error al verificar el estado del sensor: {e}")
-            return False
+                if ready == 1:
+                    logging.info("[MANAGER] [SENSOR] El sensor está listo para operar.")
+                    return True
+
+                time.sleep(1)  # Esperar antes de intentar nuevamente
+            except Exception as e:
+                logging.error(f"[MANAGER] [SENSOR] Error al verificar el estado del sensor: {e}")
+
+        logging.error("[MANAGER] [SENSOR] El sensor no alcanzó el estado READY después de varios intentos.")
+        return False
+
 
 
     def reset(self):
