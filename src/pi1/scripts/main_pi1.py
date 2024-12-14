@@ -222,8 +222,11 @@ def main():
             #Leer el estado del sensor
             status = sensor.read_status()
             logging.debug(f"[MAIN] [SENSOR] Estado del sensor después del reinicio: {bin(status)}")
-            if not status & sensor.READY:  # Define un valor para READY si es necesario
-                raise RuntimeError("El sensor no está listo para configurarse.")
+            tx_valid = status & sensor.TX_VALID
+            rx_valid = status & sensor.RX_VALID
+            if tx_valid or not rx_valid:
+                raise RuntimeError("[MAIN] El sensor no está listo para configurarse.")
+
 
             # Configurar el sensor
             sensor.configure()

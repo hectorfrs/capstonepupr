@@ -128,10 +128,13 @@ class SENSOR_AS7265x:
 
     def _read_status(self):
         """
-        Lee el estado del sensor.
-        :return: Valor del registro de estado.
+        Lee el registro de estado y devuelve los bits relevantes.
         """
-        return self._read_register(self.REG_STATUS)
+        status = self._read_register(self.REG_STATUS)
+        tx_valid = status & self.TX_VALID
+        rx_valid = status & self.RX_VALID
+        logging.debug(f"[CONTROLLER] Estado del sensor: TX_VALID={bool(tx_valid)}, RX_VALID={bool(rx_valid)}")
+        return status
 
     def _attempt_action(self, action, max_attempts=3, delay=0.05):
         """
