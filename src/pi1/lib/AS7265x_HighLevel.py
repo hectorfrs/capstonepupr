@@ -110,31 +110,22 @@ class AS7265x_Manager:
 
     def check_sensor_status(self):
         """
-        Verifica el estado del sensor AS7265x leyendo el registro REG_STATUS.
-        Determina si el sensor está listo para operar.
+        Verifica el estado del sensor llamando a la función de bajo nivel `verify_ready_state` en el Controller.
+
         :return: True si el sensor está listo, False en caso contrario.
         """
-        for attempt in range(3):
-            try:
-                reg_status = self.sensor._read_status()
+        try:
+            ready = self.controller.verify_ready_state()
+            if ready:
+                logging.info("[HIGHLEVEL] [SENSOR] El sensor está listo para operar.")
+                return True
+            else:
+                logging.error("[HIGHLEVEL] [SENSOR] El sensor no está listo después del reinicio.")
+                return False
+        except Exception as e:
+            logging.error(f"[HIGHLEVEL] [SENSOR] Error al verificar el estado del sensor: {e}")
+            return False
 
-                tx_valid = (reg_status & self.sensor.TX_VALID) >> 1
-                rx_valid = reg_status & self.sensor.RX_VALID
-                ready = (reg_status & self.sensor.READY) >> 3
-
-                logging.debug(f"[MANAGER] [SENSOR] Intento {attempt + 1}: REG_STATUS leído: {bin(reg_status)} "
-                            f"(TX_VALID={tx_valid}, RX_VALID={rx_valid}, READY={ready})")
-
-                if ready == 1:
-                    logging.info("[MANAGER] [SENSOR] El sensor está listo para operar.")
-                    return True
-
-                time.sleep(1)  # Esperar antes de intentar nuevamente
-            except Exception as e:
-                logging.error(f"[MANAGER] [SENSOR] Error al verificar el estado del sensor: {e}")
-
-        logging.error("[MANAGER] [SENSOR] El sensor no alcanzó el estado READY después de varios intentos.")
-        return False
 
 
 
@@ -179,22 +170,19 @@ class AS7265x_Manager:
     
     def initialize_sensor(self):
         """
-        Secuencia completa de inicialización del sensor.
+        Inicializa el sensor AS7265x y verifica que esté listo.
         """
         try:
-            logging.info("[MANAGER] [SENSOR] Inicializando sensor...")
-            self.reset()
-            time.sleep(5)  # Esperar después del reinicio
-
-            # Verificar si el sensor está listo
-            if not self.is_ready():
-                raise RuntimeError("[MANAGER] [SENSOR] El sensor no está listo después del reinicio.")
-            
-            logging.info("[MANAGER] [SENSOR] El sensor está listo para configurarse.")
-            self.configure()
+            logging.info("[MANAGER] [SENSOR] Inicializando sensor AS7265x...")
+            self.reset()  # Envío de comando de reinicio
+            time.sleep(5)  # Espera tras el reinicio
+            if self.sensor.check_sensor_status():
+                logging.info("[MANAGER] [SENSOR] Sensor inicializado correctamente.")
+            return True
         except Exception as e:
-            logging.error(f"[MANAGER] [SENSOR] Error durante la inicialización: {e}")
-            raise
+            logging.error(f"[MANAGER] [SENSOR] Error inicializando el sensor: {str(e)}")
+            return False
+
 
     def is_ready(self):
         """

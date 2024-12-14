@@ -85,6 +85,7 @@ class MUX_TCA9548A:
         try:
             self.bus.write_byte(self.address, 0x00)
             #logging.info("Todos los canales deshabilitados en el MUX.")
+            time.sleep(1)  # Pausa adicional para estabilización
         except Exception as e:
             logging.error(f"Error al deshabilitar todos los canales en el MUX: {e}")
             raise

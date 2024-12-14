@@ -43,6 +43,33 @@ class SENSOR_AS7265x:
 
         logging.info(f"[CONTROLLER] [SENSOR] AS7265x inicializado en dirección {hex(self.address)} en el bus I2C {i2c_bus}.")
 
+    def verify_ready_state(self, retries=5, delay=2):
+        """
+        Verifica si el sensor está en estado READY después del reinicio.
+        Lee el registro REG_STATUS directamente del sensor y revisa si el bit READY está activo.
+
+        :param retries: Número máximo de intentos para verificar el estado READY.
+        :param delay: Tiempo (en segundos) entre intentos consecutivos.
+        :return: True si el sensor está listo, False en caso contrario.
+        """
+        for attempt in range(retries):
+            try:
+                reg_status = self._read_status()  # Método de bajo nivel que accede al hardware
+                ready = (reg_status & self.READY) >> 3  # Bit READY en la posición 3
+                logging.debug(f"[CONTROLLER] [SENSOR] Intento {attempt + 1}: REG_STATUS leído: {bin(reg_status)} (READY={bool(ready)})")
+                
+                if ready:
+                    logging.info("[CONTROLLER] [SENSOR] El sensor está listo para operar.")
+                    return True
+                
+                time.sleep(delay)  # Esperar antes del siguiente intento
+            except Exception as e:
+                logging.error(f"[CONTROLLER] [SENSOR] Error al verificar el estado READY: {e}")
+        
+        logging.error("[CONTROLLER] [SENSOR] El sensor no alcanzó el estado READY después de varios intentos.")
+        return False
+
+
     def _write_register(self, reg, value):
         """
         Escribe un valor en un registro del sensor utilizando reintentos.
@@ -369,6 +396,7 @@ class SENSOR_AS7265x:
         fraction = full_channel & 0x7fffff
         accum = 1 + sum(((fraction & (1 << bit)) >> bit) / 2 ** (23 - bit) for bit in range(22, -1, -1))
         return sign * accum * (2 ** (exponent - 127))
+
 
 
     def _reset(self):
