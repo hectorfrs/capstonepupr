@@ -20,6 +20,7 @@ class SENSOR_AS7265x:
     REG_STATUS = 0x00           # Registro de estado
     REG_WRITE = 0x01            # Registro para escritura
     REG_READ = 0x02             # Registro para lectura
+    REG_RESET = 0x80            # Registro de reinicio
 
     TX_VALID = 0x02             # Buffer de escritura ocupado
     RX_VALID = 0x01             # Datos disponibles para leer
@@ -83,7 +84,7 @@ class SENSOR_AS7265x:
                 if status & self.BUSY:
                     logging.debug("[CONTROLLER] [SENSOR] Sensor ocupado, esperando...")
                     time.sleep(self.POLLING_DELAY)
-                    
+
                 # Si está listo, verifica RX_VALID
                 if status & self.RX_VALID:
                     read_val = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_READ)
@@ -356,21 +357,19 @@ class SENSOR_AS7265x:
         accum = 1 + sum(((fraction & (1 << bit)) >> bit) / 2 ** (23 - bit) for bit in range(22, -1, -1))
         return sign * accum * (2 ** (exponent - 127))
 
-    def reset(self):
+    def _reset(self):
         """
-        Reinicia el sensor AS7265x.
+        Reinicia el sensor AS7265x utilizando el Registro de Configuración.
         """
-        logging.info("[CONTROLLER] Reiniciando el sensor AS7265x...")
-        self.i2c.write_byte_data(self.I2C_ADDR, self.REG_RESET, 0x01)  # Comando de reinicio
-        time.sleep(1)  # Espera 1 segundo para que se reinicie completamente
-        for _ in range(3):  # Reintenta leer el estado después del reinicio
-            status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
-            logging.debug(f"[CONTROLLER] REG_STATUS tras reinicio: 0x{status:02X}")
-            if not (status & self.BUSY):  # Verifica que no esté ocupado
-                logging.info("[CONTROLLER] Sensor reiniciado y listo.")
-                return
-            time.sleep(self.POLLING_DELAY)
-        raise RuntimeError("[CONTROLLER] El sensor no se reinició correctamente.")
+        try:
+            logging.debug("[CONTROLLER] [SENSOR] Ejecutando reinicio del sensor...")
+            self.i2c.write_byte_data(self.I2C_ADDR, 0x04, 0x01)  # Reinicio por software
+            time.sleep(1)  # Esperar para que el reinicio surta efecto
+            logging.debug("[CONTROLLER] [SENSOR] Comando de reinicio enviado al sensor.")
+        except Exception as e:
+            logging.error(f"[MANAGER] [SENSOR] Error durante el reinicio: {e}")
+            raise
+
 
 
     def adjust_sensor_settings(self):
@@ -386,7 +385,7 @@ class SENSOR_AS7265x:
             elif max_value > 2000:
                 self.set_integration_time(100)  # Reduce el tiempo de integración
                 self.set_gain(1)  # Reduce la ganancia
-            logging.info("[SENSOR] Configuraciones ajustadas dinámicamente según los datos.")
+            logging.info("[CONTROLLER] [SENSOR] Configuraciones ajustadas dinámicamente según los datos.")
         except Exception as e:
-            logging.error(f"[SENSOR] Error ajustando configuraciones del sensor: {e}")
+            logging.error(f"[CONTROLLER] [SENSOR] Error ajustando configuraciones del sensor: {e}")
 
