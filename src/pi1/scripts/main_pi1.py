@@ -43,7 +43,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 # Cargar configuración desde el archivo config.yaml
-config_path = "/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config_optimized.yaml"
 
 def load_config(config_path):
     try:
@@ -61,7 +60,7 @@ def load_config(config_path):
     except Exception as e:
         logging.error(f"Error inesperado al cargar la configuración: {e}")
         sys.exit(1)
-        
+
 # Configuración de los logs
 def configure_logging(config):
     """
@@ -148,7 +147,8 @@ def main():
     error_details = []
 
     # Cargar configuración
-    config = load_config()
+    config_path = "/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config_optimized.yaml"
+    config = load_config(config_path)
 
     # Configuración de logging
     configure_logging(config)
