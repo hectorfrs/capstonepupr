@@ -111,6 +111,9 @@ class AS7265x_Manager:
         for attempt in range(3):  # Hasta 3 intentos
             try:
                 status = self.sensor._read_status()  # Usa el controlador del sensor para leer el estado
+                if not (status & self.READY):
+                    logging.warning("[MANAGER] [SENSOR] El sensor sigue ocupado. Reintentando...")
+                    time.sleep(2)  # Esperar un poco más antes de reintentar
                 tx_valid = status & self.sensor.TX_VALID
                 rx_valid = status & self.sensor.RX_VALID
 
