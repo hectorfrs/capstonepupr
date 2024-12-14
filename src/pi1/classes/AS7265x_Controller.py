@@ -21,7 +21,7 @@ class SENSOR_AS7265x:
     REG_WRITE = 0x01            # Registro para escritura
     REG_READ = 0x02             # Registro para lectura
     REG_RESET = 0x80            # Registro de reinicio (en duda)
-    REG_CONFIGURATION = 0x04  # Registro para configuración (incluye reset)
+    REG_CONFIGURATION = 0x04    # Registro para configuración (incluye reset)
 
     TX_VALID = 0x02             # Buffer de escritura ocupado
     RX_VALID = 0x01             # Datos disponibles para leer
@@ -96,7 +96,7 @@ class SENSOR_AS7265x:
                 time.sleep(self.POLLING_DELAY)
 
             self.i2c.write_byte_data(self.I2C_ADDR, self.REG_WRITE, value)
-
+        logging.debug(f"[CONTROLLER] [SENSOR] Intentando escribir en el registro 0x{reg:02X} con valor 0x{value:02X}.")
         # Usa _attempt_action para ejecutar el proceso con reintentos
         self._attempt_action(action)
 
@@ -208,6 +208,7 @@ class SENSOR_AS7265x:
         Lee el registro de estado y retorna detalles sobre TX_VALID, RX_VALID y READY.
         """
         try:
+            logging.debug("[CONTROLLER] [SENSOR] Leyendo estado del sensor...")
             reg_status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
             tx_valid = (reg_status & self.TX_VALID) >> 1
             rx_valid = reg_status & self.RX_VALID
@@ -224,6 +225,7 @@ class SENSOR_AS7265x:
         """
         Verifica si el sensor está listo (READY).
         """
+        logging.debug("[CONTROLLER] [SENSOR] Verificando si el sensor está listo.")
         status = self.verify_ready_state()
         ready = not (status & self.TX_VALID) and (status & self.RX_VALID)
         logging.debug(f"[CONTROLLER] [SENSOR] Estado del sensor: READY={ready}, TX_VALID={(status & self.TX_VALID) != 0}, RX_VALID={(status & self.RX_VALID) != 0}")
@@ -284,6 +286,7 @@ class SENSOR_AS7265x:
             raise ValueError(f"[CONTROLLER] [SENSOR] Dispositivo {device} no válido. Seleccione entre {list(self.DEVICES.keys())}.")
         
         self._write_virtual_register(0x4F, self.DEVICES[device])
+        logging.debug(f"[CONTROLLER] [SENSOR] Seleccionando dispositivo {device}.")
         selected_device = self._read_virtual_register(0x4F)
         if selected_device != self.DEVICES[device]:
             raise RuntimeError(f"[CONTROLLER] [SENSOR] Error al seleccionar el dispositivo {device}.")
