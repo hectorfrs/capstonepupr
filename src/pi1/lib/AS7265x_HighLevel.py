@@ -116,11 +116,11 @@ class AS7265x_Manager:
         """
         for attempt in range(3):
             try:
-                reg_status = self.sensorer._read_status()
+                reg_status = self.sensor._read_status()
 
-                tx_valid = (reg_status & self.sensorer.TX_VALID) >> 1
-                rx_valid = reg_status & self.sensorer.RX_VALID
-                ready = (reg_status & self.sensorer.READY) >> 3
+                tx_valid = (reg_status & self.sensor.TX_VALID) >> 1
+                rx_valid = reg_status & self.sensor.RX_VALID
+                ready = (reg_status & self.sensor.READY) >> 3
 
                 logging.debug(f"[MANAGER] [SENSOR] Intento {attempt + 1}: REG_STATUS leído: {bin(reg_status)} "
                             f"(TX_VALID={tx_valid}, RX_VALID={rx_valid}, READY={ready})")
