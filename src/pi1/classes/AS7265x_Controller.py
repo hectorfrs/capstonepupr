@@ -53,7 +53,7 @@ class SENSOR_AS7265x:
         :return: True si el sensor está listo, False en caso contrario.
         """
         for attempt in range(retries):
-            _, _, ready = self._read_status()
+            _, _, ready = self.verify_ready_state()
             if ready:
                 logging.info("[CONTROLLER] [SENSOR] El sensor está listo para operar.")
                 return True
@@ -149,7 +149,7 @@ class SENSOR_AS7265x:
         :param reg: Dirección del registro virtual.
         :param value: Valor a escribir.
         """
-        while self._read_status() & self.TX_VALID:
+        while self.verify_ready_state() & self.TX_VALID:
             time.sleep(self.POLLING_DELAY)                                # Esperar hasta que el buffer de escritura esté listo
         self._write_register(self.REG_WRITE, reg | 0x80)    # Escribir dirección del registro
         self._write_register(self.REG_WRITE, value)         # Escribir valor
@@ -161,10 +161,10 @@ class SENSOR_AS7265x:
         :param reg: Dirección del registro virtual.
         :return: Valor leído del registro.
         """
-        while self._read_status() & self.TX_VALID:
+        while self.verify_ready_state() & self.TX_VALID:
             time.sleep(self.POLLING_DELAY)                                # Esperar hasta que el buffer de escritura esté listo
         self._write_register(self.REG_WRITE, reg)           # Escribir dirección para leer
-        while not (self._read_status() & self.RX_VALID):
+        while not (self.verify_ready_state() & self.RX_VALID):
             time.sleep(self.POLLING_DELAY)                                # Esperar hasta que haya datos disponibles
         value = self._read_register(self.REG_READ)          # Leer valor
         logging.debug(f"[CONTROLLER] [SENSOR] Registro virtual {hex(reg)} leído con valor {value}.")
@@ -174,7 +174,7 @@ class SENSOR_AS7265x:
         """
         Lee el registro de estado y retorna detalles sobre TX_VALID, RX_VALID y READY.
         """
-        reg_status = self._read_status()
+        reg_status = self.verify_ready_state()
         tx_valid = (reg_status & self.TX_VALID) >> 1
         rx_valid = reg_status & self.RX_VALID
         ready = (reg_status & self.READY) >> 3
@@ -187,7 +187,7 @@ class SENSOR_AS7265x:
         """
         Verifica si el sensor está listo (READY).
         """
-        status = self._read_status()
+        status = self.verify_ready_state()
         ready = not (status & self.TX_VALID) and (status & self.RX_VALID)
         logging.debug(f"[CONTROLLER] [SENSOR] Estado del sensor: READY={ready}, TX_VALID={(status & self.TX_VALID) != 0}, RX_VALID={(status & self.RX_VALID) != 0}")
         return ready
