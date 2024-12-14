@@ -45,26 +45,23 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 # Cargar configuración desde el archivo config.yaml
 config_path = "/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config_optimized.yaml"
 
-def load_config(file_path=config_path):
+def load_config(config_path):
     try:
         with open(config_path, "r") as file:
             config = yaml.safe_load(file)
             if not config:
                 raise ValueError(f"El archivo de configuración está vacío: {config_path}")
-            required_keys = ['sensors', 'system']
-            missing_keys = [key for key in required_keys if key not in config]
-            if missing_keys:
-                raise KeyError(f"Faltan claves requeridas en la configuración: {missing_keys}")
+            return config
     except FileNotFoundError:
-        print(f"Archivo de configuración no encontrado en: {config_path}")
+        logging.error(f"Archivo de configuración no encontrado: {config_path}")
         sys.exit(1)
     except yaml.YAMLError as e:
-        print(f"Error al analizar el archivo YAML: {e}")
+        logging.error(f"Error al analizar el archivo YAML: {e}")
         sys.exit(1)
     except Exception as e:
-        print(f"Error inesperado al cargar la configuración: {e}")
+        logging.error(f"Error inesperado al cargar la configuración: {e}")
         sys.exit(1)
-
+        
 # Configuración de los logs
 def configure_logging(config):
     """
