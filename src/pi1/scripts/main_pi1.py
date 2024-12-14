@@ -159,6 +159,7 @@ def main():
     configure_logging(config)
     logging.info("=" * 50)
     logging.info("[MAIN] Sistema iniciado en Raspberry Pi #1...")
+    logging.info("[MAIN] Análisis Espectral y Clasificación del Plástico.")
     logging.info("=" * 50)
 
     # Configuración de red
@@ -222,14 +223,12 @@ def main():
             # Leer el estado del sensor desde el Manager
             try:
                 sensor.check_sensor_status()  # Delega la lógica al manager
+                # Configurar el sensor
+                sensor.configure()
+                sensors.append(sensor)
             except RuntimeError as e:
                 logging.error(f"[MAIN] [SENSOR] Error al verificar el estado del sensor: {e}")
                 continue
-
-
-            # Configurar el sensor
-            sensor.configure()
-            sensors.append(sensor)
             logging.info(f"[MAIN] [SENSOR] Sensor {sensor_name} inicializado y configurado correctamente.")
 
         except Exception as e:

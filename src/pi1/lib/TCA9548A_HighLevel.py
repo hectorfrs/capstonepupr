@@ -22,7 +22,7 @@ class TCA9548A_Manager:
         """
         self.address = address
         self.mux = MUX_TCA9548A(address=address, i2c_bus=i2c_bus)
-        logging.info(f"[MUX] TCA9548A inicializado en la dirección {hex(address)}.")
+        logging.info(f"[MANAGER] [MUX] TCA9548A inicializado en la dirección {hex(address)}.")
 
     def enable_channel(self, channel):
         """
@@ -31,10 +31,10 @@ class TCA9548A_Manager:
         """
         try:
             self.mux.enable_channel(channel)
-            logging.info(f"[MUX] [CANAL {channel}] Habilitado.")
+            logging.info(f"[MANAGER] [MUX] [CANAL {channel}] Habilitado.")
             time.sleep(2)
         except Exception as e:
-            logging.error(f"[MUX] Error al habilitar el canal {channel}: {e}")
+            logging.error(f"[MANAGER] [MUX] Error al habilitar el canal {channel}: {e}")
 
     def disable_channel(self, channel):
         """
@@ -42,7 +42,7 @@ class TCA9548A_Manager:
         :param channel: Canal a deshabilitar (0-7).
         """
         self.mux.disable_channel(channel)
-        logging.info(f"[MUX] [CANAL {channel}] Deshabilitado.")
+        logging.info(f"[MANAGER] [MUX] [CANAL {channel}] Deshabilitado.")
 
     def enable_multiple_channels(self, channels):
         """
@@ -50,14 +50,14 @@ class TCA9548A_Manager:
         :param channels: Lista de canales a habilitar (0-7).
         """
         self.mux.enable_multiple_channels(channels)
-        logging.info(f"[MUX] Canales {channels} habilitados.")
+        logging.info(f"[MANAGER] [MUX] Canales {channels} habilitados.")
 
     def disable_all_channels(self):
         """
         Deshabilita todos los canales del MUX.
         """
         self.mux.disable_all_channels()
-        logging.info("[MUX] Todos los canales deshabilitados.")
+        logging.info("[MANAGER] [MUX] Todos los canales deshabilitados.")
 
     def get_active_channel(self):
         """
@@ -66,7 +66,7 @@ class TCA9548A_Manager:
         """
         status = self.mux.read_control_register()  # Leer el registro de control
         active_channels = [i for i in range(8) if status & (1 << i)]
-        logging.info(f"[MUX] Canales activos: {active_channels}")
+        logging.info(f"[MANAGER] [MUX] Canales activos: {active_channels}")
         return active_channels
 
 

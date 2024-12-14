@@ -114,7 +114,8 @@ class AS7265x_Manager:
                 tx_valid = status & self.sensor.TX_VALID
                 rx_valid = status & self.sensor.RX_VALID
 
-                logging.debug(f"[MANAGER] [SENSOR] Estado del sensor: TX_VALID={bool(tx_valid)}, RX_VALID={bool(rx_valid)}")
+                logging.debug(f"[MANAGER] [SENSOR] Estado completo del sensor: {bin(status)}")
+                logging.debug(f"[MANAGER] [SENSOR] TX_VALID={bool(tx_valid)}, RX_VALID={bool(rx_valid)}")
                 
                 if not rx_valid or tx_valid:
                     raise RuntimeError("[MANAGER] [SENSOR] El sensor no está listo para configurarse.")
@@ -124,9 +125,11 @@ class AS7265x_Manager:
 
             except Exception as e:
                 logging.warning(f"[MANAGER] [SENSOR] Estado no válido en intento {attempt + 1}/3: {e}")
-                time.sleep(1)  # Esperar antes de reintentar
+                time.sleep(2)  # Incrementa el tiempo de espera antes de reintentar
 
         raise RuntimeError("[MANAGER] [SENSOR] El sensor sigue ocupado después de varios intentos.")
+
+
 
     def reset(self):
         """
