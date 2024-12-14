@@ -114,7 +114,7 @@ class AS7265x_Manager:
         Determina si el sensor está listo para operar.
         :return: True si el sensor está listo, False en caso contrario.
         """
-        for attempt in range(retries):
+        for attempt in range(3):
             try:
                 reg_status = self.sensorer._read_status()
 
