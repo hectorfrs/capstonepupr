@@ -207,9 +207,12 @@ def main():
             
             # Leer el estado del sensor desde el Manager
             try:
-                sensor.check_sensor_status()  # Delega la lógica al manager
-                # Configurar el sensor
-                sensor.configure()
+                sensor.check_sensor_status()
+                logging.info(f"[MAIN] [SENSOR] Sensor en canal {channel} listo para configuración.")
+
+                sensor.initialize_sensor()
+                logging.info(f"[MAIN] [SENSOR] Sensor en canal {channel} inicializado correctamente.")
+
                 sensors.append(sensor)
             except RuntimeError as e:
                 logging.error(f"[MAIN] [SENSOR] Error al verificar el estado del sensor: {e}")
@@ -232,7 +235,7 @@ def main():
         finally:
             # Deshabilitar todos los canales después de configurar el sensor
             mux.disable_all_channels()
-            logging.info(f"[MAIN] [MUX] Todos los canales deshabilitados después del canal {channel}.")
+            logging.info(f"[MAIN] [MUX] Canal {channel} deshabilitado después de inicialización.")
             logging.info("=" * 50)
 
      # Seleccionar flujo según configuración

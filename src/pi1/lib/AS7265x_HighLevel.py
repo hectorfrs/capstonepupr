@@ -44,6 +44,7 @@ class AS7265x_Manager:
         self.sensor = SENSOR_AS7265x(i2c_bus=i2c_bus, address=address)
         logging.info(f"[SENSOR] AS7265x inicializado en la dirección {hex(address)}.")
 
+
     def configure(self):
         """
         Configura el sensor usando los parámetros de configuración desde config.yaml.
@@ -174,6 +175,26 @@ class AS7265x_Manager:
             logging.info("[MANAGER] [SENSOR] Diagnóstico completado exitosamente.")
         except Exception as e:
             logging.error(f"[MANAGER] [SENSOR] Error en diagnóstico del espectro: {e}")
+    
+    def initialize_sensor(self):
+        """
+        Secuencia completa de inicialización del sensor.
+        """
+        try:
+            logging.info("[MANAGER] [SENSOR] Inicializando sensor...")
+            self._reset()
+            time.sleep(5)  # Esperar después del reinicio
+
+            # Verificar si el sensor está listo
+            if not self.is_ready():
+                raise RuntimeError("[MANAGER] [SENSOR] El sensor no está listo después del reinicio.")
+            
+            logging.info("[MANAGER] [SENSOR] El sensor está listo para configurarse.")
+            self.configure()
+        except Exception as e:
+            logging.error(f"[MANAGER] [SENSOR] Error durante la inicialización: {e}")
+            raise
+
 
 
 # Al final de AS7265x_HighLevel.py, fuera de clases

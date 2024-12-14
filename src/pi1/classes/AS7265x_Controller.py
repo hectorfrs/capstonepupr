@@ -20,13 +20,15 @@ class SENSOR_AS7265x:
     REG_STATUS = 0x00           # Registro de estado
     REG_WRITE = 0x01            # Registro para escritura
     REG_READ = 0x02             # Registro para lectura
-    REG_RESET = 0x80            # Registro de reinicio
+    REG_RESET = 0x80            # Registro de reinicio (en duda)
+    REG_CONFIGURATION = 0x04  # Registro para configuración (incluye reset)
 
     TX_VALID = 0x02             # Buffer de escritura ocupado
     RX_VALID = 0x01             # Datos disponibles para leer
     POLLING_DELAY = 0.05        # Retardo de espera para el buffer de escritura
 
     READY = 0x08     # El sensor está listo (bit específico para "READY")
+    BUSY = 0x08      # El sensor está ocupado (bit específico para "BUSY")
 
     DEVICES = {"AS72651": 0b00, "AS72652": 0b01, "AS72653": 0b10}  # Selección de dispositivos internos
 
@@ -153,12 +155,23 @@ class SENSOR_AS7265x:
         """
         Lee el registro de estado y devuelve los bits relevantes.
         """
-        status = self._read_register(self.REG_STATUS)
-        logging.debug(f"[CONTROLLER] [SENSOR] Estado completo del sensor: {bin(status)} (hex: {hex(status)})")
-        tx_valid = status & self.TX_VALID
-        rx_valid = status & self.RX_VALID
-        logging.debug(f"[CONTROLLER] [SENSOR] Estado desglosado: TX_VALID={bool(tx_valid)}, RX_VALID={bool(rx_valid)}")
-        return status
+        try:
+            status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
+            logging.debug(f"[CONTROLLER] [SENSOR] REG_STATUS leído: 0b{status:08b}")
+            return status
+        except Exception as e:
+            logging.error(f"[CONTROLLER] [SENSOR] Error al leer REG_STATUS: {e}")
+            raise
+
+    def is_ready(self):
+        """
+        Verifica si el sensor está listo (READY).
+        """
+        status = self._read_status()
+        ready = not (status & self.TX_VALID) and (status & self.RX_VALID)
+        logging.debug(f"[CONTROLLER] [SENSOR] Estado del sensor: READY={ready}, TX_VALID={(status & self.TX_VALID) != 0}, RX_VALID={(status & self.RX_VALID) != 0}")
+        return ready
+
 
     def _attempt_action(self, action, max_attempts=3, delay=0.05):
         """
@@ -357,13 +370,14 @@ class SENSOR_AS7265x:
         accum = 1 + sum(((fraction & (1 << bit)) >> bit) / 2 ** (23 - bit) for bit in range(22, -1, -1))
         return sign * accum * (2 ** (exponent - 127))
 
+
     def _reset(self):
         """
         Reinicia el sensor AS7265x utilizando el Registro de Configuración.
         """
         try:
             logging.debug("[CONTROLLER] [SENSOR] Ejecutando reinicio del sensor...")
-            self.i2c.write_byte_data(self.I2C_ADDR, 0x04, 0x01)  # Reinicio por software
+            self.i2c.write_byte_data(self.I2C_ADDR, self.REG_CONFIGURATION, 0x01)  # Reinicio por software
             time.sleep(1)  # Esperar para que el reinicio surta efecto
             logging.debug("[CONTROLLER] [SENSOR] Comando de reinicio enviado al sensor.")
         except Exception as e:
