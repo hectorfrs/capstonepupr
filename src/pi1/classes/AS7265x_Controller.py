@@ -47,23 +47,35 @@ class SENSOR_AS7265x:
     def check_sensor_status(self):
         return self.verify_ready_state()
 
-    def verify_ready_state(self, retries=5, delay=5):
+    def verify_ready_state(self, retries=10, delay=1):
         """
         Verifica si el sensor está en estado READY después del reinicio.
+        :param retries: Número de intentos para verificar el estado READY.
+        :param delay: Tiempo de espera entre intentos en segundos.
+        :return: True si el sensor está listo, False en caso contrario.
         """
         for attempt in range(retries):
-            reg_status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)  # Lee directamente el estado
-            tx_valid = (reg_status & self.TX_VALID) >> 1
-            rx_valid = reg_status & self.RX_VALID
-            ready = (reg_status & self.READY) >> 3  # Extrae el bit READY
-            logging.debug(f"[CONTROLLER] [SENSOR] Intento {attempt + 1}: REG_STATUS leído: {bin(reg_status)} (READY={bool(ready)})")
-            logging.debug(f"REG_STATUS leído: {bin(reg_status)} (TX_VALID={tx_valid}, RX_VALID={rx_valid}, READY={ready})")
-            if ready:
-                logging.info("[CONTROLLER] [SENSOR] El sensor está listo para operar.")
-                return True
-            time.sleep(delay)  # Espera antes del siguiente intento
-        logging.error("[CONTROLLER] [SENSOR] Error al verificar el estado del sensor: {e}")
+            try:
+                reg_status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)  # Lee directamente el estado
+                tx_valid = (reg_status & self.TX_VALID) >> 1
+                rx_valid = reg_status & self.RX_VALID
+                ready = (reg_status & self.READY) >> 3  # Extrae el bit READY
+
+                logging.debug(f"[CONTROLLER] [SENSOR] Intento {attempt + 1}/{retries}: REG_STATUS={bin(reg_status)}")
+                logging.debug(f"[CONTROLLER] [SENSOR] TX_VALID={tx_valid}, RX_VALID={rx_valid}, READY={ready}")
+
+                if ready:
+                    logging.info(f"[CONTROLLER] [SENSOR] Sensor listo después de {attempt + 1} intentos.")
+                    return True
+                
+                # Espera antes del próximo intento
+                time.sleep(delay)
+            except Exception as e:
+                logging.error(f"[CONTROLLER] [SENSOR] Error al verificar el estado READY: {str(e)}")
+
+        logging.error(f"[CONTROLLER] [SENSOR] El sensor no alcanzó el estado READY después de {retries} intentos.")
         return False
+
 
     def verify_connection(self):
         try:

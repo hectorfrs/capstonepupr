@@ -40,12 +40,13 @@ class MUX_TCA9548A:
         """
         logging.debug(f"[CONTROLLER] [MUX] Intentando habilitar el canal {channel}.")
         if not (0 <= channel <= 7):
+            logging.error(f"[CONTROLLER] [MUX] Canal inválido: {channel}.")
             raise ValueError("El canal debe estar entre 0 y 7.")
         try:
             self.bus.write_byte(self.address, 1 << channel)
             logging.info(f"[CONTROLLER] [MUX] Canal {channel} habilitado en el MUX.")
         except Exception as e:
-            logging.error(f"[CONTROLLER] [MUX] Error al habilitar el canal {channel} en el MUX: {e}")
+            logging.error(f"[CONTROLLER] [MUX] Error al habilitar el canal {channel} en el MUX: {str(e)}")
             raise
 
     def disable_channel(self, channel):
