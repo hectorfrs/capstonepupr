@@ -182,7 +182,7 @@ class AS7265x_Manager:
         """
         try:
             logging.info("[MANAGER] [SENSOR] Inicializando sensor...")
-            self._reset()
+            self.reset()
             time.sleep(5)  # Esperar después del reinicio
 
             # Verificar si el sensor está listo
