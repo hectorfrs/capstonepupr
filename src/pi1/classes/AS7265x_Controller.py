@@ -25,6 +25,8 @@ class SENSOR_AS7265x:
     RX_VALID = 0x01             # Datos disponibles para leer
     POLLING_DELAY = 0.05        # Retardo de espera para el buffer de escritura
 
+    READY = 0x08     # El sensor está listo (bit específico para "READY")
+
     DEVICES = {"AS72651": 0b00, "AS72652": 0b01, "AS72653": 0b10}  # Selección de dispositivos internos
 
     def __init__(self, i2c_bus=1, address=0x49):

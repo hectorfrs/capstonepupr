@@ -110,7 +110,7 @@ class AS7265x_Manager:
         """
         for attempt in range(3):  # Hasta 3 intentos
             try:
-                logging.info(f"Inicio de Verificacion de estado del sensor: Intento {attempt + 1}/3")
+                logging.info(f"[MANAGER] [SENSOR] Inicio de Verificacion de estado del sensor: Intento {attempt + 1}/3")
                 status = self.sensor._read_status()  # Usa el controlador del sensor para leer el estado
                 if not (status & self.READY):
                     logging.warning("[MANAGER] [SENSOR] El sensor sigue ocupado. Reintentando...")
