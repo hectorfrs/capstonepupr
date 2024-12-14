@@ -108,19 +108,25 @@ class AS7265x_Manager:
         """
         Verifica el estado inicial del sensor AS7265x.
         """
-        # Leer el estado del sensor
         for attempt in range(3):  # Hasta 3 intentos
-            sensor_status = self._read_status()
-            logging.debug(f"Estado del sensor: {bin(sensor_status)}")
+            try:
+                status = self.sensor._read_status()  # Usa el controlador del sensor para leer el estado
+                tx_valid = status & self.sensor.TX_VALID
+                rx_valid = status & self.sensor.RX_VALID
 
-            if sensor_status & 0x80:  # Bit ocupado
-                logging.warning(f"El sensor está ocupado. Reintento {attempt + 1}/3...")
-                time.sleep(1)  # Esperar 1 segundo antes de reintentar
-            else:
-                logging.info("El sensor está listo para recibir comandos.")
-        return True
+                logging.debug(f"[MANAGER] [SENSOR] Estado del sensor: TX_VALID={bool(tx_valid)}, RX_VALID={bool(rx_valid)}")
+                
+                if not rx_valid or tx_valid:
+                    raise RuntimeError("[MANAGER] [SENSOR] El sensor no está listo para configurarse.")
+                
+                logging.info("[MANAGER] [SENSOR] El sensor está listo para recibir comandos.")
+                return True
 
-        raise Exception("El sensor sigue ocupado después de varios intentos.")
+            except Exception as e:
+                logging.warning(f"[MANAGER] [SENSOR] Estado no válido en intento {attempt + 1}/3: {e}")
+                time.sleep(1)  # Esperar antes de reintentar
+
+        raise RuntimeError("[MANAGER] [SENSOR] El sensor sigue ocupado después de varios intentos.")
 
     def reset(self):
         """
@@ -140,7 +146,7 @@ class AS7265x_Manager:
         :return: Valor del estado del sensor.
         """
 
-        logging.info(f"[MANAGER] [SENSOR] El sensor está listo para leer datos.")
+        logging.info(f"[MANAGER] [SENSOR] El sensor está listo.")
         return self.sensor._read_status()
 
     def _diagnostic_check(self, spectrum):
