@@ -110,30 +110,30 @@ class AS7265x_Manager:
 
     def check_sensor_status(self):
         """
-        Verifica el estado inicial del sensor AS7265x.
+        Verifica el estado del sensor AS7265x leyendo el registro REG_STATUS.
+        Determina si el sensor está listo para operar.
+        :return: True si el sensor está listo, False en caso contrario.
         """
-        for attempt in range(3):  # Hasta 3 intentos
-            try:
-                status = self.sensor._read_status()  # Usa el controlador del sensor para leer el estado
-                tx_valid = bool(status & self.sensor.TX_VALID)
-                rx_valid = bool(status & self.sensor.RX_VALID)
-                ready = not bool(status & self.sensor.BUSY)
+        try:
+            # Leer el registro de estado
+            reg_status = self.sensor._read_status()
 
-                logging.debug(
-                    f"[MANAGER] [SENSOR] Intento {attempt + 1}: Estado del sensor: 0b{status:08b} "
-                    f"(TX_VALID={tx_valid}, RX_VALID={rx_valid}, READY={ready})"
-                )
-                
-                if ready and not tx_valid:
-                    logging.info("[MANAGER] [SENSOR] El sensor está listo para operar.")
-                    return True
-                else:
-                    logging.warning("[MANAGER] [SENSOR] El sensor no está listo para configurarse.")
-                    time.sleep(1)  # Espera antes de reintentar
-            except Exception as e:
-                logging.warning(f"[MANAGER] [SENSOR] Error en intento {attempt + 1}/3: {e}")
-                time.sleep(1)
-        raise RuntimeError("[MANAGER] [SENSOR] El sensor sigue ocupado después de varios intentos.")
+            # Interpretar los bits relevantes
+            tx_valid = (reg_status & self.sensor.TX_VALID) >> 1  # Bit 1
+            rx_valid = reg_status & self.sensor.RX_VALID         # Bit 0
+            ready = (reg_status & self.sensor.READY) >> 3        # Bit 3
+
+            # Log para depuración
+            logging.debug(f"[MANAGER] [SENSOR] REG_STATUS leído: {bin(reg_status)} "
+                        f"(TX_VALID={tx_valid}, RX_VALID={rx_valid}, READY={ready})")
+
+            # Condición de "listo"
+            is_ready = tx_valid == 0 and rx_valid == 1 and ready == 1
+            return is_ready
+        except Exception as e:
+            logging.error(f"[MANAGER] [SENSOR] Error al verificar el estado del sensor: {e}")
+            return False
+
 
     def reset(self):
         """
@@ -195,13 +195,12 @@ class AS7265x_Manager:
 
     def is_ready(self):
         """
-        Verifica si el sensor está listo para operar.
-        :return: True si el sensor está listo, False en caso contrario.
+        Verifica si el sensor está en estado READY.
         """
         try:
-            status = self.sensor._read_status()  # Usar el controlador para leer el estado del sensor
+            status = self.sensor._read_register(self.sensor.REG_STATUS)
             ready = bool(status & self.sensor.READY)
-            logging.debug(f"[MANAGER] [SENSOR] Estado del sensor: {bin(status)} (READY={ready})")
+            logging.debug(f"[MANAGER] [SENSOR] REG_STATUS={bin(status)}, READY={ready}")
             return ready
         except Exception as e:
             logging.error(f"[MANAGER] [SENSOR] Error al verificar estado READY: {e}")
