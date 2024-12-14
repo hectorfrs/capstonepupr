@@ -27,21 +27,17 @@ class AS7265x_Manager:
         :param config: Configuración del sistema cargada desde config.yaml.
         :param i2c_bus: Bus I²C donde está conectado el sensor.
         """
-        try:
-            self.config = config if config else {}
-            self.address = address
-            self.i2c_bus = i2c_bus
-
-            # Validar configuración mínima
-            required_keys = ['sensors', 'system']
-            if not all(key in self.config for key in required_keys):
-                raise KeyError(f"Faltan claves requeridas en la configuración: {required_keys}")
-
-            self.sensor = SENSOR_AS7265x(i2c_bus=i2c_bus, address=address)
-            logging.info(f"[MANAGER] [SENSOR] AS7265x inicializado en la dirección {hex(address)} en el bus I²C {i2c_bus}.")
-        except Exception as e:
-            logging.error(f"[MANAGER] [SENSOR] Error durante la inicialización: {e}")
-            raise
+        required_keys = ['sensors', 'system']
+        missing_keys = [key for key in required_keys if key not in config]
+        if missing_keys:
+            logging.error(f"[MANAGER] [SENSOR] Configuración actual: {config}")
+            logging.error(f"[MANAGER] [SENSOR] Faltan claves requeridas en la configuración: {missing_keys}")
+            raise KeyError(f"Faltan claves requeridas en la configuración: {missing_keys}")
+        self.config = config
+        self.address = address
+        self.i2c_bus = i2c_bus
+        self.sensor = SENSOR_AS7265x(i2c_bus=i2c_bus, address=address)
+        logging.info(f"[SENSOR] AS7265x inicializado en la dirección {hex(address)}.")
 
     def configure(self):
         """
