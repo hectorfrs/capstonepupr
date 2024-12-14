@@ -210,6 +210,9 @@ def main():
                 sensor.check_sensor_status()
                 raise Exception("[MAIN] [SENSOR] El sensor no está listo después del reinicio.")
 
+                if not sensor.check_sensor_status():
+                    logging.critical("[MAIN] [SENSOR] Sensor falló irreparablemente. Notificando al sistema.")
+
                 sensor.initialize_sensor()
                 logging.info(f"[MAIN] [SENSOR] Sensor en canal {channel} inicializado correctamente.")
 
