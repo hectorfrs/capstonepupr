@@ -131,10 +131,10 @@ class SENSOR_AS7265x:
         Lee el registro de estado y devuelve los bits relevantes.
         """
         status = self._read_register(self.REG_STATUS)
-        logging.debug(f"[CONTROLLER] [SENSOR] Estado bruto del sensor: {bin(status)}")
+        logging.debug(f"[CONTROLLER] [SENSOR] Estado completo del sensor: {bin(status)} (hex: {hex(status)})")
         tx_valid = status & self.TX_VALID
         rx_valid = status & self.RX_VALID
-        logging.debug(f"[CONTROLLER] [SENSOR] Estado del sensor desglosado: TX_VALID={bool(tx_valid)}, RX_VALID={bool(rx_valid)}")
+        logging.debug(f"[CONTROLLER] [SENSOR] Estado desglosado: TX_VALID={bool(tx_valid)}, RX_VALID={bool(rx_valid)}")
         return status
 
     def _attempt_action(self, action, max_attempts=3, delay=0.05):

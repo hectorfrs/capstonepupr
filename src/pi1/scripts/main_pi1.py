@@ -212,7 +212,7 @@ def main():
                 f"[MAIN] [MUX] El canal {channel} ha sido habilitado. "
                 f"Esperando estabilización del sensor..."
                 )
-            time.sleep(1)    # Tiempo de estabilización a 500 ms
+            time.sleep(0.5)    # esperar a que el sensor se estabilice
         
         
             # Crea instancia High Level para el sensor
