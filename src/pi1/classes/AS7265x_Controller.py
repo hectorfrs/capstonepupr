@@ -187,13 +187,14 @@ class SENSOR_AS7265x:
         """
         Lee el registro de estado y retorna detalles sobre TX_VALID, RX_VALID y READY.
         """
-        reg_status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
+        reg_status = self.verify_ready_state()  
         tx_valid = (reg_status & self.TX_VALID) >> 1
         rx_valid = reg_status & self.RX_VALID
         ready = (reg_status & self.READY) >> 3
         logging.debug(f"[CONTROLLER] [SENSOR] REG_STATUS leído: {bin(reg_status)} "
                     f"(TX_VALID={tx_valid}, RX_VALID={rx_valid}, READY={ready})")
-        return tx_valid, rx_valid, ready
+        return tx_valid, rx_valid, ready 
+
 
 
 
