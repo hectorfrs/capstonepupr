@@ -43,7 +43,7 @@ class SENSOR_AS7265x:
         self.address = address
         logging.info(f"[CONTROLLER] [SENSOR] AS7265x inicializado en dirección {hex(self.address)} en el bus I2C {i2c_bus}.")
 
-    def verify_ready_state(self, retries=5, delay=2):
+    def verify_ready_state(self, retries=5, delay=5):
         """
         Verifica si el sensor está en estado READY después del reinicio.
         """

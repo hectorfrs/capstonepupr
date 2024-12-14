@@ -119,7 +119,7 @@ class AS7265x_Manager:
             if ready:
                 logging.info("[MANAGER] [SENSOR] El sensor está listo para operar.")
                 return True
-            if not self.controller.check_sensor_status():
+            if not self.sensor.check_sensor_status():
                 logging.error("[MANAGER] [SENSOR] El sensor no está listo después del reinicio.")
             raise RuntimeError("[MANAGER] [SENSOR] El sensor no está listo después del reinicio.")
         except Exception as e:
