@@ -78,10 +78,18 @@ class SENSOR_AS7265x:
                 logging.debug(f"[CONTROLLER] [SENSOR] Iniciando lectura del registro 0x{reg:02X}.")
                 # Verifica el estado inicial del sensor
                 status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
-                logging.debug(f"[CONTROLLER] [SENSOR] REG_STATUS antes de RX_VALID: 0x{status:02X}")
+                logging.debug(f"[CONTROLLER] [STATUS] REG_STATUS inicial: 0x{status:02X}")
+                # Validar si está listo para recibir datos
+                if status & self.BUSY:
+                    logging.debug("[CONTROLLER] [SENSOR] Sensor ocupado, esperando...")
+                    time.sleep(self.POLLING_DELAY)
+                continue
+                # Si está listo, verifica RX_VALID
                 if status & self.RX_VALID:
-                    self.i2c.read_byte_data(self.I2C_ADDR, self.REG_READ)
-                    logging.debug(f"[CONTROLLER] [SENSOR] REG_READ por RX_VALID: 0x{read_val:02X}")
+                    read_val = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_READ)
+                    logging.debug(f"[CONTROLLER] [SENSOR] REG_READ valor: 0x{read_val:02X}")
+
+                
 
                 # Espera a que el buffer de escritura esté listo
                 while True:
@@ -92,8 +100,8 @@ class SENSOR_AS7265x:
                     time.sleep(self.POLLING_DELAY)
 
                 # Solicita lectura del registro
-                logging.debug(f"[CONTROLLER] [SENSOR] Escribiendo registro 0x{reg:02X} en REG_WRITE.")
                 self.i2c.write_byte_data(self.I2C_ADDR, self.REG_WRITE, reg)
+                logging.debug(f"[CONTROLLER] REG_WRITE enviado: 0x{reg:02X}")
                 while True:
                     status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
                     logging.debug(f"[CONTROLLER] [SENSOR] REG_STATUS durante RX_VALID: 0x{status:02X}")
@@ -350,16 +358,20 @@ class SENSOR_AS7265x:
 
     def reset(self):
         """
-        Reinicia el sensor AS7265x utilizando el bit de reset.
+        Reinicia el sensor AS7265x.
         """
-        try:
-            self._write_virtual_register(0x04, 0x02)  # Registro de control: bit de reinicio
-            time.sleep(1)  # Esperar 1 segundo para que el sensor se reinicie
-            #logging.info("El sensor ha sido reiniciado.")
-        except Exception as e:
-            logging.error(f"[SENSOR] Error al intentar reiniciar el sensor: {e}")
-            raise
-        pass
+        logging.info("[CONTROLLER] Reiniciando el sensor AS7265x...")
+        self.i2c.write_byte_data(self.I2C_ADDR, self.REG_RESET, 0x01)  # Comando de reinicio
+        time.sleep(1)  # Espera 1 segundo para que se reinicie completamente
+        for _ in range(3):  # Reintenta leer el estado después del reinicio
+            status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
+            logging.debug(f"[CONTROLLER] REG_STATUS tras reinicio: 0x{status:02X}")
+            if not (status & self.BUSY):  # Verifica que no esté ocupado
+                logging.info("[CONTROLLER] Sensor reiniciado y listo.")
+                return
+            time.sleep(self.POLLING_DELAY)
+        raise RuntimeError("[CONTROLLER] El sensor no se reinició correctamente.")
+
 
     def adjust_sensor_settings(self):
         """

@@ -113,27 +113,26 @@ class AS7265x_Manager:
         """
         for attempt in range(3):  # Hasta 3 intentos
             try:
-                status = self.sensor._read_status()  # Lee el registro STATUS
-                logging.debug(f"[MANAGER] [SENSOR] Intento {attempt+1}: Estado del sensor: {bin(status)}")
+                status = self.sensor._read_status()  # Usa el controlador del sensor para leer el estado
+                tx_valid = bool(status & self.sensor.TX_VALID)
+                rx_valid = bool(status & self.sensor.RX_VALID)
+                ready = not bool(status & self.sensor.BUSY)
 
-                tx_valid = status & self.sensor.TX_VALID
-                rx_valid = status & self.sensor.RX_VALID
-                ready = status & self.sensor.READY
-
-                logging.debug(f"[MANAGER] [SENSOR] TX_VALID={bool(tx_valid)}, RX_VALID={bool(rx_valid)}, READY={bool(ready)}")
-
-                if ready and not tx_valid and rx_valid:
-                    logging.info("[MANAGER] [SENSOR] Sensor listo para configurarse.")
+                logging.debug(
+                    f"[MANAGER] [SENSOR] Intento {attempt + 1}: Estado del sensor: 0b{status:08b} "
+                    f"(TX_VALID={tx_valid}, RX_VALID={rx_valid}, READY={ready})"
+                )
+                
+                if ready and not tx_valid:
+                    logging.info("[MANAGER] [SENSOR] El sensor está listo para operar.")
                     return True
-
-                time.sleep(1)  # Esperar antes de reintentar
-
+                else:
+                    logging.warning("[MANAGER] [SENSOR] El sensor no está listo para configurarse.")
+                    time.sleep(1)  # Espera antes de reintentar
             except Exception as e:
-                logging.warning(f"[MANAGER] [SENSOR] Error verificando estado en intento {attempt + 1}: {e}")
-
+                logging.warning(f"[MANAGER] [SENSOR] Error en intento {attempt + 1}/3: {e}")
+                time.sleep(1)
         raise RuntimeError("[MANAGER] [SENSOR] El sensor sigue ocupado después de varios intentos.")
-
-
 
 
     def reset(self):
