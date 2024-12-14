@@ -40,42 +40,51 @@ class SENSOR_AS7265x:
 
     def _write_register(self, reg, value):
         """
-        Escribe un valor en un registro del sensor.
+        Escribe un valor en un registro del sensor utilizando reintentos.
         :param reg: Dirección del registro.
         :param value: Valor a escribir.
         """
-        while True:
-            status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
-            if not (status & self.TX_VALID):
-                break
-            time.sleep(self.POLLING_DELAY)
+        def action():
+            # Lógica de escritura
+            while True:
+                status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
+                if not (status & self.TX_VALID):
+                    break
+                time.sleep(self.POLLING_DELAY)
 
-        self.i2c.write_byte_data(self.I2C_ADDR, self.REG_WRITE, reg | 0x80)
-        while True:
-            status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
-            if not (status & self.TX_VALID):
-                break
-            time.sleep(self.POLLING_DELAY)
+            self.i2c.write_byte_data(self.I2C_ADDR, self.REG_WRITE, reg | 0x80)
+            while True:
+                status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
+                if not (status & self.TX_VALID):
+                    break
+                time.sleep(self.POLLING_DELAY)
 
-        self.i2c.write_byte_data(self.I2C_ADDR, self.REG_WRITE, value)
+            self.i2c.write_byte_data(self.I2C_ADDR, self.REG_WRITE, value)
+
+        # Usa _attempt_action para ejecutar el proceso con reintentos
+        self._attempt_action(action)
+
 
     def _read_register(self, reg):
         """
-        Lee un valor de un registro del sensor.
+        Lee un valor de un registro del sensor utilizando reintentos.
         :param reg: Dirección del registro.
         :return: Valor leído.
         """
-        try:
+        def action():
+            # Verifica el estado inicial del sensor
             status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
             if status & self.RX_VALID:
                 self.i2c.read_byte_data(self.I2C_ADDR, self.REG_READ)
 
+            # Espera a que el buffer de escritura esté listo
             while True:
                 status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
                 if not (status & self.TX_VALID):
-                    break 
+                    break
                 time.sleep(self.POLLING_DELAY)
 
+            # Solicita lectura del registro
             self.i2c.write_byte_data(self.I2C_ADDR, self.REG_WRITE, reg)
             while True:
                 status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
@@ -83,12 +92,12 @@ class SENSOR_AS7265x:
                     break
                 time.sleep(self.POLLING_DELAY)
 
+            # Devuelve el valor leído
             return self.i2c.read_byte_data(self.I2C_ADDR, self.REG_READ)
-            return self._attempt_action(lambda: self.i2c.read_byte_data(self.I2C_ADDR, reg))
-        except OSError as e:
-            logging.warning(f"Error de I2C al leer el registro {hex(reg)} (Intento {attempt + 1}/{attempts}): {e}")
-            time.sleep(self.POLLING_DELAY)  # Esperar antes de reintentar
-    raise OSError(f"No se pudo leer el registro {hex(reg)} después de {attempts} intentos.")
+
+        # Usa _attempt_action para ejecutar el proceso con reintentos
+        return self._attempt_action(action)
+
 
     def _write_virtual_register(self, reg, value):
         """
@@ -126,18 +135,21 @@ class SENSOR_AS7265x:
 
     def _attempt_action(self, action, max_attempts=3, delay=0.05):
         """
-        Intenta ejecutar una acción específica (lectura/escritura) con reintentos en caso de fallos.
-        :param action: Función que realiza la acción.
-        :param max_attempts: Número máximo de intentos.
-        :param delay: Tiempo de espera entre intentos.
+        Intenta ejecutar una acción específica con reintentos.
+        :param action: Una función lambda o callable que representa la acción a realizar.
+        :param max_attempts: Número máximo de intentos permitidos.
+        :param delay: Retardo entre intentos fallidos.
+        :return: El resultado de la acción si es exitosa.
+        :raises: OSError si todos los intentos fallan.
         """
-        for attempt in range(max_attempts):
+        for attempt in range(1, max_attempts + 1):
             try:
-                return action()
+                result = action()
+                return result
             except OSError as e:
-                logging.warning(f"Intento {attempt + 1}/{max_attempts} fallido: {e}")
+                logging.warning(f"Intento {attempt}/{max_attempts} fallido: {e}")
                 time.sleep(delay)
-        raise OSError("No se pudo completar la acción después de múltiples intentos.")
+        raise OSError(f"No se pudo completar la acción después de {max_attempts} intentos.")
 
     def configure(self, integration_time, gain, mode):
         """
