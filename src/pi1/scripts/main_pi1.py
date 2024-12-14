@@ -62,67 +62,51 @@ def load_config(config_path):
         sys.exit(1)
 
 # Configuración de los logs
+import logging
+from logging.handlers import RotatingFileHandler
+
 def configure_logging(config):
     """
     Configura el sistema de logging.
     """
-    log_file = os.path.expanduser(config['logging']['log_file'])    
+    log_file = os.path.expanduser(config['logging']['log_file'])
     log_dir = os.path.dirname(log_file)
-    error_log_file = config["logging"]["error_log_file"]
-    max_log_size = config.get("logging", {}).get("max_size_mb", 5) * 1024 * 1024                # Tamaño máximo en bytes
-    backup_count = config.get("logging", {}).get("backup_count", 3)                             # Número de archivos de respaldo
+    error_log_file = config['logging']['error_log_file']
+    max_log_size = config.get("logging", {}).get("max_size_mb", 5) * 1024 * 1024
+    backup_count = config.get("logging", {}).get("backup_count", 3)
 
+    # Crear directorio de logs si no existe
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
 
-    if len(logging.getLogger().handlers):
-        return  # Evitar múltiples configuraciones
-    
-    # Configuración del formato de los logs con fecha y hora
-    LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
-    DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+    # Configuración del logger principal
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG if config.get('system', {}).get('enable_detailed_logging', False) else logging.INFO)
 
-    logging.basicConfig(
-        filename=log_file,                                                                                          # Archivo de logs
-        level=logging.DEBUG if config.get("system", {}).get("enable_detailed_logging", False) else logging.INFO,    # Nivel de logs
-        format=LOG_FORMAT,                                                                                          # Formato del log                                         
-        datefmt=DATE_FORMAT,                                                                                        # Formato de la fecha                                     
-)
-#     formatter = ColoredFormatter(
-#     "%(log_color)s%(levelname)s: %(message)s",
-#     log_colors={
-#         "DEBUG": "cyan",
-#         "INFO": "green",
-#         "WARNING": "yellow",
-#         "ERROR": "red",
-#         "CRITICAL": "bold_red",
-#     },
-# )
-    # Configuración del RotatingFileHandler
-    handler = RotatingFileHandler(
-        filename=log_file,
-        maxBytes=max_log_size,  # Tamaño máximo del archivo en bytes
-        backupCount=backup_count,  # Número de archivos de respaldo
-    )
-    handler.setFormatter(logging.Formatter(fmt=LOG_FORMAT, datefmt=DATE_FORMAT))
-    logging.getLogger().addHandler(handler)
+    # Formato de los logs
+    log_format = "%(asctime)s - %(levelname)s - %(message)s"
+    date_format = "%Y-%m-%d %H:%M:%S"
 
-    # Configuración del manejador para logs de errores
+    # Manejador de archivo (RotatingFileHandler)
+    file_handler = RotatingFileHandler(log_file, maxBytes=max_log_size, backupCount=backup_count)
+    file_handler.setFormatter(logging.Formatter(fmt=log_format, datefmt=date_format))
+    file_handler.setLevel(logging.DEBUG if config.get('system', {}).get('enable_detailed_logging', False) else logging.INFO)
+    logger.addHandler(file_handler)
+
+    # Manejador de consola (StreamHandler)
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(logging.Formatter(fmt=log_format, datefmt=date_format))
+    console_handler.setLevel(logging.DEBUG if config.get('system', {}).get('enable_detailed_logging', False) else logging.INFO)
+    logger.addHandler(console_handler)
+
+    # Manejador de errores
     error_handler = logging.FileHandler(error_log_file)
+    error_handler.setFormatter(logging.Formatter(fmt=log_format, datefmt=date_format))
     error_handler.setLevel(logging.ERROR)
-    error_handler.setFormatter(logging.Formatter(fmt=LOG_FORMAT, datefmt=DATE_FORMAT))
-
-    # Agregar manejadores al logger
-    logger = logging.getLogger(ColorLogger)
-    logger.setLevel(logging.DEBUG if config.get("enable_detailed_logging", False) else logging.INFO)
-    logger.addHandler(handler)
     logger.addHandler(error_handler)
 
-    # Redirigir stdout y stderr al logger
-    sys.stdout = StreamToLogger(logging.getLogger(), logging.INFO)
-    sys.stderr = StreamToLogger(logging.getLogger(), logging.ERROR)
+    logging.info("Sistema de logging configurado correctamente.")
 
-    print(f"Logging configurado en {log_file}.")
 
 def scan_i2c_bus():
     """
