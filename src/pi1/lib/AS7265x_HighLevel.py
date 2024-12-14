@@ -20,51 +20,52 @@ class AS7265x_Manager:
     Este archivo abstrae las operaciones comunes como configuración y lectura de espectros.
     """
 
-    def __init__(self, address=0x49, config=config, i2c_bus=1):
+    def __init__(self, address=0x49, config=None, i2c_bus=1):
         """
         Inicializa el controlador de alto nivel para el sensor AS7265x.
         :param address: Dirección I²C del sensor.
+        :param config: Configuración del sistema cargada desde config.yaml.
+        :param i2c_bus: Bus I²C donde está conectado el sensor.
         """
-        self.config = config
-        self.address = address
-        self.i2c_bus = i2c_bus
-        self.sensor = SENSOR_AS7265x(i2c_bus=i2c_bus, address=address)
-        logging.info(f"[SENSOR] AS7265x inicializado en la dirección {hex(address)}.")
-    
+        try:
+            self.config = config if config else {}
+            self.address = address
+            self.i2c_bus = i2c_bus
+
+            # Validar configuración mínima
+            required_keys = ['sensors', 'system']
+            if not all(key in self.config for key in required_keys):
+                raise KeyError(f"Faltan claves requeridas en la configuración: {required_keys}")
+
+            self.sensor = SENSOR_AS7265x(i2c_bus=i2c_bus, address=address)
+            logging.info(f"[MANAGER] [SENSOR] AS7265x inicializado en la dirección {hex(address)} en el bus I²C {i2c_bus}.")
+        except Exception as e:
+            logging.error(f"[MANAGER] [SENSOR] Error durante la inicialización: {e}")
+            raise
+
     def configure(self):
         """
         Configura el sensor usando los parámetros de configuración desde config.yaml.
         """
-        logging.info("[HIGH LEVEL] [SENSOR] Iniciando configuración del sensor...")
+        logging.info("[MANAGER] [SENSOR] Iniciando configuración del sensor...")
         try:
-            # Leer parámetros desde config.yaml
             integration_time = self.config['sensors']['integration_time']
             gain = self.config['sensors']['gain']
             mode = self.config['sensors']['mode']
 
-            logging.info(f"[HIGH LEVEL] [SENSOR] Parámetros leídos: integración={integration_time}, ganancia={gain}, modo={mode}.")
+            logging.info(f"[MANAGER] [SENSOR] Parámetros: integración={integration_time}, ganancia={gain}, modo={mode}.")
 
-            # Validar parámetros
-            if not (1 <= integration_time <= 255):
-                logging.error(f"[HIGH LEVEL] [SENSOR] Tiempo de integración inválido: {integration_time}. Debe estar entre 1 y 255.")
-                raise ValueError(f"[HIGH LEVEL] [SENSOR] Tiempo de integración inválido: {integration_time}.")
-
-            if gain not in [0, 1, 2, 3]:
-                logging.error(f"[HIGH LEVEL] [SENSOR] Ganancia inválida: {gain}. Valores permitidos: 0, 1, 2, 3.")
-                raise ValueError(f"[HIGH LEVEL] [SENSOR] Ganancia inválida: {gain}.")
-
-            if mode not in [0, 1, 2, 3]:
-                logging.error(f"[HIGH LEVEL] [SENSOR] Modo inválido: {mode}. Valores permitidos: 0, 1, 2, 3.")
-                raise ValueError(f"[HIGH LEVEL] [SENSOR] Modo inválido: {mode}.")
-
-            # Configurar el sensor
-            self.sensor.configure(integration_time, gain, mode)
-            logging.info(f"[HIGH LEVEL] [SENSOR] Configuración completada exitosamente: integración={integration_time}, ganancia={gain}, modo={mode}.")
+            # Llamada segura al controlador
+            if hasattr(self.sensor, 'configure'):
+                self.sensor.configure(integration_time, gain, mode)
+                logging.info(f"[MANAGER] [SENSOR] Configuración completada exitosamente.")
+            else:
+                raise AttributeError("[MANAGER] [SENSOR] El controlador no tiene un método 'configure'.")
         except KeyError as e:
-            logging.error(f"[HIGH LEVEL] [SENSOR] Clave de configuración faltante: {e}")
+            logging.error(f"[MANAGER] [SENSOR] Clave de configuración faltante: {e}")
             raise
         except Exception as e:
-            logging.error(f"[HIGH LEVEL] [SENSOR] Error al configurar el sensor: {e}")
+            logging.error(f"[MANAGER] [SENSOR] Error al configurar el sensor: {e}")
             raise
 
 
@@ -75,30 +76,34 @@ class AS7265x_Manager:
         """
         try:
             spectrum = self.sensor.read_calibrated_spectrum()
-            formatted_spectrum = json.dumps(spectrum, indent=4)
-            if self.config['system']['enable_sensor_diagnostics']:
+            if not spectrum:
+                raise ValueError("[MANAGER] [SENSOR] El espectro calibrado está vacío o es nulo.")
+
+            # Diagnóstico opcional
+            if self.config['system'].get('enable_sensor_diagnostics', False):
                 self._diagnostic_check(spectrum)
-            logging.info(f"[SENSOR] Espectro calibrado leído: \n{formatted_spectrum}")
+
+            logging.info(f"[MANAGER] [SENSOR] Espectro calibrado leído:\n{json.dumps(spectrum, indent=4)}")
             return spectrum
         except Exception as e:
-            logging.error(f"[SENSOR] Error leyendo el espectro calibrado: {e}")
+            logging.error(f"[MANAGER] [SENSOR] Error leyendo el espectro calibrado: {e}")
             raise
 
     def read_raw_spectrum(self):
         """
-        Lee el espectro crudo en formato de diccionario usando AS7265x_Manager.
+        Lee y devuelve el espectro crudo del sensor.
         :return: Diccionario con nombres de colores y valores.
         """
         try:
-            logging.debug("Leyendo espectro crudo desde AS7265x_Manager...")
-            raw_spectrum = self.sensor.read_raw_spectrum()  # Llama a la función del manager
-            formatted_spectrum = json.dumps(raw_spectrum, indent=4)
-            logging.info(f"Espectro crudo leído: \n{formatted_spectrum}")
+            raw_spectrum = self.sensor.read_raw_spectrum()
+            if not raw_spectrum:
+                raise ValueError("[MANAGER] [SENSOR] El espectro crudo está vacío o es nulo.")
+
+            logging.info(f"[MANAGER] [SENSOR] Espectro crudo leído:\n{json.dumps(raw_spectrum, indent=4)}")
             return raw_spectrum
         except Exception as e:
-            logging.error(f"Error leyendo el espectro crudo: {e}")
-            raise RuntimeError(f"Error leyendo el espectro crudo: {e}")
-
+            logging.error(f"[MANAGER] [SENSOR] Error leyendo el espectro crudo: {e}")
+            raise
 
     def check_sensor_status(self):
         """
@@ -120,14 +125,15 @@ class AS7265x_Manager:
 
     def reset(self):
         """
-        Reinicia el sensor AS7265x utilizando la clase base.
+        Reinicia el sensor AS7265x.
         """
         try:
             self.sensor.reset()
-            logging.info(f"[SENSOR] El sensor ha sido reiniciado correctamente.")
+            logging.info("[MANAGER] [SENSOR] Reinicio del sensor completado correctamente.")
         except Exception as e:
-            logging.error(f"[SENSOR] Error al reiniciar el sensor: {e}")
+            logging.error(f"[MANAGER] [SENSOR] Error durante el reinicio: {e}")
             raise
+
 
     def read_status(self):
         """
@@ -135,21 +141,28 @@ class AS7265x_Manager:
         :return: Valor del estado del sensor.
         """
 
-        logging.info(f"[SENSOR] El sensor está listo para leer datos.")
+        logging.info(f"[MANAGER] [SENSOR] El sensor está listo para leer datos.")
         return self.sensor._read_status()
 
     def _diagnostic_check(self, spectrum):
         """
         Verifica la calidad de los datos espectrales y genera alertas si son inconsistentes.
+        :param spectrum: Datos espectrales calibrados.
         """
         try:
+            if not spectrum:
+                raise ValueError("[MANAGER] [SENSOR] El espectro está vacío para el diagnóstico.")
+
             if all(entry['calibrated_value'] == 0 for entry in spectrum):
-                logging.warning("[SENSOR] Diagnóstico: Todos los valores del espectro son 0.")
+                logging.warning("[MANAGER] [SENSOR] Diagnóstico: Todos los valores del espectro son 0.")
+
             if any(entry['calibrated_value'] > 3000 for entry in spectrum):
-                logging.warning("[SENSOR] Diagnóstico: Valor excesivo detectado en el espectro.")
-            logging.info("[SENSOR] Diagnóstico completado exitosamente.")
+                logging.warning("[MANAGER] [SENSOR] Diagnóstico: Valor excesivo detectado en el espectro.")
+
+            logging.info("[MANAGER] [SENSOR] Diagnóstico completado exitosamente.")
         except Exception as e:
-            logging.error(f"[SENSOR] Error en diagnóstico del espectro: {e}")
+            logging.error(f"[MANAGER] [SENSOR] Error en diagnóstico del espectro: {e}")
+
 
 # Al final de AS7265x_HighLevel.py, fuera de clases
 def generate_summary(successful_reads, failed_reads, error_details):
@@ -168,14 +181,22 @@ def generate_summary(successful_reads, failed_reads, error_details):
         warnings.append("No se completaron lecturas exitosas.")
 
     logging.info("=" * 50)
+    logging.info("")
     logging.info("========== RESUMEN FINAL ==========")
     logging.info(f"Lecturas exitosas: {successful_reads}")
     logging.info(f"Fallos totales: {failed_reads}")
+    logging.info("")
     if error_details:
         logging.info("Detalles de los fallos por canal:")
         for error in error_details:
-            logging.error(f" - Canal {error['channel']}: {error['error_message']}")
+            channel = error.get('channel', 'Desconocido')
+            message = error.get('error_message', 'Error no especificado.')
+            logging.error(f" - Canal {channel}: {message}")
     if warnings:
         for warning in warnings:
             logging.warning(warning)
+
+    if successful_reads == 0:
+        logging.warning("No se completaron lecturas exitosas.")
+
     logging.info("=" * 50)

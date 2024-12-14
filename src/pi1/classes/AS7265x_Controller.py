@@ -65,31 +65,30 @@ class SENSOR_AS7265x:
         :param reg: Dirección del registro.
         :return: Valor leído.
         """
-        attempts = 3
-        for attempt in range(attempts):
-            try:
+        try:
+            status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
+            if status & self.RX_VALID:
+                self.i2c.read_byte_data(self.I2C_ADDR, self.REG_READ)
+
+            while True:
+                status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
+                if not (status & self.TX_VALID):
+                    break 
+                time.sleep(self.POLLING_DELAY)
+
+            self.i2c.write_byte_data(self.I2C_ADDR, self.REG_WRITE, reg)
+            while True:
                 status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
                 if status & self.RX_VALID:
-                    self.i2c.read_byte_data(self.I2C_ADDR, self.REG_READ)
+                    break
+                time.sleep(self.POLLING_DELAY)
 
-                while True:
-                    status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
-                    if not (status & self.TX_VALID):
-                        break 
-                    time.sleep(self.POLLING_DELAY)
-
-                self.i2c.write_byte_data(self.I2C_ADDR, self.REG_WRITE, reg)
-                while True:
-                    status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
-                    if status & self.RX_VALID:
-                        break
-                    time.sleep(self.POLLING_DELAY)
-
-                return self.i2c.read_byte_data(self.I2C_ADDR, self.REG_READ)
-            except OSError as e:
-                logging.warning(f"Error de I2C al leer el registro {hex(reg)} (Intento {attempt + 1}/{attempts}): {e}")
-                time.sleep(self.POLLING_DELAY)  # Esperar antes de reintentar
-        raise OSError(f"No se pudo leer el registro {hex(reg)} después de {attempts} intentos.")
+            return self.i2c.read_byte_data(self.I2C_ADDR, self.REG_READ)
+            return self._attempt_action(lambda: self.i2c.read_byte_data(self.I2C_ADDR, reg))
+        except OSError as e:
+            logging.warning(f"Error de I2C al leer el registro {hex(reg)} (Intento {attempt + 1}/{attempts}): {e}")
+            time.sleep(self.POLLING_DELAY)  # Esperar antes de reintentar
+    raise OSError(f"No se pudo leer el registro {hex(reg)} después de {attempts} intentos.")
 
     def _write_virtual_register(self, reg, value):
         """
@@ -101,7 +100,7 @@ class SENSOR_AS7265x:
             time.sleep(self.POLLING_DELAY)                                # Esperar hasta que el buffer de escritura esté listo
         self._write_register(self.REG_WRITE, reg | 0x80)    # Escribir dirección del registro
         self._write_register(self.REG_WRITE, value)         # Escribir valor
-        logging.debug(f"[CONTROLLER] [SENSOR] Registro virtual {hex(reg)} configurado con {value}.")
+        logging.debug(f"[CONTROLLER] [SENSOR] Intentando escribir {value} en el registro virtual {hex(reg)}.")
 
     def _read_virtual_register(self, reg):
         """
@@ -124,6 +123,21 @@ class SENSOR_AS7265x:
         :return: Valor del registro de estado.
         """
         return self._read_register(self.REG_STATUS)
+
+    def _attempt_action(self, action, max_attempts=3, delay=0.05):
+        """
+        Intenta ejecutar una acción específica (lectura/escritura) con reintentos en caso de fallos.
+        :param action: Función que realiza la acción.
+        :param max_attempts: Número máximo de intentos.
+        :param delay: Tiempo de espera entre intentos.
+        """
+        for attempt in range(max_attempts):
+            try:
+                return action()
+            except OSError as e:
+                logging.warning(f"Intento {attempt + 1}/{max_attempts} fallido: {e}")
+                time.sleep(delay)
+        raise OSError("No se pudo completar la acción después de múltiples intentos.")
 
     def configure(self, integration_time, gain, mode):
         """
@@ -155,60 +169,48 @@ class SENSOR_AS7265x:
     def set_devsel(self, device):
         """
         Selecciona el dispositivo interno del sensor.
-        :param device: Dispositivo a seleccionar (AS72651, AS72652, AS72653).
+        :param device: Dispositivo a seleccionar (AS72651(NIR), AS72652(VIS), AS72653(UV)).
         """
-        if device == "AS72651":
-            # Cambia al dispositivo NIR
-            self._write_register(0x4F, 0x00)
-        elif device == "AS72652":
-            # Cambia al dispositivo VIS
-            self._write_register(0x4F, 0x01)
-        elif device == "AS72653":
-            # Cambia al dispositivo UV
-            self._write_register(0x4F, 0x02)
-        else:
-            raise ValueError(f"Dispositivo no válido: {device}")
-
         if device not in self.DEVICES:
             raise ValueError(f"[CONTROLLER] [SENSOR] Dispositivo {device} no válido. Seleccione entre {list(self.DEVICES.keys())}.")
+        
         self._write_virtual_register(0x4F, self.DEVICES[device])
+        selected_device = self._read_virtual_register(0x4F)
+        if selected_device != self.DEVICES[device]:
+            raise RuntimeError(f"[CONTROLLER] [SENSOR] Error al seleccionar el dispositivo {device}.")
+        
         logging.info(f"[CONTROLLER] [SENSOR] Dispositivo seleccionado: {device}.")
 
-    def read_calibrated_spectrum(self):
-        """
-        Lee el espectro calibrado junto con las longitudes de onda.
-        """
-        # Registros de calibración y longitudes de onda
+    def _read_calibrated_values(self, device):
         cal_registers = [
             (0x14, 0x15, 0x16, 0x17), (0x18, 0x19, 0x1a, 0x1b),
             (0x1c, 0x1d, 0x1e, 0x1f), (0x20, 0x21, 0x22, 0x23),
             (0x24, 0x25, 0x26, 0x27), (0x28, 0x29, 0x2a, 0x2b)
         ]
+        cal_values = []
+        self.set_devsel(device)
+        for reg_quad in cal_registers:
+            cal = [self._read_register(r) for r in reg_quad]
+            cal_values.append(self.ieee754_to_float(cal))
+        return self.reorder_data(cal_values)
+
+    def read_calibrated_spectrum(self):
+        """
+        Lee el espectro calibrado junto con las longitudes de onda.
+        """
         wavelengths_nm = [
             410, 435, 460, 485, 510, 535, 560, 585, 610,
             645, 680, 705, 730, 760, 810, 860, 900, 940
         ]
         devices = ["AS72651", "AS72652", "AS72653"]
-        cal_values = []
-        wave_values = []
 
-        # Leer los valores calibrados de cada dispositivo
-        for device_index, device in enumerate(devices):
-            self.set_devsel(device)
-            for reg_index, reg_quad in enumerate(cal_registers):
-                # Leer los valores calibrados
-                cal = [self._read_register(r) for r in reg_quad]
-                calibrated_value = self.ieee754_to_float(cal)
-
-                # Determinar el índice global para asociar longitudes de onda
-                global_index = device_index * 6 + reg_index
-                wave_nm = wavelengths_nm[global_index]
-
-                # Añadir a las listas
-                cal_values.append(calibrated_value)
-                wave_values.append(wave_nm)
-
-        return cal_values, wave_values
+        all_cal_values = []
+        for device in devices:
+            all_cal_values.extend(self._read_calibrated_values(device))
+        
+        spectrum = {"wavelengths": wavelengths_nm, "calibrated_values": all_cal_values}
+        logging.info(f"[CONTROLLER] [SENSOR] Espectro calibrado leído: {spectrum}")
+        return spectrum
 
 
     # def read_raw_spectrum(self):
