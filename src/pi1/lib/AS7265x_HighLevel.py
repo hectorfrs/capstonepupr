@@ -115,7 +115,7 @@ class AS7265x_Manager:
         :return: True si el sensor está listo, False en caso contrario.
         """
         try:
-            ready = self.controller.verify_ready_state()
+            ready = self.sensor.verify_ready_state()
             if ready:
                 logging.info("[HIGHLEVEL] [SENSOR] El sensor está listo para operar.")
                 return True
