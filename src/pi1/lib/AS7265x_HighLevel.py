@@ -117,7 +117,8 @@ class AS7265x_Manager:
                 rx_valid = status & self.sensor.RX_VALID
                 ready = status & self.sensor.READY
 
-                logging.debug(f"[MANAGER] [SENSOR] Estado del sensor: TX_VALID={bool(tx_valid)}, RX_VALID={bool(rx_valid)}, READY={bool(ready)}")
+                logging.debug(f"[MANAGER] [SENSOR] Estado del sensor: "
+                            f"TX_VALID={bool(tx_valid)}, RX_VALID={bool(rx_valid)}, READY={bool(ready)}")
 
                 if not ready:  # El sensor no está listo
                     raise RuntimeError("[MANAGER] [SENSOR] El sensor no está listo para configurarse.")
@@ -130,6 +131,7 @@ class AS7265x_Manager:
                 time.sleep(2)  # Aumentar tiempo de espera antes de reintentar
 
         raise RuntimeError("[MANAGER] [SENSOR] El sensor sigue ocupado después de varios intentos.")
+
 
 
     def reset(self):
