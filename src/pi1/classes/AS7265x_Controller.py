@@ -42,6 +42,7 @@ class SENSOR_AS7265x:
         self.i2c = SMBus(i2c_bus)
         self.address = address
         logging.info(f"[CONTROLLER] [SENSOR] AS7265x inicializado en dirección {hex(self.address)} en el bus I2C {i2c_bus}.")
+        self.verify_connection()
 
     def check_sensor_status(self):
         return self.verify_ready_state()
@@ -60,6 +61,15 @@ class SENSOR_AS7265x:
             time.sleep(delay)  # Espera antes del siguiente intento
         logging.error("[CONTROLLER] [SENSOR] El sensor no alcanzó el estado READY después de varios intentos.")
         return False
+
+    def verify_connection(self):
+        try:
+            self.i2c.read_byte(self.I2C_ADDR)
+            logging.info("[CONTROLLER] [SENSOR] Comunicación I2C verificada.")
+            return True
+        except OSError as e:
+            logging.error(f"[CONTROLLER] [SENSOR] Error de comunicación I2C: {e}")
+            return False
 
     def _write_register(self, reg, value):
         """
@@ -201,10 +211,11 @@ class SENSOR_AS7265x:
             ready = (reg_status & self.READY) >> 3
             logging.debug(f"[CONTROLLER] [SENSOR] REG_STATUS leído: {bin(reg_status)} "
                         f"(TX_VALID={tx_valid}, RX_VALID={rx_valid}, READY={ready})")
-            return tx_valid, rx_valid, ready
-        except Exception as e:
+            return reg_status
+        except OSError as e:
             logging.error(f"[CONTROLLER] [SENSOR] Error al leer REG_STATUS: {e}")
             raise
+
 
     def is_ready(self):
         """
@@ -423,7 +434,7 @@ class SENSOR_AS7265x:
             logging.debug("[CONTROLLER] [SENSOR] Ejecutando reinicio del sensor...")
             self.i2c.write_byte_data(self.I2C_ADDR, self.REG_CONFIGURATION, 0x01)  # Reinicio por software
             logging.debug("[CONTROLLER] [SENSOR] Comando de reinicio enviado al sensor.")
-            time.sleep(5)  # Esperar para que el reinicio surta efecto
+            time.sleep(10)  # Esperar para que el reinicio surta efecto
         except Exception as e:
             logging.error(f"[MANAGER] [SENSOR] Error durante el reinicio: {e}")
             raise
