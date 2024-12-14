@@ -184,12 +184,15 @@ def main():
     logging.info("[MAIN] [MUX] Inicializando...")
     if 'mux' not in config or 'address' not in config['mux']:
         logging.error("[MAIN] [MUX] La configuración del MUX es inválida o incompleta.")
-    sys.exit(1)
+        sys.exit(1)
     mux = TCA9548A_Manager(address=config['mux']['address'])
 
     # Habilitar canales del MUX
+    logging.info("[MAIN] [MUX] Habilitando canales...")
     mux_channels = [entry['channel'] for entry in config['mux']['channels']]
+    logging.info(f"[MAIN] [MUX] Intentando habilitar canales: {mux_channels}")
     mux.enable_multiple_channels(mux_channels)
+    logging.info(f"[MAIN] [MUX] Canales habilitados correctamente.")
 
     # Inicializar sensores en los canales
     logging.info("[MAIN] [SENSOR] Inicializando...")
@@ -260,4 +263,7 @@ def main():
     
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        logging.critical(f"Error crítico en la ejecución principal: {e}", exc_info=True)
