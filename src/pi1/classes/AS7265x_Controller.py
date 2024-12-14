@@ -83,7 +83,7 @@ class SENSOR_AS7265x:
                 if status & self.BUSY:
                     logging.debug("[CONTROLLER] [SENSOR] Sensor ocupado, esperando...")
                     time.sleep(self.POLLING_DELAY)
-                continue
+                    continue
                 # Si está listo, verifica RX_VALID
                 if status & self.RX_VALID:
                     read_val = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_READ)
