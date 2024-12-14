@@ -53,13 +53,16 @@ class SENSOR_AS7265x:
         """
         for attempt in range(retries):
             reg_status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)  # Lee directamente el estado
+            tx_valid = (reg_status & self.TX_VALID) >> 1
+            rx_valid = reg_status & self.RX_VALID
             ready = (reg_status & self.READY) >> 3  # Extrae el bit READY
             logging.debug(f"[CONTROLLER] [SENSOR] Intento {attempt + 1}: REG_STATUS leído: {bin(reg_status)} (READY={bool(ready)})")
+            logging.debug(f"REG_STATUS leído: {bin(reg_status)} (TX_VALID={tx_valid}, RX_VALID={rx_valid}, READY={ready})")
             if ready:
                 logging.info("[CONTROLLER] [SENSOR] El sensor está listo para operar.")
                 return True
             time.sleep(delay)  # Espera antes del siguiente intento
-        logging.error("[CONTROLLER] [SENSOR] El sensor no alcanzó el estado READY después de varios intentos.")
+        logging.error("[CONTROLLER] [SENSOR] Error al verificar el estado del sensor: {e}")
         return False
 
     def verify_connection(self):
