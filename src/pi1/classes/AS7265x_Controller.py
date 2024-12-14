@@ -26,7 +26,7 @@ class SENSOR_AS7265x:
     TX_VALID = 0x02             # Buffer de escritura ocupado
     RX_VALID = 0x01             # Datos disponibles para leer
     POLLING_DELAY = 0.05        # Retardo de espera para el buffer de escritura
-    DELAY = min(self.POLLING_DELAY * attempt, 1)  # Retardo de espera para el buffer de escritura
+    
 
     READY = 0x08     # El sensor está listo (bit específico para "READY")
     BUSY = 0x08      # El sensor está ocupado (bit específico para "BUSY")
@@ -41,7 +41,7 @@ class SENSOR_AS7265x:
         """
         self.i2c = SMBus(i2c_bus)
         self.address = address
-
+        DELAY = min(self.POLLING_DELAY * attempt, 1)  # Retardo de espera para el buffer de escritura
         logging.info(f"[CONTROLLER] [SENSOR] AS7265x inicializado en dirección {hex(self.address)} en el bus I2C {i2c_bus}.")
 
     def verify_ready_state(self, retries=5, delay=2):
