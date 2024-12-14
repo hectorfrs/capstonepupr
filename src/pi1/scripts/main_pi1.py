@@ -182,10 +182,10 @@ def main():
     
     # Inicializar MUX
     logging.info("[MAIN] [MUX] Inicializando...")
+    if 'mux' not in config or 'address' not in config['mux']:
+        logging.error("[MAIN] [MUX] La configuración del MUX es inválida o incompleta.")
+    sys.exit(1)
     mux = TCA9548A_Manager(address=config['mux']['address'])
-    if 'address' not in config['mux']:
-        logging.error("La dirección del MUX no está especificada en la configuración.")
-        sys.exit(1)
 
     # Habilitar canales del MUX
     mux_channels = [entry['channel'] for entry in config['mux']['channels']]
@@ -194,9 +194,6 @@ def main():
     # Inicializar sensores en los canales
     logging.info("[MAIN] [SENSOR] Inicializando...")
     sensors = []
-    if not sensors:
-        logging.error(f"[MAIN] [SENSOR] No se inicializaron sensores correctamente. Finalizando el programa.")
-        return
 
     for channel_entry in config["mux"]["channels"]:
         channel = channel_entry["channel"]
@@ -205,33 +202,34 @@ def main():
         
         logging.info("=" * 50)
         logging.info(f"[MAIN] [SENSOR] Inicializando sensor en canal {channel}...")
-        mux.enable_channel(channel)
-        logging.info(
-            f"[MAIN] [MUX] El canal {channel} ha sido habilitado. "
-            f"Esperando estabilización del sensor..."
-            )
-        time.sleep(0.5)    # Tiempo de estabilización a 500 ms
-        
         try:
+            mux.enable_channel(channel)
+            logging.info(
+                f"[MAIN] [MUX] El canal {channel} ha sido habilitado. "
+                f"Esperando estabilización del sensor..."
+                )
+            time.sleep(1)    # Tiempo de estabilización a 500 ms
+        
+        
             # Crea instancia High Level para el sensor
             sensor = AS7265x_Manager(i2c_bus=1, address=0x49, config=config)
-
-            # Reset y Verificar el estado del sensor
             sensor.reset()
-            time.sleep(1)  # Esperar 5 segundo después de resetear
+            time.sleep(1)  # Esperar después del reset.
+            
+            #Leer el estado del sensor
             status = sensor.read_status()
             logging.debug(f"[MAIN] [SENSOR] Estado del sensor después del reinicio: {bin(status)}")
-            if not self._read_status() & self.READY:  # Define un valor para READY si es necesario
+            if not status & sensor.READY:  # Define un valor para READY si es necesario
                 raise RuntimeError("El sensor no está listo para configurarse.")
 
             # Configurar el sensor
-            try:
-                logging.info("[MAIN] [SENSOR] El sensor está listo para ser configurado.")
-                sensor.configure()
-                sensors.append(sensor)
-            except Exception as e:
-                logging.error(f"[MAIN] [SENSOR] Error al configurar el sensor: {e}")
-                continue
+            sensor.configure()
+            sensors.append(sensor)
+            logging.info(f"[MAIN] [SENSOR] Sensor {sensor_name} inicializado y configurado correctamente.")
+
+        except Exception as e:
+            logging.error(f"[MAIN] [SENSOR] Error al configurar el sensor: {e}")
+            continue
             
             # logging.info(
             #     f"[CANAL {channel} Sensor configurado: {sensor_name}] "
@@ -239,19 +237,20 @@ def main():
             #    )
 
             # Deshabilitar todos los canales después de configurar el sensor
-            mux.disable_all_channels()
         except Exception as e:
             logging.error(f"[MAIN] [SENSOR] Error con el sensor en canal {channel}: {e}")
             continue
         finally:
             # Deshabilitar todos los canales después de configurar el sensor
             mux.disable_all_channels()
+            logging.info(f"[MAIN] [MUX] Todos los canales deshabilitados después del canal {channel}.")
             logging.info("=" * 50)
 
      # Seleccionar flujo según configuración
     if not sensors:
         logging.error("[MAIN] No se pudieron inicializar sensores. Finalizando...")
         sys.exit(1)
+    system_config = config.get("system", {})
     if config["system"].get("process_with_conveyor", False):
         successful_reads, failed_reads, error_details = process_with_conveyor(config, sensors, mux)
     else:
