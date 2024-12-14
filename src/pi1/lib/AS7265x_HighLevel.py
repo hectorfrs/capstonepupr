@@ -147,7 +147,7 @@ class AS7265x_Manager:
         """
 
         logging.info(f"[MANAGER] [SENSOR] El sensor está listo.")
-        return self.sensor._read_status()
+        return self.sensor.verify_ready_state()
 
     def _diagnostic_check(self, spectrum):
         """
