@@ -207,10 +207,10 @@ def main():
             
             # Leer el estado del sensor desde el Manager
             try:
-                sensor.check_sensor_status()
-                raise Exception("[MAIN] [SENSOR] El sensor no está listo después del reinicio.")
+                #sensor.check_sensor_status()
+                #raise Exception("[MAIN] [SENSOR] El sensor no está listo después del reinicio.")
 
-                if not sensor.check_sensor_status():
+                if not sensor.verify_ready_state():
                     logging.critical("[MAIN] [SENSOR] Sensor falló irreparablemente. Notificando al sistema.")
 
                 sensor.initialize_sensor()
