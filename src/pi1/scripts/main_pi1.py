@@ -149,6 +149,11 @@ def main():
     # Cargar configuración
     config_path = "/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config_optimized.yaml"
     config = load_config(config_path)
+    required_keys = ['mux', 'sensors', 'system']
+    missing_keys = [key for key in required_keys if key not in config]
+    if missing_keys:
+        logging.error(f"Faltan claves requeridas en la configuración: {missing_keys}")
+        sys.exit(1)
 
     # Configuración de logging
     configure_logging(config)
@@ -178,6 +183,9 @@ def main():
     # Inicializar MUX
     logging.info("[MAIN] [MUX] Inicializando...")
     mux = TCA9548A_Manager(address=config['mux']['address'])
+    if 'address' not in config['mux']:
+        logging.error("La dirección del MUX no está especificada en la configuración.")
+        sys.exit(1)
 
     # Habilitar canales del MUX
     mux_channels = [entry['channel'] for entry in config['mux']['channels']]
@@ -185,9 +193,7 @@ def main():
 
     # Inicializar sensores en los canales
     logging.info("[MAIN] [SENSOR] Inicializando...")
-    sensors = [
-            AS7265x_Manager(i2c_bus=1, address=0x49, config=config)
-        ]
+    sensors = []
     if not sensors:
         logging.error(f"[MAIN] [SENSOR] No se inicializaron sensores correctamente. Finalizando el programa.")
         return
@@ -196,6 +202,7 @@ def main():
         channel = channel_entry["channel"]
         sensor_name = channel_entry["sensor_name"]
 
+        
         logging.info("=" * 50)
         logging.info(f"[MAIN] [SENSOR] Inicializando sensor en canal {channel}...")
         mux.enable_channel(channel)
@@ -207,7 +214,7 @@ def main():
         
         try:
             # Crea instancia High Level para el sensor
-            sensor = AS7265x_Manager()
+            sensor = AS7265x_Manager(i2c_bus=1, address=0x49, config=config)
 
             # Reset y Verificar el estado del sensor
             sensor.reset()
@@ -242,6 +249,9 @@ def main():
             logging.info("=" * 50)
 
      # Seleccionar flujo según configuración
+    if not sensors:
+        logging.error("[MAIN] No se pudieron inicializar sensores. Finalizando...")
+        sys.exit(1)
     if config["system"].get("process_with_conveyor", False):
         successful_reads, failed_reads, error_details = process_with_conveyor(config, sensors, mux)
     else:
