@@ -19,6 +19,8 @@ class AS7265x_Manager:
     Manejo de alto nivel para un sensor AS7265x.
     Este archivo abstrae las operaciones comunes como configuración y lectura de espectros.
     """
+    
+    READY = 0x08 # Máscara para el bit "READY" del registro REG_STATUS
 
     def __init__(self, address=0x49, config=None, i2c_bus=1):
         """
@@ -110,18 +112,14 @@ class AS7265x_Manager:
         """
         for attempt in range(3):  # Hasta 3 intentos
             try:
-                logging.info(f"[MANAGER] [SENSOR] Inicio de Verificacion de estado del sensor: Intento {attempt + 1}/3")
                 status = self.sensor._read_status()  # Usa el controlador del sensor para leer el estado
-                if not (status & self.READY):
-                    logging.warning("[MANAGER] [SENSOR] El sensor sigue ocupado. Reintentando...")
-                    time.sleep(2)  # Esperar un poco más antes de reintentar
                 tx_valid = status & self.sensor.TX_VALID
                 rx_valid = status & self.sensor.RX_VALID
+                ready = status & self.sensor.READY
 
-                logging.debug(f"[MANAGER] [SENSOR] Estado completo del sensor: {bin(status)}")
-                logging.debug(f"[MANAGER] [SENSOR] TX_VALID={bool(tx_valid)}, RX_VALID={bool(rx_valid)}")
-                
-                if not rx_valid or tx_valid:
+                logging.debug(f"[MANAGER] [SENSOR] Estado del sensor: TX_VALID={bool(tx_valid)}, RX_VALID={bool(rx_valid)}, READY={bool(ready)}")
+
+                if not ready:  # El sensor no está listo
                     raise RuntimeError("[MANAGER] [SENSOR] El sensor no está listo para configurarse.")
                 
                 logging.info("[MANAGER] [SENSOR] El sensor está listo para recibir comandos.")
@@ -129,10 +127,9 @@ class AS7265x_Manager:
 
             except Exception as e:
                 logging.warning(f"[MANAGER] [SENSOR] Estado no válido en intento {attempt + 1}/3: {e}")
-                time.sleep(2)  # Incrementa el tiempo de espera antes de reintentar
+                time.sleep(2)  # Aumentar tiempo de espera antes de reintentar
 
         raise RuntimeError("[MANAGER] [SENSOR] El sensor sigue ocupado después de varios intentos.")
-
 
 
     def reset(self):
