@@ -27,6 +27,9 @@ class AS7265x_Manager:
         :param config: Configuración del sistema cargada desde config.yaml.
         :param i2c_bus: Bus I²C donde está conectado el sensor.
         """
+        if config is None:
+            raise ValueError("[MANAGER] [SENSOR] La configuración no puede ser None.")
+            
         required_keys = ['sensors', 'system']
         missing_keys = [key for key in required_keys if key not in config]
         if missing_keys:

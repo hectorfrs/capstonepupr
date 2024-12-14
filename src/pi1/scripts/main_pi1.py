@@ -186,8 +186,8 @@ def main():
     # Inicializar sensores en los canales
     logging.info("[MAIN] [SENSOR] Inicializando...")
     sensors = [
-    AS7265x_Manager(i2c_bus=1, address=0x49),
-]
+            AS7265x_Manager(i2c_bus=1, address=0x49, config=config)
+        ]
     if not sensors:
         logging.error(f"[MAIN] [SENSOR] No se inicializaron sensores correctamente. Finalizando el programa.")
         return
