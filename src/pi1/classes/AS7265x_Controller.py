@@ -378,8 +378,8 @@ class SENSOR_AS7265x:
         try:
             logging.debug("[CONTROLLER] [SENSOR] Ejecutando reinicio del sensor...")
             self.i2c.write_byte_data(self.I2C_ADDR, self.REG_CONFIGURATION, 0x01)  # Reinicio por software
-            time.sleep(1)  # Esperar para que el reinicio surta efecto
             logging.debug("[CONTROLLER] [SENSOR] Comando de reinicio enviado al sensor.")
+            time.sleep(5)  # Esperar para que el reinicio surta efecto
         except Exception as e:
             logging.error(f"[MANAGER] [SENSOR] Error durante el reinicio: {e}")
             raise
