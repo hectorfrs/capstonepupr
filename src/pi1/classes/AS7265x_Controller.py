@@ -53,7 +53,7 @@ class SENSOR_AS7265x:
         :return: True si el sensor está listo, False en caso contrario.
         """
         for attempt in range(retries):
-            _, _, ready = self._read_status_details()
+            _, _, ready = self._read_status()
             if ready:
                 logging.info("[CONTROLLER] [SENSOR] El sensor está listo para operar.")
                 return True
