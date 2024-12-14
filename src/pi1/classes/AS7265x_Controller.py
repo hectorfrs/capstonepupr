@@ -53,19 +53,11 @@ class SENSOR_AS7265x:
         :return: True si el sensor está listo, False en caso contrario.
         """
         for attempt in range(retries):
-            try:
-                reg_status = self._read_status()  # Método de bajo nivel que accede al hardware
-                ready = (reg_status & self.READY) >> 3  # Bit READY en la posición 3
-                logging.debug(f"[CONTROLLER] [SENSOR] Intento {attempt + 1}: REG_STATUS leído: {bin(reg_status)} (READY={bool(ready)})")
-                
-                if ready:
-                    logging.info("[CONTROLLER] [SENSOR] El sensor está listo para operar.")
-                    return True
-                
-                time.sleep(delay)  # Esperar antes del siguiente intento
-            except Exception as e:
-                logging.error(f"[CONTROLLER] [SENSOR] Error al verificar el estado READY: {e}")
-        
+            _, _, ready = self._read_status_details()
+            if ready:
+                logging.info("[CONTROLLER] [SENSOR] El sensor está listo para operar.")
+                return True
+            time.sleep(delay)
         logging.error("[CONTROLLER] [SENSOR] El sensor no alcanzó el estado READY después de varios intentos.")
         return False
 
@@ -178,17 +170,18 @@ class SENSOR_AS7265x:
         logging.debug(f"[CONTROLLER] [SENSOR] Registro virtual {hex(reg)} leído con valor {value}.")
         return value
 
-    def _read_status(self):
+    def _read_status_details(self):
         """
-        Lee el registro de estado y devuelve los bits relevantes.
+        Lee el registro de estado y retorna detalles sobre TX_VALID, RX_VALID y READY.
         """
-        try:
-            status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
-            logging.debug(f"[CONTROLLER] [SENSOR] REG_STATUS leído: 0b{status:08b}")
-            return status
-        except Exception as e:
-            logging.error(f"[CONTROLLER] [SENSOR] Error al leer REG_STATUS: {e}")
-            raise
+        reg_status = self._read_status()
+        tx_valid = (reg_status & self.TX_VALID) >> 1
+        rx_valid = reg_status & self.RX_VALID
+        ready = (reg_status & self.READY) >> 3
+        logging.debug(f"[CONTROLLER] [SENSOR] REG_STATUS leído: {bin(reg_status)} "
+                    f"(TX_VALID={tx_valid}, RX_VALID={rx_valid}, READY={ready})")
+        return tx_valid, rx_valid, ready
+
 
     def is_ready(self):
         """
