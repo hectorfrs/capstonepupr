@@ -199,7 +199,7 @@ class AS7265x_Manager:
         :return: True si el sensor está listo, False en caso contrario.
         """
         try:
-            status = self.sensor.read_status()  # Usar el controlador para leer el estado del sensor
+            status = self.sensor._read_status()  # Usar el controlador para leer el estado del sensor
             ready = bool(status & self.sensor.READY)
             logging.debug(f"[MANAGER] [SENSOR] Estado del sensor: {bin(status)} (READY={ready})")
             return ready
