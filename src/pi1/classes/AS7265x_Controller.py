@@ -74,28 +74,40 @@ class SENSOR_AS7265x:
         :return: Valor leído.
         """
         def action():
-            # Verifica el estado inicial del sensor
-            status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
-            if status & self.RX_VALID:
-                self.i2c.read_byte_data(self.I2C_ADDR, self.REG_READ)
-
-            # Espera a que el buffer de escritura esté listo
-            while True:
+            try:
+                logging.debug(f"[CONTROLLER] Iniciando lectura del registro 0x{reg:02X}.")
+                # Verifica el estado inicial del sensor
                 status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
-                if not (status & self.TX_VALID):
-                    break
-                time.sleep(self.POLLING_DELAY)
-
-            # Solicita lectura del registro
-            self.i2c.write_byte_data(self.I2C_ADDR, self.REG_WRITE, reg)
-            while True:
-                status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
+                logging.debug(f"[CONTROLLER] REG_STATUS antes de RX_VALID: 0x{status:02X}")
                 if status & self.RX_VALID:
-                    break
-                time.sleep(self.POLLING_DELAY)
+                    self.i2c.read_byte_data(self.I2C_ADDR, self.REG_READ)
+                    logging.debug(f"[CONTROLLER] REG_READ por RX_VALID: 0x{read_val:02X}")
 
-            # Devuelve el valor leído
-            return self.i2c.read_byte_data(self.I2C_ADDR, self.REG_READ)
+                # Espera a que el buffer de escritura esté listo
+                while True:
+                    status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
+                    logging.debug(f"[CONTROLLER] REG_STATUS durante TX_VALID: 0x{status:02X}")
+                    if not (status & self.TX_VALID):
+                        break
+                    time.sleep(self.POLLING_DELAY)
+
+                # Solicita lectura del registro
+                logging.debug(f"[CONTROLLER] Escribiendo registro 0x{reg:02X} en REG_WRITE.")
+                self.i2c.write_byte_data(self.I2C_ADDR, self.REG_WRITE, reg)
+                while True:
+                    status = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_STATUS)
+                    logging.debug(f"[CONTROLLER] REG_STATUS durante RX_VALID: 0x{status:02X}")
+                    if status & self.RX_VALID:
+                        break
+                    time.sleep(self.POLLING_DELAY)
+
+                # Devuelve el valor leído
+                read_val = self.i2c.read_byte_data(self.I2C_ADDR, self.REG_READ)
+                logging.debug(f"[CONTROLLER] REG_READ final: 0x{read_val:02X}")
+                return read_val
+            except OSError as e:
+                logging.error(f"[CONTROLLER] Error durante la lectura del registro 0x{reg:02X}: {e}")
+            raise
 
         # Usa _attempt_action para ejecutar el proceso con reintentos
         return self._attempt_action(action)

@@ -191,13 +191,14 @@ def main():
         logging.info("=" * 50)
         logging.info(f"[MAIN] [SENSOR] Inicializando sensor en canal {channel}...")
         try:
+            logging.debug(f"[MAIN] [MUX] Habilitando canal {channel}.")
             mux.enable_channel(channel)
             logging.info(
                 f"[MAIN] [MUX] El canal {channel} ha sido habilitado. "
                 f"Esperando estabilización del sensor..."
                 )
             time.sleep(0.5)    # esperar a que el sensor se estabilice
-        
+            logging.debug(f"[MAIN] [MUX] Canal {channel} habilitado.")
         
             # Crea instancia High Level para el sensor
             sensor = AS7265x_Manager(i2c_bus=1, address=0x49, config=config)

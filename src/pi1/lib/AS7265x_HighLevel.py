@@ -58,6 +58,7 @@ class AS7265x_Manager:
 
             # Llamada segura al controlador
             if hasattr(self.sensor, 'configure'):
+                logging.info("[MANAGER] [SENSOR] Configurando el sensor.")
                 self.sensor.configure(integration_time, gain, mode)
                 logging.info(f"[MANAGER] [SENSOR] Configuración completada exitosamente.")
             else:
@@ -112,25 +113,26 @@ class AS7265x_Manager:
         """
         for attempt in range(3):  # Hasta 3 intentos
             try:
-                status = self.sensor._read_status()  # Usa el controlador del sensor para leer el estado
+                status = self.sensor._read_status()  # Lee el registro STATUS
+                logging.debug(f"[MANAGER] [SENSOR] Intento {attempt+1}: Estado del sensor: {bin(status)}")
+
                 tx_valid = status & self.sensor.TX_VALID
                 rx_valid = status & self.sensor.RX_VALID
                 ready = status & self.sensor.READY
 
-                logging.debug(f"[MANAGER] [SENSOR] Estado del sensor: "
-                            f"TX_VALID={bool(tx_valid)}, RX_VALID={bool(rx_valid)}, READY={bool(ready)}")
+                logging.debug(f"[MANAGER] [SENSOR] TX_VALID={bool(tx_valid)}, RX_VALID={bool(rx_valid)}, READY={bool(ready)}")
 
-                if not ready:  # El sensor no está listo
-                    raise RuntimeError("[MANAGER] [SENSOR] El sensor no está listo para configurarse.")
-                
-                logging.info("[MANAGER] [SENSOR] El sensor está listo para recibir comandos.")
-                return True
+                if ready and not tx_valid and rx_valid:
+                    logging.info("[MANAGER] [SENSOR] Sensor listo para configurarse.")
+                    return True
+
+                time.sleep(1)  # Esperar antes de reintentar
 
             except Exception as e:
-                logging.warning(f"[MANAGER] [SENSOR] Estado no válido en intento {attempt + 1}/3: {e}")
-                time.sleep(2)  # Aumentar tiempo de espera antes de reintentar
+                logging.warning(f"[MANAGER] [SENSOR] Error verificando estado en intento {attempt + 1}: {e}")
 
         raise RuntimeError("[MANAGER] [SENSOR] El sensor sigue ocupado después de varios intentos.")
+
 
 
 
