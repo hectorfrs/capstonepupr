@@ -140,7 +140,7 @@ class AS7265x_Manager:
         Reinicia el sensor AS7265x.
         """
         try:
-            self.sensor.reset()
+            self.sensor._reset()
             logging.info("[MANAGER] [SENSOR] Reinicio del sensor completado correctamente.")
         except Exception as e:
             logging.error(f"[MANAGER] [SENSOR] Error durante el reinicio: {e}")
