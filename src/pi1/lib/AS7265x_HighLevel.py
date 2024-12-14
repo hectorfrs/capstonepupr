@@ -135,7 +135,6 @@ class AS7265x_Manager:
                 time.sleep(1)
         raise RuntimeError("[MANAGER] [SENSOR] El sensor sigue ocupado después de varios intentos.")
 
-
     def reset(self):
         """
         Reinicia el sensor AS7265x.
@@ -146,7 +145,6 @@ class AS7265x_Manager:
         except Exception as e:
             logging.error(f"[MANAGER] [SENSOR] Error durante el reinicio: {e}")
             raise
-
 
     def read_status(self):
         """
@@ -194,6 +192,20 @@ class AS7265x_Manager:
         except Exception as e:
             logging.error(f"[MANAGER] [SENSOR] Error durante la inicialización: {e}")
             raise
+
+    def is_ready(self):
+        """
+        Verifica si el sensor está listo para operar.
+        :return: True si el sensor está listo, False en caso contrario.
+        """
+        try:
+            status = self.sensor.read_status()  # Usar el controlador para leer el estado del sensor
+            ready = bool(status & self.sensor.READY)
+            logging.debug(f"[MANAGER] [SENSOR] Estado del sensor: {bin(status)} (READY={ready})")
+            return ready
+        except Exception as e:
+            logging.error(f"[MANAGER] [SENSOR] Error al verificar estado READY: {e}")
+            return False
 
 
 
