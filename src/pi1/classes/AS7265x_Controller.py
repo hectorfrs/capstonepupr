@@ -47,7 +47,7 @@ class SENSOR_AS7265x:
     def check_sensor_status(self):
         return self.verify_ready_state()
 
-    def verify_ready_state(self, retries=10, delay=1):
+    def verify_ready_state(self, retries=5, delay=5):
         """
         Verifica si el sensor está en estado READY después del reinicio.
         :param retries: Número de intentos para verificar el estado READY.
