@@ -170,7 +170,7 @@ class SENSOR_AS7265x:
         logging.debug(f"[CONTROLLER] [SENSOR] Registro virtual {hex(reg)} leído con valor {value}.")
         return value
 
-    def _read_status_details(self):
+    def _read_status(self):
         """
         Lee el registro de estado y retorna detalles sobre TX_VALID, RX_VALID y READY.
         """
