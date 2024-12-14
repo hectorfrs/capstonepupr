@@ -1,3 +1,9 @@
+# main.py - Script principal para Raspberry Pi #3
+# Desarrollado por Héctor F. Rivera Santiago
+# copyright (c) 2024
+
+# Raspberry Pi #3 (Registro y Publicación a la Nube)
+
 import yaml
 import logging
 import os

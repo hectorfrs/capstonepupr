@@ -1,3 +1,9 @@
+# main.py - Script principal para la operación de Raspberry Pi #2.
+# Desarrollado por Héctor F. Rivera Santiago
+# copyright (c) 2024
+
+# Raspberry Pi #2 (Segmentación por Válvulas)
+
 import sys
 import os
 import yaml

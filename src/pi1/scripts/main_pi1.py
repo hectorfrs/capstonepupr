@@ -2,6 +2,8 @@
 # Desarrollado por Héctor F. Rivera Santiago
 # copyright (c) 2024
 
+# Raspberry Pi #1 (Análisis Espectral y Clasificación del Plástico)
+
 import logging
 import yaml
 import qwiic
