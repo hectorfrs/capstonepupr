@@ -56,13 +56,13 @@ def load_config(file_path=config_path):
             if missing_keys:
                 raise KeyError(f"Faltan claves requeridas en la configuración: {missing_keys}")
     except FileNotFoundError:
-        logging.error(f"Archivo de configuración no encontrado en: {config_path}")
+        print(f"Archivo de configuración no encontrado en: {config_path}")
         sys.exit(1)
     except yaml.YAMLError as e:
-        logging.error(f"Error al analizar el archivo YAML: {e}")
+        print(f"Error al analizar el archivo YAML: {e}")
         sys.exit(1)
     except Exception as e:
-        logging.error(f"Error inesperado al cargar la configuración: {e}")
+        print(f"Error inesperado al cargar la configuración: {e}")
         sys.exit(1)
 
 # Configuración de los logs
