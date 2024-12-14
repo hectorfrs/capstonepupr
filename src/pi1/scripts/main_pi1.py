@@ -208,7 +208,7 @@ def main():
             # Leer el estado del sensor desde el Manager
             try:
                 if not sensor.check_sensor_status():
-                    raise Exception("[MAIN] [SENSOR] El sensor en el canal {channel} no está listo después del reinicio.")
+                    raise Exception("[MAIN] [SENSOR] El sensor no está listo después del reinicio.")
 
                 sensor.initialize_sensor()
                 logging.info(f"[MAIN] [SENSOR] Sensor en canal {channel} inicializado correctamente.")
