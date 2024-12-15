@@ -13,9 +13,8 @@ import os
 #from colorlog import ColoredFormatter
 
 # Importar módulos criticos
-from lib.TCA9548A_HighLevel import TCA9548A_Manager
-from lib.AS7265x_HighLevel import AS7265x_Manager
-from lib.AS7265x_HighLevel import generate_summary
+
+
 from utils.process_manager import process_individual, process_with_conveyor
 
 # Importar módulos personalizados
@@ -45,6 +44,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 # Funciones auxiliares
 
 def initialize_mux(config):
+    from TCA9548A_HighLevel import MUX_TCA9548A
     """
     Inicializa y configura el MUX TCA9548A.
     """
@@ -62,6 +62,8 @@ def initialize_mux(config):
     return mux
 
 def initialize_sensors(config, mux):
+    from lib.AS7265x_HighLevel import AS7265x_Manager
+    from lib.AS7265x_HighLevel import generate_summary
     """
     Inicializa y configura los sensores AS7265x conectados al MUX.
     """

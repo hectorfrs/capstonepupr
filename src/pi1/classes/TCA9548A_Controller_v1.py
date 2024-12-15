@@ -23,10 +23,12 @@ CHANNELS = {
 
 class MUX_TCA9548A:
 
-    def __init__(self):
+    def __init__(self, i2c_bus=1, address=MUX_ADDRESS):
         """
         Inicializa el controlador del MUX TCA9548A.
         """
+        self.i2c_bus = i2c_bus
+        self.address = address
         self.mux = qwiic_tca9548a.QwiicTCA9548A()
         if not self.mux.connected:
             raise Exception("[CONTROLLER] [MUX] TCA9548A no detectado en el bus I2C.")
