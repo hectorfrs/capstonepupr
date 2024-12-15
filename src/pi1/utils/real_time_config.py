@@ -35,14 +35,14 @@ class RealTimeConfigManager:
                 with open(self.config_path, "r") as file:
                     self.config_data = yaml.safe_load(file)
                     self.last_modified_time = os.path.getmtime(self.config_path)
-                    logging.info("Configuración cargada con éxito.")
+                    logging.info("[REALTIME] [CONFIG] Configuración cargada con éxito.")
                     if "log_file" not in self.config_data.get("logging", {}):
                         logging.warning("Clave 'log_file' no encontrada. Usando valor predeterminado.")
                         self.config_data["logging"]["log_file"] = "/home/raspberry-1/logs/default.log"
             else:
-                logging.error(f"El archivo de configuración no existe: {self.config_path}")
+                logging.error(f"[REALTIME] [CONFIG] El archivo de configuración no existe: {self.config_path}")
         except Exception as e:
-            logging.error(f"Error cargando configuración: {e}")
+            logging.error(f"[REALTIME] [CONFIG] Error cargando configuración: {e}")
 
     def save_config(self):
         """
@@ -52,9 +52,9 @@ class RealTimeConfigManager:
             with open(self.config_path, 'w') as file:
                 yaml.safe_dump(self.config_data, file)
             self.last_modified_time = os.path.getmtime(self.config_path)
-            logging.info("Configuración guardada con éxito.")
+            logging.info("[REALTIME] [CONFIG] Configuración guardada con éxito.")
         except Exception as e:
-            logging.error(f"Error guardando configuración: {e}")
+            logging.error(f"[REALTIME] [CONFIG] Error guardando configuración: {e}")
 
     def delete_key(self, section, key):
         """
@@ -66,23 +66,23 @@ class RealTimeConfigManager:
         if section in self.config_data and key in self.config_data[section]:
             del self.config_data[section][key]
             self.save_config()
-            logging.info(f"Clave {key} eliminada de la sección {section}.")
+            logging.info(f"[REALTIME] [CONFIG] Clave {key} eliminada de la sección {section}.")
         else:
-            logging.warning(f"No se encontró la clave {key} en la sección {section}.")
+            logging.warning(f"[REALTIME] [CONFIG] No se encontró la clave {key} en la sección {section}.")
 
     def monitor_config(self):
         """
         Monitorea el archivo de configuración y recarga cambios si es necesario.
         """
-        logging.info("Iniciando monitoreo del archivo de configuración.")
+        logging.info("[REALTIME] [CONFIG] Iniciando monitoreo del archivo de configuración.")
         while not self._stop_monitoring:
             try:
                 current_modified_time = os.path.getmtime(self.config_path)
                 if current_modified_time != self.last_modified_time:
-                    logging.info("Cambio detectado en el archivo de configuración. Recargando...")
+                    logging.info("[REALTIME] [CONFIG] Cambio detectado en el archivo de configuración. Recargando...")
                     self.load_config()
             except Exception as e:
-                logging.error(f"Error monitoreando configuración: {e}")
+                logging.error(f"[REALTIME] [CONFIG] Error monitoreando configuración: {e}")
             time.sleep(self.reload_interval)
 
     def get_config(self):
@@ -106,7 +106,7 @@ class RealTimeConfigManager:
         self._stop_monitoring = True
         if self.monitor_thread.is_alive():
             self.monitor_thread.join()
-        logging.info("Monitoreo del archivo de configuración detenido.")
+        logging.info("[REALTIME] [CONFIG] Monitoreo del archivo de configuración detenido.")
     
     def set_value(self, section, key, value):
         """

@@ -13,7 +13,7 @@ class MQTTPublisher:
     Soporta un broker local y AWS IoT Core.
     """
 
-    def __init__(self, config, local=True, monitor=None):
+    def __init__(self, config, config_path, local=True, monitor=None):
         """
         Inicializa el cliente MQTT usando la configuración YAML.
 
