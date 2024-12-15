@@ -17,7 +17,7 @@ def on_message(client, userdata, msg):
 
 # Configuración del cliente MQTT
 client = mqtt.Client()
-client.username_pw_set(USERNAME, PASSWORD)
+#client.username_pw_set("raspberry-1", "Elefante")
 client.on_connect = on_connect
 client.on_message = on_message
 
