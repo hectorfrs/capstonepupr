@@ -1,31 +1,21 @@
 import paho.mqtt.client as mqtt
 
-# Configuración MQTT
-BROKER_ADDRESS = "192.168.1.147"
-PORT = 1883
-USERNAME = "raspberry-2"
-PASSWORD = "Elefante"
-
-# Callback al conectar
 def on_connect(client, userdata, flags, rc):
-    print(f"Conectado al broker MQTT con código {rc}")
-    client.subscribe("raspberry-2/settings_update")  # Suscribirse a un tópico
+    if rc == 0:
+        print("Conexión exitosa al broker MQTT")
+        client.subscribe("raspberry-2/settings_update")  # Suscripción al conectar
+    else:
+        print(f"Error al conectar al broker MQTT. Código: {rc}")
 
-# Callback al recibir un mensaje
 def on_message(client, userdata, msg):
     print(f"Mensaje recibido: {msg.topic} -> {msg.payload.decode()}")
 
-# Configuración del cliente MQTT
-client = mqtt.Client()
-client.username_pw_set(USERNAME, PASSWORD)
+client = mqtt.Client(client_id="raspberry-2-client")
 client.on_connect = on_connect
 client.on_message = on_message
 
-# Conexión al broker
-client.connect(BROKER_ADDRESS, PORT)
-
-# Publicar un mensaje
-client.publish("raspberry-2/sensor_data", "Test desde Raspberry Pi 2")
-
-# Loop infinito
-client.loop_forever()
+try:
+    client.connect("192.168.1.147", 1883, 60)
+    client.loop_forever()
+except Exception as e:
+    print(f"Error en la conexión MQTT: {e}")
