@@ -51,24 +51,22 @@ class MUX_TCA9548A:
             return False
 
     def disable_channel(self, channel):
-        try:
-            if not self.mux.is_connected():
-                raise ConnectionError("El MUX TCA9548A no está conectado.")
-
-            self.mux.disable_channels([channel])
-            logging.info(f"[CONTROLLER] [MUX] Canal {channel} deshabilitado correctamente.")
-            return True
-        except Exception as e:
-            logging.error(f"[CONTROLLER] [MUX] No se pudo deshabilitar el canal {channel}: {e}")
-            return False
+        """
+        Deshabilita un canal específico en el MUX.
+        :param channel: Canal a deshabilitar.
+        """
+        if 0 <= channel <= 7:
+            self.i2c_bus.write_byte_data(self.address, 0x00, 0x00)  # Apaga todos los canales
+            logging.info(f"[CONTROLLER] [MUX] Canal {channel} deshabilitado.")
+        else:
+            raise ValueError(f"[CONTROLLER] [MUX] Canal {channel} fuera del rango permitido (0-7).")
 
     def disable_all_channels(self):
         """
         Deshabilita todos los canales del MUX.
         """
         try:
-            for channel in CHANNELS.keys():
-                self.mux.disable_channel(channel)
+            self.i2c_bus.write_byte_data(self.address, 0x00, 0x00)  # Apaga todos los canales
             logging.info("[CONTROLLER] [MUX] Todos los canales deshabilitados.")
         except Exception as e:
             logging.error(f"[CONTROLLER] [MUX] Error al deshabilitar todos los canales: {e}")
