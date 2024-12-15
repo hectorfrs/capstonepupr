@@ -28,7 +28,7 @@ import AlertManager
 import PerformanceTracker
 import RealTimeConfigManager
 import ConfigManager
-import LoggingManager
+import FunctionMonitor
 
 try:
     from qwiic import QwiicKx13X, QwiicAs6212
@@ -89,15 +89,16 @@ def main():
 
     # Cargar configuración
     config_path = "/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config_optimized.yaml"
-    config = load_config(config_path)
+    monitor = FunctionMonitor(config_path=config_path)
     required_keys = ['mux', 'sensors', 'system']
     missing_keys = [key for key in required_keys if key not in config]
     if missing_keys:
-        logging.error(f"Faltan claves requeridas en la configuración: {missing_keys}")
+        logging.error(f"[MAIN] Faltan keys requeridas en la configuración: {missing_keys}")
         sys.exit(1)
 
     # Configuración de logging
-    logging_manager = LoggingManager(config)
+    monitor = FunctionMonitor(config_path=config_path)
+    monitor.start()
     logging.info("=" * 50)
     logging.info("[MAIN] Sistema iniciado en Raspberry Pi #1...")
     logging.info("[MAIN] Análisis Espectral y Clasificación del Plástico.")
@@ -118,9 +119,9 @@ def main():
     expected_devices = [0x70, 0x49]  # Dirección del MUX y del sensor AS7265x
     for device in expected_devices:
         if device not in detected_devices:
-            logging.error(f"[SCAN] Dispositivo con dirección {hex(device)} no encontrado.")
+            logging.error(f"[MAIN] [SCAN] Dispositivo con dirección {hex(device)} no encontrado.")
         else:
-            logging.info(f"[SCAN] Dispositivo con dirección {hex(device)} detectado correctamente.")
+            logging.info(f"[MAIN] [SCAN] Dispositivo con dirección {hex(device)} detectado correctamente.")
     
     # Inicializar MUX
     logging.info("[MAIN] [MUX] Inicializando...")
@@ -209,6 +210,7 @@ def main():
         successful_reads, failed_reads, error_details = process_individual(config, sensors, mux)
 
     generate_summary(successful_reads, failed_reads, error_details)
+    monitor.stop()
     
 
 if __name__ == "__main__":
