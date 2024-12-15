@@ -64,7 +64,7 @@ def initialize_mux(config):
             if channel < 0 or channel > 7:
                 logging.error(f"[MAIN] Canal {channel} fuera de rango permitido (0-7).")
                 continue
-            mux.enable_channels(channel)
+            mux.enable_channel(channel)
 
         logging.info(f"[MANAGER] [MUX] Canales {mux_channels} habilitados.")
         return mux
