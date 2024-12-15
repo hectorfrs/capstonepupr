@@ -224,4 +224,4 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        logging.critical(f"Error crítico en la ejecución principal: {e}", exc_info=True)
+        logging.critical(f"[MAIN] Error crítico en la ejecución principal: {e}", exc_info=True)

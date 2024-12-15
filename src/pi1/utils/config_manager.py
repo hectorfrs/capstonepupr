@@ -59,15 +59,15 @@ class ConfigManager:
                     if 'mux' in self.config and 'i2c_address' in self.config['mux']:
                         self.config['mux']['i2c_address'] = int(self.config['mux']['i2c_address'], 16) \
                             if isinstance(self.config['mux']['i2c_address'], str) else self.config['mux']['i2c_address']
-                    logging.info(f"Configuración cargada desde {self.config_path}")
+                    logging.info(f"[MANAGER] [CONFIG] Configuración cargada desde {self.config_path}")
             else:
-                logging.warning(f"El archivo de configuración no existe: {self.config_path}. Usando configuración predeterminada.")
+                logging.warning(f"[MANAGER] [CONFIG] El archivo de configuración no existe: {self.config_path}. Usando configuración predeterminada.")
                 self.config = self.default_config
         except yaml.YAMLError as e:
-            logging.error(f"Error al leer el archivo YAML: {e}. Usando configuración predeterminada.")
+            logging.error(f"[MANAGER] [CONFIG] Error al leer el archivo YAML: {e}. Usando configuración predeterminada.")
             self.config = self.default_config
         except Exception as e:
-            logging.error(f"Error cargando configuración: {e}")
+            logging.error(f"[MANAGER] [CONFIG] Error cargando configuración: {e}")
             self.config = self.default_config
 
     def save_config(self):
@@ -77,9 +77,9 @@ class ConfigManager:
         try:
             with open(self.config_path, "w") as file:
                 yaml.dump(self.config, file, default_flow_style=False)
-                logging.info(f"Configuración guardada en {self.config_path}")
+                logging.info(f"[MANAGER] [CONFIG] Configuración guardada en {self.config_path}")
         except Exception as e:
-            logging.error(f"Error al guardar la configuración: {e}")
+            logging.error(f"[MANAGER] [CONFIG] Error al guardar la configuración: {e}")
 
     def validate_config(self):
         """
@@ -87,12 +87,12 @@ class ConfigManager:
         """
         for section, defaults in self.default_config.items():
             if section not in self.config:
-                logging.warning(f"Sección {section} no encontrada en la configuración. Usando valores predeterminados.")
+                logging.warning(f"[MANAGER] [CONFIG] Sección {section} no encontrada en la configuración. Usando valores predeterminados.")
                 self.config[section] = defaults
             else:
                 for key, value in defaults.items():
                     if key not in self.config[section]:
-                        logging.warning(f"Clave {key} no encontrada en {section}. Estableciendo valor predeterminado: {value}.")
+                        logging.warning(f"[MANAGER] [CONFIG] Clave {key} no encontrada en {section}. Estableciendo valor predeterminado: {value}.")
                         self.config[section][key] = value
         self.save_config()
 
@@ -121,7 +121,7 @@ class ConfigManager:
         :param value: Valor a establecer.
         """
         if section == 'mux' and key == 'i2c_address':
-            logging.warning("Intento de modificar `i2c_address` bloqueado. Este valor no debe ser cambiado.")
+            logging.warning("[MANAGER] [CONFIG] Intento de modificar `i2c_address` bloqueado. Este valor no debe ser cambiado.")
         return
 
         keys = key_path.split(".")
@@ -130,4 +130,4 @@ class ConfigManager:
             config_section = config_section.setdefault(key, {})
         config_section[keys[-1]] = value
         self.save_config()
-        logging.info(f"Configuración actualizada: [{section}][{key}] = {value}")
+        logging.info(f"[MANAGER] [CONFIG] Configuración actualizada: [{section}][{key}] = {value}")
