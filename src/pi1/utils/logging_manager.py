@@ -130,7 +130,7 @@ class FunctionMonitor:
         Documenta los cambios de estado de funcionalidades.
         """
         hostname = socket.gethostname()
-        message = f"[[MONITOR] [LOG] {hostname}] Funcionalidad: {function}, Estado: {'Activado' if status else 'Desactivado'}"
+        message = f"[MONITOR] [LOG] [{hostname}] Funcionalidad: {function}, Estado: {'Activado' if status else 'Desactivado'}"
         self.logger.info(message)
 
         if self.mqtt_publisher:
