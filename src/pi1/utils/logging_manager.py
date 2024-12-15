@@ -153,6 +153,13 @@ class FunctionMonitor:
             self.last_config = current_config.get("system", {})
             time.sleep(self.reload_interval)
 
+    def start(self):
+        """
+        Inicia el monitoreo en un hilo separado.
+        """
+        monitor_thread = Thread(target=self.monitor_changes, daemon=True)
+        monitor_thread.start()
+
     def stop(self):
         """Detiene el monitoreo."""
         self.logger.info("[MONITOR] [LOG] Deteniendo monitoreo de funciones.")
