@@ -129,11 +129,11 @@ def initialize_components(config_path):
     # Inicializar gestores
     components = {
         'network_manager': NetworkManager(config),
-        'mqtt_publisher': MQTTPublisher(config_path),
-        'alert_manager': AlertManager(mqtt_client=MQTTPublisher(config_path)),
+        'mqtt_publisher': MQTTPublisher(config),
+        'alert_manager': AlertManager(mqtt_client=MQTTPublisher(config)),
         'real_time_config': RealTimeConfigManager(config_path),
         'greengrass_manager': GreengrassManager(config_path),
-        'logging_manager': FunctionMonitor(config_path, mqtt_publisher=MQTTPublisher(config_path))
+        'logging_manager': FunctionMonitor(config_path, mqtt_publisher=MQTTPublisher(config))
     }
     
     logging.info("[MAIN] Componentes inicializados correctamente.")
