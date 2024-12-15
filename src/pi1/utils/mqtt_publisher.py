@@ -3,7 +3,7 @@ import ssl
 import time
 import yaml
 from threading import Thread
-from utils.logging_manager import FunctionMonitor
+import logging
 
 
 class MQTTPublisher:
@@ -12,7 +12,7 @@ class MQTTPublisher:
     Soporta un broker local y AWS IoT Core.
     """
 
-    def __init__(self, config, local=True):
+    def __init__(self, config, local=True, monitor=None):
         """
         Inicializa el cliente MQTT usando la configuración YAML.
 
@@ -21,6 +21,7 @@ class MQTTPublisher:
         """
         #self.config = self.load_config(config_path)
         self.config = config
+        self.monitor = monitor
 
         # Configuración del broker MQTT
         if local:
