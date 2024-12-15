@@ -171,19 +171,8 @@ def main():
     components['network_manager'].start_monitoring()
     components['mqtt_publisher'].connect()
     components['real_time_config'].start_monitoring()
-    components['logging_manager'].monitor.start()
+    components['logging_manager'].start()
     
-    
-    
-
-    # Configuración de red
-    #network_manager = NetworkManager(config=config_path)
-    #network_manager.start_monitoring()
-
-    # Inicialización de MQTT Client
-    #mqtt_client = MQTTPublisher(config=config_path)
-    #mqtt_client.connect()
-
     # Escanear el bus I2C
     detected_devices = scan_i2c_bus()
 

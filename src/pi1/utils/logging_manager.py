@@ -103,7 +103,7 @@ class FunctionMonitor:
                 "username": mqtt_config.get("username"),
                 "password": mqtt_config.get("password"),
                 "topics": mqtt_config["topics"]
-            }, local=True)
+            }, local=True, config_path=self.config_path)
             self.mqtt_publisher.connect()
             self.logger.info("[MONITOR] [LOG] Cliente MQTT configurado y conectado.")
 
