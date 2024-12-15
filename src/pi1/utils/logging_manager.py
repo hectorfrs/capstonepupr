@@ -10,7 +10,7 @@ import yaml
 import logging
 from threading import Thread
 from logging.handlers import RotatingFileHandler
-from utils.mqtt_publisher import MQTTPublisher
+
 
 class FunctionMonitor:
     def __init__(self, config_path, log_file="/var/log/centralized.log", mqtt_config=None, reload_interval=5):
@@ -88,6 +88,7 @@ class FunctionMonitor:
         """
         Configura y conecta el cliente MQTT.
         """
+        from utils.mqtt_publisher import MQTTPublisher
         try:
             mqtt_config = self.config.get("mqtt", {})
             required_keys = ["broker_address", "port", "topics"]
