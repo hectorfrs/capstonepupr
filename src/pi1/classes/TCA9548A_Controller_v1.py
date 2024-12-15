@@ -30,7 +30,7 @@ class MUX_TCA9548A:
         """
         self.i2c_bus = i2c_bus
         self.address = address
-        self.mux = qwiic_tca9548a.QwiicTCA9548A(address=address)
+        self.mux = qwiic_tca9548a.QwiicTCA9548A(address)
 
         if not self.mux.is_connected():
             raise ConnectionError(f"[CONTROLLER] [MUX] No se pudo conectar al MUX en la dirección {hex(address)}.")
