@@ -92,6 +92,9 @@ def initialize_sensors(config, mux):
 
             #sensor = AS7265x_Manager(i2c_bus=1, address=0x49, config=config)
             # Código para inicializar el sensor
+            if sensor is None:
+                logging.error(f"[MAIN] [SENSOR] El sensor en el canal {channel} no está inicializado.")
+                continue
             sensor.reset()
             time.sleep(10)
 
@@ -100,7 +103,8 @@ def initialize_sensors(config, mux):
                 continue
 
             # Código para inicializar el sensor
-            sensor = initialize_sensor_in_channel(channel)
+            #sensor = AS7265x_Manager.initialize_sensor(i2c_bus=1, address=0x49, config=config)
+            sensor = AS7265x_Manager.initialize_sensors(channel)
             sensors.append(sensor)
             logging.info(f"[MAIN] [SENSOR] Sensor {sensor_name} inicializado correctamente.")
         except Exception as e:

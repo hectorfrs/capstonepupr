@@ -64,13 +64,13 @@ class MUX_TCA9548A:
                     logging.info(f"[CONTROLLER] [MUX] Canal {channel} habilitado correctamente.")
             except Exception as e:
                 logging.error(f"[CONTROLLER] [MUX] Error habilitando el canal {channel}: {e}")
-    def disable_channels(self, channel):
+    def disable_channel(self, channel):
         """
         Deshabilita un canal específico en el MUX.
         """
         if channel < 0 or channel > 7:
             raise ValueError(f"[CONTROLLER] [MUX] Canal {channel} fuera de rango (0-7).")
-        success = self.mux.disable_channels(channel)  # Asegúrate de que este método existe y funciona
+        success = self.mux.disable_channel(channel)  # Asegúrate de que este método existe y funciona
         if not success:
             raise RuntimeError(f"[CONTROLLER] [MUX] No se pudo deshabilitar el canal {channel}.")
 
