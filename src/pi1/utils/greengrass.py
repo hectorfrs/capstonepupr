@@ -1,5 +1,6 @@
 import boto3
 import yaml
+import logging
 
 
 class GreengrassManager:
@@ -8,15 +9,18 @@ class GreengrassManager:
     Permite invocar funciones Lambda locales para procesamiento de datos.
     """
 
-    def __init__(self, config_path="config/pi1_config.yaml"):
+    def __init__(self, config_path, monitor=None):
         """
         Inicializa el GreengrassManager usando la configuración YAML.
 
         :param config_path: Ruta al archivo YAML con la configuración.
         """
         # Cargar configuración desde el archivo YAML
-        with open(config_path, "r") as file:
-            self.config = yaml.safe_load(file)
+        self.config_path = config_path
+        self.config = {}
+        self.monitor = monitor
+        # with open(config_path, "r") as file:
+        #     self.config = yaml.safe_load(file)
         # Obtener la región desde la configuración
         self.region = self.config['aws']['region']
         # Inicializar cliente de Lambda para Greengrass
@@ -56,7 +60,7 @@ class GreengrassManager:
                 break
 
         if not function_arn:
-            raise ValueError(f"No se encontró una función Lambda llamada '{function_name}' en el archivo de configuración.")
+            raise ValueError(f"[GREENGRASS] No se encontró una función Lambda llamada '{function_name}' en el archivo de configuración.")
 
         # Invocar la función Lambda en Greengrass
         try:
@@ -66,10 +70,10 @@ class GreengrassManager:
                 Payload=str(payload)
             )
             result = response['Payload'].read()
-            print(f"Respuesta de la función Lambda '{function_name}': {result}")
+            logging.info(f"[GREENGRASS] Respuesta de la función Lambda '{function_name}': {result}")
             return result
         except Exception as e:
-            print(f"Error al invocar la función Lambda '{function_name}': {e}")
+            logging.error(f"[GREENGRASS] Error al invocar la función Lambda '{function_name}': {e}")
             raise
 
 # # Ejemplo de uso:
