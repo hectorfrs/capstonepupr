@@ -139,7 +139,7 @@ class FunctionMonitor:
                 topic = self.config['mqtt']['topics'].get('functions')
                 if not topic:
                     raise KeyError("[MONITOR] [LOG] Tópico 'functions' no configurado en MQTT.")
-                self.mqtt_publisher.publish(topic, message)
+                self.mqtt_handler.publish(topic, message)
                 time.sleep(0.2)
             except KeyError as e:
                 self.logger.error(f"[MONITOR] [LOG] Error: {e}")
