@@ -132,7 +132,7 @@ def initialize_components(config_path):
         'mqtt_publisher': MQTTPublisher(config),
         'alert_manager': AlertManager(mqtt_client=MQTTPublisher(config)),
         'real_time_config': RealTimeConfigManager(config_path),
-        'greengrass_manager': GreengrassManager(config),
+        'greengrass_manager': GreengrassManager(config, config_path),
         'logging_manager': FunctionMonitor(config_path, mqtt_publisher=MQTTPublisher(config))
     }
     
