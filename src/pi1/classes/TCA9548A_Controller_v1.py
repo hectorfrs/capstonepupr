@@ -43,8 +43,10 @@ class MUX_TCA9548A:
         """
         if channel < 0 or channel > 7:
             raise ValueError(f"[MUX] Canal {channel} fuera del rango permitido (0-7).")
+        
 
         result = self.mux.enable_channels(1 << channel)  # Máscara para habilitar el canal
+        self.mux.enable_channels(CHANNELS[channel])
         if not result:
             raise RuntimeError(f"[MUX] No se pudo habilitar el canal {channel}.")
 
@@ -63,6 +65,7 @@ class MUX_TCA9548A:
             channel_mask |= (1 << channel)
 
         result = self.mux.enable_channels(channel_mask)
+        self.mux.enable_channels(CHANNELS[channel])
         if not result:
             raise RuntimeError(f"[MUX] No se pudieron habilitar los canales: {channels}.")
 
@@ -77,6 +80,8 @@ class MUX_TCA9548A:
             raise ValueError(f"[MUX] Canal {channel} fuera del rango permitido (0-7).")
 
         result = self.mux.disable_channels(1 << channel)  # Máscara para deshabilitar el canal
+        self.mux.disable_all_channels(CHANNELS[channel])
+        
         if not result:
             raise RuntimeError(f"[MUX] No se pudo deshabilitar el canal {channel}.")
 
