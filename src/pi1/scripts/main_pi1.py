@@ -84,7 +84,7 @@ def initialize_sensors(config, mux):
         sensor_name = channel_entry.get("sensor_name", f"Sensor_{channel}")
 
         try:
-            logging.info(f"[MAIN] [SENSOR] Inicializando sensor en canal {channel}...")
+            logging.info(f"[MAIN] [SENSOR] Intentando la inicializacion del sensor en canal {channel}...")
             # Intentar habilitar el canal
             if not mux.enable_channel(channel):
                 logging.error(f"[MAIN] [MUX] No se pudo habilitar el canal {channel}. Saltando inicialización del sensor.")
