@@ -2,6 +2,7 @@ from smbus2 import SMBus
 import time
 import sys
 import logging
+import qwiic_tca9548a
 
 # Configuración de logging
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
