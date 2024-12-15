@@ -26,9 +26,9 @@ class TCA9548A_Manager:
             self.mux = MUX_TCA9548A(address=address, i2c_bus=i2c_bus)
             # Aquí puedes inicializar el objeto mux según tu lógica
             # Por ejemplo, si tienes otro objeto que controla el MUX, asígnalo aquí
-            logging.info(f"[CONTROLLER] [MUX] MUX TCA9548A inicializado en la dirección {address}.")
+            logging.info(f"[MANAGER] [MUX] MUX TCA9548A inicializado en la dirección {address}.")
         except Exception as e:
-            logging.critical(f"[CONTROLLER] [MUX] Error inicializando el MUX: {e}")
+            logging.critical(f"[MANAGER] [MUX] Error inicializando el MUX: {e}")
             raise
 
     def enable_channel(self, channel):
@@ -76,15 +76,27 @@ class TCA9548A_Manager:
         logging.info(f"[MANAGER] [MUX] Canales activos: {active_channels}")
         return active_channels
 
+    def is_channel_active(self, channel):
+        """
+        Verifica si un canal específico está activo en el MUX.
+        :param channel: Canal a verificar.
+        :return: True si el canal está activo, False en caso contrario.
+        """
+        if 0 <= channel <= 7:
+            active_channels = self.mux.get_active_channels()  
+            return channel in active_channels
+        else:
+            raise ValueError(f"[MANAGER] [MUX] Canal {channel} fuera del rango permitido (0-7).")
+
     def select_channel(self, channel):
         """
         Selecciona un canal en el MUX.
         """
         if 0 <= channel <= 7:
             self.mux.enable_channel(channel)
-            logging.debug(f"[TCA9548A_Manager] Canal {channel} seleccionado.")
+            logging.debug(f"[MANAGER] [MUX] Canal {channel} seleccionado.")
         else:
-            raise ValueError(f"Canal {channel} fuera del rango permitido (0-7).")
+            raise ValueError(f"[MANAGER] [MUX] Canal {channel} fuera del rango permitido (0-7).")
 
     def reset_channel(self, channel):
         """
@@ -96,7 +108,7 @@ class TCA9548A_Manager:
             self.mux.enable_channel(channel)
             logging.debug(f"[MANAGER] [MUX] Canal {channel} reiniciado.")
         else:
-            raise ValueError(f"Canal {channel} fuera del rango permitido (0-7).")
+            raise ValueError(f"[MANAGER] [MUX] Canal {channel} fuera del rango permitido (0-7).")
 
 
 
