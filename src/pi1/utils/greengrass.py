@@ -9,7 +9,7 @@ class GreengrassManager:
     Permite invocar funciones Lambda locales para procesamiento de datos.
     """
 
-    def __init__(self, config, monitor=None):
+    def __init__(self, config, config_path, monitor=None):
         """
         Inicializa el GreengrassManager usando la configuración YAML.
 
