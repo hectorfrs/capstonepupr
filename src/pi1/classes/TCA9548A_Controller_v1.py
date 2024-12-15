@@ -37,35 +37,24 @@ class MUX_TCA9548A:
         logging.info(f"[CONTROLLER] [MUX] TCA9548A conectado correctamente {hex(address)}.")
 
     def enable_channel(self, channel):
-        """
-        Habilita un canal específico.
-        :param channel: Número del canal a habilitar (0-7).
-        """
-        if channel not in CHANNELS:
-            logging.error(f"[CONTROLLER] [MUX] Canal {channel} fuera de rango permitido (0-7).")
-            return False
-
         try:
-            # Activar el canal
-            self.mux.enable_channels(CHANNELS[channel])
+            if channel not in CHANNELS:
+                raise ValueError("Entries must be in range of available channels (0-7).")
+            self.bus.write_byte_data(self.address, 0x00, CHANNELS[channel])
             logging.info(f"[CONTROLLER] [MUX] Canal {channel} habilitado correctamente.")
-            return True
+            return True  # Devuelve True si tuvo éxito
         except Exception as e:
-            logging.error(f"[CONTROLLER] [MUX] No se pudo habilitar el canal {channel}: {e}")
-            return False
+            logging.error(f"[MUX] No se pudo habilitar el canal {channel}: {e}")
+            return False  # Devuelve False si hubo un fallo
 
     def disable_channel(self, channel):
-        if channel not in CHANNELS:
-            logging.error(f"[CONTROLLER] [MUX] Canal {channel} fuera de rango permitido (0-7).")
-            return False
         try:
-            # Desactivar el canal
-            self.mux.disable_channels(CHANNELS[channel])
+            self.bus.write_byte_data(self.address, 0x00, 0x00)  # Apaga todos los canales
             logging.info(f"[CONTROLLER] [MUX] Canal {channel} deshabilitado correctamente.")
-            return True
+            return True  # Devuelve True si tuvo éxito
         except Exception as e:
-            logging.error(f"[CONTROLLER] [MUX] No se pudo deshabilitar el canal {channel}: {e}")
-            return False
+            logging.error(f"[MUX] No se pudo deshabilitar el canal {channel}: {e}")
+            return False  # Devuelve False si hubo un fallo
 
     def disable_all_channels(self):
         """
