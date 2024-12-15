@@ -25,7 +25,6 @@ class TCA9548A_Manager:
         try:
             # Aquí puedes inicializar el objeto mux según tu lógica
             # Por ejemplo, si tienes otro objeto que controla el MUX, asígnalo aquí
-            self.mux = TCA9548A_Manager(address=address, i2c_bus=i2c_bus)
             logging.info(f"[CONTROLLER] [MUX] MUX TCA9548A inicializado en la dirección {address}.")
         except Exception as e:
             logging.critical(f"[CONTROLLER] [MUX] Error inicializando el MUX: {e}")
