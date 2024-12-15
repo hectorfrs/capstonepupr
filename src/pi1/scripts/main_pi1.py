@@ -119,6 +119,11 @@ def initialize_components(config_path):
             logging.StreamHandler()
         ]
     )
+    # Reducir el nivel de logging para bibliotecas de terceros como boto3 y urllib3
+    logging.getLogger("botocore").setLevel(logging.WARNING)
+    logging.getLogger("boto3").setLevel(logging.WARNING)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
+    
     logging.info("[MAIN] Sistema inicializando...")
 
     # Inicializar gestores
