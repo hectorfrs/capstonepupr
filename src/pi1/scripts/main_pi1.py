@@ -220,7 +220,7 @@ def main():
             logging.info(f"[MAIN] [SCAN] Dispositivo con dirección {hex(device)} detectado correctamente.")
     
     # Inicializar MUX
-    logging.info("[MAIN] [MUX] Inicializando...")
+    logging.debug("[MAIN] [MUX] Inicializando...")
     if 'mux' not in config or 'address' not in config['mux']:
         logging.error("[MAIN] [MUX] La configuración del MUX es inválida o incompleta.")
         sys.exit(1)
@@ -228,7 +228,7 @@ def main():
     sensors = initialize_sensors(config, mux)
 
     # Habilitar canales del MUX
-    logging.info("[MAIN] [MUX] Habilitando canales...")
+    logging.debug("[MAIN] [MUX] Habilitando canales...")
     mux_channels = [entry['channel'] for entry in config['mux']['channels']]
     logging.info(f"[MAIN] [MUX] Intentando habilitar canales: {mux_channels}")
     mux.enable_multiple_channels(mux_channels)
