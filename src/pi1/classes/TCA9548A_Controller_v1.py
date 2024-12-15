@@ -57,8 +57,14 @@ class MUX_TCA9548A:
         :param channels: Lista de canales a habilitar.
         """
         for channel in channels:
-            if not self.mux.enable_channels(channel):
-                raise RuntimeError(f"[CONTROLLER] [MUX] No se pudo habilitar el canal {channel}.")
+            try:
+                if not self.mux.enable_channels(channel):
+                    logging.warning(f"[CONTROLLER] [MUX] No se pudo habilitar el canal {channel}. Continuando con los demás.")
+                else:
+                    logging.info(f"[CONTROLLER] [MUX] Canal {channel} habilitado correctamente.")
+            except Exception as e:
+                logging.error(f"[CONTROLLER] [MUX] Error habilitando el canal {channel}: {e}")
+
 
     def disable_all_channels(self):
         """

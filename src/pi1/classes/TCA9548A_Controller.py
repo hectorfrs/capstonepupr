@@ -61,20 +61,19 @@ class MUX_TCA9548A:
     def enable_multiple_channels(self, channels):
         """
         Habilita múltiples canales en el MUX.
-        :param channels: Lista de canales a habilitar (0-7).
+
+        :param channels: Lista de canales a habilitar.
         """
-        logging.debug(f"[CONTROLLER] [MUX] Intentando habilitar múltiples canales: {channels}.")
-        mask = 0
         for channel in channels:
-            if not 0 <= channel <= 7:
-                raise ValueError(f"Canal inválido: {channel}. Debe estar entre 0 y 7.")
-            mask |= 1 << channel  # Agregar el canal a la máscara
-        try:
-            self.bus.write_byte(self.address, mask)  # Escribir la máscara en el MUX
-            #logging.info(f"Canales {channels} habilitados en el MUX con máscara {bin(mask)}.")
-        except Exception as e:
-            logging.error(f"[CONTROLLER] [MUX] Error al habilitar múltiples canales {channels} en el MUX: {e}")
-            raise
+            try:
+                if not self.mux.enable_channels(channel):
+                    logging.warning(f"[CONTROLLER] [MUX] No se pudo habilitar el canal {channel}. Continuando con los demás.")
+                else:
+                    logging.info(f"[CONTROLLER] [MUX] Canal {channel} habilitado correctamente.")
+            except Exception as e:
+                logging.error(f"[CONTROLLER] [MUX] Error habilitando el canal {channel}: {e}")
+
+
     
     def select_channel(self, channel):
         logging.debug(f"[CONTROLLER] [MUX] Seleccionando canal {channel}.")
