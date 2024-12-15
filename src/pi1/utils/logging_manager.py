@@ -160,8 +160,10 @@ class FunctionMonitor:
                 if self.last_config.get(function) != status:
                     self._document_change(function, status)
 
+            # Guarda solo los cambios relevantes
             self.last_config = current_config.get("system", {})
             time.sleep(self.reload_interval)
+
 
     def start(self):
         """

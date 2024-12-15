@@ -163,6 +163,7 @@ def main():
 
     # Cargar configuración
     config_path = "/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config_optimized.yaml"
+    monitor = FunctionMonitor(config_path=config_path, reload_interval=5)
 
     # Inicializar componentes
     components, config = initialize_components(config_path)
@@ -170,7 +171,8 @@ def main():
     components['network_manager'].start_monitoring()
     components['mqtt_publisher'].connect()
     components['real_time_config'].start_monitoring()
-    components['logging_manager'].monitor_changes()
+    components['logging_manager'].monitor.start()
+    
     
     
 
@@ -213,18 +215,26 @@ def main():
     sensors = initialize_sensors(config, mux)
 
 
-     # Seleccionar flujo según configuración
+    # Seleccionar flujo según configuración
     if not sensors:
         logging.error("[MAIN] No se pudieron inicializar sensores. Finalizando...")
         sys.exit(1)
-    system_config = config.get("system", {})
-    if config["system"].get("process_with_conveyor", False):
-        successful_reads, failed_reads, error_details = process_with_conveyor(config, sensors, mux)
-    else:
-        successful_reads, failed_reads, error_details = process_individual(config, sensors, mux)
+        try:
+            while True:
+                system_config = config.get("system", {})
+            if config["system"].get("process_with_conveyor", False):
+                successful_reads, failed_reads, error_details = process_with_conveyor(config, sensors, mux)
+            else:
+                successful_reads, failed_reads, error_details = process_individual(config, sensors, mux)
+                time.sleep(1)
 
-    generate_summary(successful_reads, failed_reads, error_details)
-    monitor.stop()
+        except KeyboardInterrupt:
+            logging.info("[MAIN] Proceso interrumpido por el usuario.")
+            monitor.stop()
+        except Exception as e:
+            logging.critical(f"[MAIN] Error crítico en la ejecución principal: {e}", exc_info=True)
+
+generate_summary(successful_reads, failed_reads, error_details)
     
 
 if __name__ == "__main__":
