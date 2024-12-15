@@ -51,8 +51,10 @@ def initialize_mux(config):
     if 'mux' not in config or 'address' not in config['mux']:
         logging.error("[MAIN] [MUX] La configuración del MUX es inválida o incompleta.")
         sys.exit(1)
-
-    mux = TCA9548A_Manager(address=config['mux']['address'])
+        
+    i2c_bus = config.get('i2c_bus', 1)
+    address = config['mux']['address']
+    mux = TCA9548A_Manager(address=address, i2c_bus=i2c_bus)
     mux_channels = [entry['channel'] for entry in config['mux']['channels']]
 
     logging.info(f"[MAIN] [MUX] Habilitando canales: {mux_channels}")
