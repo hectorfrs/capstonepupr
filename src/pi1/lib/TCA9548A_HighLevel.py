@@ -76,5 +76,17 @@ class TCA9548A_Manager:
         logging.info(f"[MANAGER] [MUX] Canales activos: {active_channels}")
         return active_channels
 
+    def reset_channel(self, channel):
+        """
+        Reinicia un canal del MUX deshabilitándolo y habilitándolo nuevamente.
+        """
+        if 0 <= channel <= 7:
+            self.mux.disable_channel(channel)
+            time.sleep(0.1)  # Esperar para reiniciar
+            self.mux.enable_channel(channel)
+            logging.debug(f"[MANAGER] [MUX] Canal {channel} reiniciado.")
+        else:
+            raise ValueError(f"Canal {channel} fuera del rango permitido (0-7).")
+
 
 

@@ -4,7 +4,7 @@ from time import time
 from utils.alert_manager import AlertManager
 
 
-def run_mux_diagnostics(mux_manager, channels, alert_manager, restart_failed=False):
+def run_mux_diagnostics(mux, channels, alert_manager=None, restart_failed=False):
     """
     Ejecuta diagnósticos en los canales especificados del MUX.
 
@@ -16,14 +16,14 @@ def run_mux_diagnostics(mux_manager, channels, alert_manager, restart_failed=Fal
     """
     diagnostics_results = {}
 
-    logging.info("Iniciando diagnósticos del MUX...")
+    logging.info("[DIAGNOSTIC] [MUX]Iniciando diagnósticos del MUX...")
 
     for channel in channels:
         start_time = time()  # Medir tiempo de diagnóstico
         try:
             # Seleccionar y diagnosticar canal
-            mux_manager.select_channel(channel)
-            if mux_manager.is_channel_active(channel):
+            mux.select_channel(channel)
+            if mux.is_channel_active(channel):
                 diagnostics_results[channel] = "OK"
                 logging.info(f"Canal {channel} del MUX operativo.")
             else:
@@ -55,7 +55,7 @@ def run_mux_diagnostics(mux_manager, channels, alert_manager, restart_failed=Fal
             if restart_failed:
                 try:
                     logging.info(f"Intentando reiniciar canal {channel}...")
-                    mux_manager.reset_channel(channel)
+                    mux.reset_channel(channel)
                     logging.info(f"Canal {channel} reiniciado exitosamente.")
                 except Exception as reset_error:
                     logging.error(f"Error reiniciando canal {channel}: {reset_error}")
@@ -67,7 +67,7 @@ def run_mux_diagnostics(mux_manager, channels, alert_manager, restart_failed=Fal
                         )
 
     # Desactivar todos los canales al finalizar
-    mux_manager.disable_all_channels()
+    mux.disable_all_channels()
 
     # Resumen final
     logging.info("Diagnósticos completados.")

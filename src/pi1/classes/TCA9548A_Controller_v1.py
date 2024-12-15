@@ -64,14 +64,15 @@ class MUX_TCA9548A:
 
     def disable_all_channels(self):
         """
-        Deshabilita todos los canales.
+        Deshabilita todos los canales del MUX.
         """
-        result = self.mux.disable_channels(0xFF)  # Máscara para deshabilitar todos los canales
-        self.mux.disable_channels(CHANNELS[channel])
-        if not result:
-            raise RuntimeError("[CONTROLLER] [MUX] No se pudieron deshabilitar todos los canales.")
-
-        logging.info("[CONTROLLER] [MUX] Todos los canales deshabilitados correctamente.")
+        try:
+            for channel in CHANNELS.keys():
+                self.mux.disable_channel(channel)
+            logging.info("[CONTROLLER] [MUX] Todos los canales deshabilitados.")
+        except Exception as e:
+            logging.error(f"[CONTROLLER] [MUX] Error al deshabilitar todos los canales: {e}")
+            raise
 
     def scan_channels(self):
         """
