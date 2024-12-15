@@ -106,8 +106,8 @@ def initialize_components(config_path):
     """
     components = {}
 
-    # Cargar configuración
-    cconfig_manager = ConfigManager(config_path)
+    # Crear instancia de ConfigManager
+    config_manager = ConfigManager(config_path)
     config = config_manager.config
 
     # Inicializar el logger
@@ -128,7 +128,7 @@ def initialize_components(config_path):
         'alert_manager': AlertManager(mqtt_client=MQTTPublisher(config)),
         'real_time_config': RealTimeConfigManager(config_path),
         'greengrass_manager': GreengrassManager(config_path),
-        'function_monitor': FunctionMonitor(config_path)
+        'logging_manager': FunctionMonitor(config_path)
     }
     
     logging.info("[MAIN] Componentes inicializados correctamente.")
@@ -164,15 +164,15 @@ def main():
     logging.debug(f"Configuración cargada: {config}")
     components['network_manager'].start_monitoring()
     components['real_time_config'].start_monitoring()
-    components['function_monitor'].monitor_changes()
+    components['logging_manager'].monitor_changes()
 
     # Configuración de red
-    network_manager = NetworkManager(config=config_path)
-    network_manager.start_monitoring()
+    #network_manager = NetworkManager(config=config_path)
+    #network_manager.start_monitoring()
 
     # Inicialización de MQTT Client
-    mqtt_client = MQTTPublisher(config=config_path)
-    mqtt_client.connect()
+    #mqtt_client = MQTTPublisher(config=config_path)
+    #mqtt_client.connect()
 
     # Escanear el bus I2C
     detected_devices = scan_i2c_bus()
