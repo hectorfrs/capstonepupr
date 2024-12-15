@@ -127,7 +127,7 @@ def initialize_sensors(config, mux):
                 logging.warning(f"[MAIN] [MUX] Error inesperado al deshabilitar el canal {channel}: {disable_error}")
 
     if not sensors:
-        logging.critical("[MAIN] No se pudieron inicializar sensores. Finalizando...")
+        logging.critical("[MAIN] [ERROR] No se pudieron inicializar sensores. Finalizando...")
         sys.exit(1)
 
     return sensors
