@@ -3,7 +3,7 @@ import ssl
 import time
 import yaml
 from threading import Thread
-from logging_manager import FunctionMonitor
+from utils.logging_manager import FunctionMonitor
 
 
 class MQTTPublisher:
