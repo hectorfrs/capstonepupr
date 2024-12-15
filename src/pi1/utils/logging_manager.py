@@ -133,9 +133,16 @@ class FunctionMonitor:
         message = f"[[MONITOR] [LOG] {hostname}] Funcionalidad: {function}, Estado: {'Activado' if status else 'Desactivado'}"
         self.logger.info(message)
 
-        if self.mqtt_publisher:  # Verifica si mqtt_publisher está configurado
+        if self.mqtt_publisher:
             try:
-                self.mqtt_publisher.publish(self.config['mqtt']['topics']['functions'], message)
+                # Depuración: imprimir configuración de MQTT
+                self.logger.debug(f"[MONITOR] [LOG] Configuración de MQTT: {self.config['mqtt']}")
+                topic = self.config['mqtt']['topics'].get('functions')
+                if not topic:
+                    raise KeyError("[MONITOR] [LOG] Tópico 'functions' no configurado en MQTT.")
+                self.mqtt_publisher.publish(topic, message)
+            except KeyError as e:
+                self.logger.error(f"[MONITOR] [LOG] Error: {e}")
             except Exception as e:
                 self.logger.error(f"[MONITOR] [LOG] Error publicando mensaje en MQTT: {e}")
 
