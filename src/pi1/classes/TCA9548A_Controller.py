@@ -45,7 +45,7 @@ class MUX_TCA9548A:
         try:
             self.bus.write_byte(self.address, 1 << channel)
             logging.info(f"[CONTROLLER] [MUX] Canal {channel} habilitado en el MUX.")
-            time.sleep(0.1)  # Pausa adicional para estabilización
+            time.sleep(0.2)  # Pausa adicional para estabilización
         except Exception as e:
             logging.error(f"[CONTROLLER] [MUX] Error al habilitar el canal {channel} en el MUX: {str(e)}")
             raise
