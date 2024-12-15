@@ -30,59 +30,68 @@ class MUX_TCA9548A:
         """
         self.i2c_bus = i2c_bus
         self.address = address
-        if not self.mux.connected:
-            raise Exception("[CONTROLLER] [MUX] TCA9548A no detectado en el bus I2C.")
-        logging.info("[CONTROLLER] [MUX] TCA9548A conectado correctamente.")
+        self.mux = qwiic_tca9548a.QwiicTCA9548A(address=address)
+
+        if not self.mux.is_connected():
+            raise ConnectionError(f"[CONTROLLER] [MUX] No se pudo conectar al MUX en la dirección {hex(address)}.")
+        logging.info(f"[CONTROLLER] [MUX] TCA9548A conectado correctamente {hex(address)}.")
 
     def enable_channel(self, channel):
         """
-        Habilita un canal específico del MUX.
+        Habilita un canal específico.
+        :param channel: Número del canal a habilitar (0-7).
         """
         if channel < 0 or channel > 7:
-            logging.error(f"Canal {channel} no válido. Seleccione un canal entre 0 y 7.")
-            return False
-        try:
-            self.mux.enable_channels(1 << channel)
-            logging.info(f"Canal {channel} habilitado correctamente.")
-            return True
-        except Exception as e:
-            logging.error(f"Error al habilitar canal {channel}: {e}")
-            return False
+            raise ValueError(f"[MUX] Canal {channel} fuera del rango permitido (0-7).")
+
+        result = self.mux.enable_channels(1 << channel)  # Máscara para habilitar el canal
+        if not result:
+            raise RuntimeError(f"[MUX] No se pudo habilitar el canal {channel}.")
+
+        logging.info(f"[MUX] Canal {channel} habilitado correctamente.")
     
     def enable_multiple_channels(self, channels):
         """
-        Habilita múltiples canales en el MUX.
-
+        Habilita múltiples canales.
         :param channels: Lista de canales a habilitar.
         """
+        channel_mask = 0
         for channel in channels:
-            try:
-                if not self.mux.enable_channels(channel):
-                    logging.warning(f"[CONTROLLER] [MUX] No se pudo habilitar el canal {channel}. Continuando con los demás.")
-                else:
-                    logging.info(f"[CONTROLLER] [MUX] Canal {channel} habilitado correctamente.")
-            except Exception as e:
-                logging.error(f"[CONTROLLER] [MUX] Error habilitando el canal {channel}: {e}")
+            if channel < 0 or channel > 7:
+                logging.error(f"[MUX] Canal {channel} fuera del rango permitido (0-7).")
+                continue
+            channel_mask |= (1 << channel)
+
+        result = self.mux.enable_channels(channel_mask)
+        if not result:
+            raise RuntimeError(f"[MUX] No se pudieron habilitar los canales: {channels}.")
+
+        logging.info(f"[MUX] Canales {channels} habilitados correctamente.")
+
     def disable_channel(self, channel):
         """
-        Deshabilita un canal específico en el MUX.
+        Deshabilita un canal específico.
+        :param channel: Número del canal a deshabilitar (0-7).
         """
         if channel < 0 or channel > 7:
-            raise ValueError(f"[CONTROLLER] [MUX] Canal {channel} fuera de rango (0-7).")
-        success = self.mux.disable_channels(channel)  # Asegúrate de que este método existe y funciona
-        if not success:
-            raise RuntimeError(f"[CONTROLLER] [MUX] No se pudo deshabilitar el canal {channel}.")
+            raise ValueError(f"[MUX] Canal {channel} fuera del rango permitido (0-7).")
+
+        result = self.mux.disable_channels(1 << channel)  # Máscara para deshabilitar el canal
+        if not result:
+            raise RuntimeError(f"[MUX] No se pudo deshabilitar el canal {channel}.")
+
+        logging.info(f"[MUX] Canal {channel} deshabilitado correctamente.")
 
 
     def disable_all_channels(self):
         """
-        Deshabilita todos los canales del MUX.
+        Deshabilita todos los canales.
         """
-        try:
-            self.mux.disable_channels(0xFF)
-            logging.info("[CONTROL] [MUX] Todos los canales deshabilitados.")
-        except Exception as e:
-            logging.error(f"[CONTROL] [MUX] Error al deshabilitar los canales: {e}")
+        result = self.mux.disable_channels(0xFF)  # Máscara para deshabilitar todos los canales
+        if not result:
+            raise RuntimeError("[MUX] No se pudieron deshabilitar todos los canales.")
+
+        logging.info("[MUX] Todos los canales deshabilitados correctamente.")
 
     def scan_channels(self):
         """
