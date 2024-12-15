@@ -9,15 +9,14 @@ class GreengrassManager:
     Permite invocar funciones Lambda locales para procesamiento de datos.
     """
 
-    def __init__(self, config_path, monitor=None):
+    def __init__(self, config, monitor=None):
         """
         Inicializa el GreengrassManager usando la configuración YAML.
 
         :param config_path: Ruta al archivo YAML con la configuración.
         """
         # Cargar configuración desde el archivo YAML
-        self.config_path = config_path
-        self.config = {}
+        self.config = config
         self.monitor = monitor
         # with open(config_path, "r") as file:
         #     self.config = yaml.safe_load(file)
