@@ -13,7 +13,7 @@ from logging.handlers import RotatingFileHandler
 
 
 class FunctionMonitor:
-    def __init__(self, config_path, log_file="/var/log/centralized.log", mqtt_config=None, reload_interval=5):
+    def __init__(self, config_path, log_file="/var/log/centralized.log", mqtt_config=None,mqtt_publisher=None, reload_interval=5):
         """
         Inicializa el monitor de funciones.
 
