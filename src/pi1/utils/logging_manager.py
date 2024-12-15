@@ -26,6 +26,7 @@ class FunctionMonitor:
         self.reload_interval = reload_interval
         self.last_config = {}
         self.stop_monitor = False
+        self.mqtt_publisher = mqtt_publisher
 
         self.logger = None  # El logger se inicializará al cargar la configuración
 
@@ -131,8 +132,12 @@ class FunctionMonitor:
         message = f"[[MONITOR] [LOG] {hostname}] Funcionalidad: {function}, Estado: {'Activado' if status else 'Desactivado'}"
         self.logger.info(message)
 
-        if self.mqtt_publisher:
-            self.mqtt_publisher.publish(self.config['mqtt']['topics']['functions'], message)
+        if self.mqtt_publisher:  # Verifica si mqtt_publisher está configurado
+            try:
+                self.mqtt_publisher.publish(self.config['mqtt']['topics']['functions'], message)
+            except Exception as e:
+                self.logger.error(f"[MONITOR] [LOG] Error publicando mensaje en MQTT: {e}")
+
     
     def monitor_changes(self):
         """
