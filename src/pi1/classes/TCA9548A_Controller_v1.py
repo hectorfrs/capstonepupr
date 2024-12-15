@@ -64,15 +64,15 @@ class MUX_TCA9548A:
                     logging.info(f"[CONTROLLER] [MUX] Canal {channel} habilitado correctamente.")
             except Exception as e:
                 logging.error(f"[CONTROLLER] [MUX] Error habilitando el canal {channel}: {e}")
-    def disable_channel(self, channel):
+    def disable_channels(self, channel):
         """
-        Deshabilita un canal en el MUX.
-        
-        :param channel: Canal a deshabilitar.
+        Deshabilita un canal específico en el MUX.
         """
-        if not self.mux.disable_channels(channel):  # Método de qwiic_tca9548a
+        if channel < 0 or channel > 7:
+            raise ValueError(f"[CONTROLLER] [MUX] Canal {channel} fuera de rango (0-7).")
+        success = self.mux.disable_channels(channel)  # Asegúrate de que este método existe y funciona
+        if not success:
             raise RuntimeError(f"[CONTROLLER] [MUX] No se pudo deshabilitar el canal {channel}.")
-        logging.info(f"[CONTROLLER] [MUX] Canal {channel} deshabilitado correctamente.")
 
 
     def disable_all_channels(self):
@@ -81,9 +81,9 @@ class MUX_TCA9548A:
         """
         try:
             self.mux.disable_channels(0xFF)
-            logging.info("Todos los canales deshabilitados.")
+            logging.info("[CONTROL] [MUX] Todos los canales deshabilitados.")
         except Exception as e:
-            logging.error(f"Error al deshabilitar los canales: {e}")
+            logging.error(f"[CONTROL] [MUX] Error al deshabilitar los canales: {e}")
 
     def scan_channels(self):
         """

@@ -46,22 +46,33 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 
 def initialize_mux(config):
     """
-    Inicializa y configura el MUX TCA9548A.
+    Inicializa el MUX TCA9548A y habilita los canales configurados.
     """
-    if 'mux' not in config or 'address' not in config['mux']:
-        logging.error("[MAIN] [MUX] La configuración del MUX es inválida o incompleta.")
-        sys.exit(1)
+    from lib.TCA9548A_HighLevel import TCA9548A_Manager
 
-    i2c_bus = config.get('i2c_bus', 1)
-    address = config['mux']['address']
-    mux = TCA9548A_Manager(address=address, i2c_bus=i2c_bus)
-    mux_channels = [entry['channel'] for entry in config['mux']['channels']]
+    try:
+        # Crear instancia del controlador MUX
+        mux_address = config['mux']['address']
+        mux = TCA9548A_Manager(address=mux_address)
+        logging.info(f"[MAIN] [MUX] TCA9548A inicializado en la dirección {hex(mux_address)}.")
 
-    logging.info(f"[MAIN] [MUX] Habilitando canales: {mux_channels}")
-    mux.enable_multiple_channels(mux_channels)
-    logging.info("[MAIN] [MUX] Canales habilitados correctamente.")
+        # Validar y habilitar canales
+        mux_channels = [entry['channel'] for entry in config['mux']['channels']]
+        logging.info(f"[MAIN] [MUX] Habilitando canales: {mux_channels}")
 
-    return mux
+        for channel in mux_channels:
+            if channel < 0 or channel > 7:
+                logging.error(f"[MAIN] Canal {channel} fuera de rango permitido (0-7).")
+                continue  # Saltar canales fuera de rango
+            mux.enable_channels(channel)
+            logging.info(f"[MAIN] Canal {channel} habilitado correctamente.")
+
+        logging.info(f"[MAIN] [MUX] Canales {mux_channels} habilitados.")
+        return mux
+
+    except Exception as e:
+        logging.critical(f"[MAIN] [MUX] Error crítico al inicializar el MUX: {e}")
+        raise
 
 def initialize_sensors(config, mux):
     """
@@ -94,6 +105,7 @@ def initialize_sensors(config, mux):
             logging.info(f"[MAIN] [SENSOR] Sensor {sensor_name} inicializado correctamente.")
         except Exception as e:
             logging.error(f"[MAIN] [SENSOR] Error al inicializar el sensor en canal {channel}: {e}")
+            sensor = None # Marcar sensor como no inicializado
         finally:
             try:
                 mux.disable_channel(channel)
@@ -162,9 +174,9 @@ def scan_i2c_bus():
 
 # Función principal
 def main():
-    print("===============================================")
-    print("        Iniciando Sistema de Acopio...")
-    print("===============================================")
+    print("==================================================================")
+    print("   SISTEMA DE SEGMENTACION DE MATERIALES Y ACOPIO DE PLASTICO     ")
+    print("==================================================================")
     
     # Variables de estado
     successful_reads = 0
