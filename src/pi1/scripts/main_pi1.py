@@ -28,6 +28,8 @@ from utils.real_time_config import RealTimeConfigManager
 from utils.config_manager import ConfigManager
 from utils.logging_manager import FunctionMonitor
 from utils.json_logger import log_detection
+from lib.sensor_diagnostics import run_sensor_diagnostics
+from lib.mux_diagnostics import run_mux_diagnostics
 
 try:
     from qwiic import QwiicKx13X, QwiicAs6212
@@ -46,27 +48,25 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 
 def initialize_mux(config):
     """
-    Inicializa el MUX TCA9548A y habilita los canales configurados.
+    Inicializa el MUX TCA9548A y ejecuta diagnósticos.
     """
-    from lib.TCA9548A_HighLevel import TCA9548A_Manager
 
     try:
-        # Crear instancia del controlador MUX
         mux_address = config['mux']['address']
         mux = TCA9548A_Manager(address=mux_address)
         logging.info(f"[MAIN] [MUX] TCA9548A inicializado en la dirección {hex(mux_address)}.")
 
-        # Validar y habilitar canales
+        # Ejecutar diagnósticos del MUX
         mux_channels = [entry['channel'] for entry in config['mux']['channels']]
-        logging.info(f"[MAIN] [MUX] Habilitando canales: {mux_channels}")
+        diagnostics = run_mux_diagnostics(
+            mux,
+            mux_channels,
+            restart_failed=True
+        )
+        for channel, status in diagnostics.items():
+            if status != "OK":
+                logging.warning(f"[MAIN] [MUX] Problema con el canal {channel}: {status}")
 
-        for channel in mux_channels:
-            if channel < 0 or channel > 7:
-                logging.error(f"[MAIN] Canal {channel} fuera de rango permitido (0-7).")
-                continue
-            mux.enable_channel(channel)
-
-        logging.info(f"[MAIN] [MUX] Canales {mux_channels} habilitados.")
         return mux
 
     except Exception as e:
@@ -89,53 +89,34 @@ def initialize_sensors(config, mux):
         logging.debug(f"[DEBUG] [SENSOR] Datos del canal: {channel_entry}")
 
         try:
-            # Intentar habilitar el canal
-            logging.debug(f"[DEBUG] [MUX] Intentando habilitar el canal {channel}...")
-            channel_status = mux.enable_channel(channel)
-            logging.debug(f"[DEBUG] [MUX] Resultado de habilitación del canal {channel}: {channel_status}")
-
-            if not channel_status:
-                logging.error(f"[MAIN] [MUX] No se pudo habilitar el canal {channel}. Saltando inicialización del sensor.")
-                error_details.append({"channel": channel, "error_message": "No se pudo habilitar el canal"})
-                continue
-
+            mux.enable_channel(channel)
             time.sleep(0.5)  # Esperar estabilización
-            logging.info(f"[MAIN] [MUX] Canal {channel} habilitado correctamente.")
 
-            # Inicializar el sensor
-            logging.debug(f"[DEBUG] [SENSOR] Inicializando sensor en canal {channel}...")
             sensor = AS7265x_Manager(address=0x49, config=config)
             init_status = sensor.initialize_sensor()
-            logging.debug(f"[DEBUG] [SENSOR] Resultado de la inicialización del sensor en canal {channel}: {init_status}")
+            if not sensor.initialize_sensor():
+                raise ValueError(f"Error inicializando el sensor {sensor_name} en canal {channel}: {init_status}.")
+                
 
-            if not init_status:
-                logging.error(f"[MAIN] [SENSOR] Error inicializando el sensor en canal {channel}.")
-                error_details.append({"channel": channel, "error_message": "Error al inicializar el sensor"})
-                continue
-
-            logging.info(f"[MAIN] [SENSOR] Sensor {sensor_name} inicializado correctamente.")
             sensors.append(sensor)
+            logging.info(f"[MAIN] [SENSOR] Sensor {sensor_name} inicializado correctamente.")
 
         except Exception as e:
             logging.error(f"[MAIN] [SENSOR] Error al inicializar el sensor en canal {channel}: {e}")
-            logging.debug(f"[DEBUG] [SENSOR] Excepción al inicializar sensor en canal {channel}: {e}")
             error_details.append({"channel": channel, "error_message": str(e)})
         finally:
-            try:
-                logging.debug(f"[DEBUG] [MUX] Intentando deshabilitar el canal {channel}...")
-                disable_status = mux.disable_channel(channel)
-                logging.debug(f"[DEBUG] [MUX] Resultado de deshabilitación del canal {channel}: {disable_status}")
-                logging.info(f"[MAIN] [MUX] Canal {channel} deshabilitado después de la inicialización.")
-            except Exception as e:
-                logging.warning(f"[MAIN] [MUX] No se pudo deshabilitar el canal {channel}: {e}")
-                logging.debug(f"[DEBUG] [MUX] Excepción al deshabilitar el canal {channel}: {e}")
+            mux.disable_channel(channel)
 
-    if not sensors:
-        logging.critical("[MAIN] [ERROR] No se pudieron inicializar sensores. Finalizando...")
-        logging.debug(f"[DEBUG] [ERROR] Detalles de los errores: {error_details}")
+    # Ejecutar diagnósticos de sensores
+    if sensors:
+        diagnostics = run_sensor_diagnostics(sensors, alert_manager=None)
+        for sensor_name, result in diagnostics.items():
+            if result.get("status") != "OK":
+                logging.warning(f"[MAIN] [SENSOR] Problema con el sensor {sensor_name}: {result}")
+    else:
+        logging.critical("[MAIN] No se pudieron inicializar sensores.")
         sys.exit(1)
 
-    logging.debug(f"[DEBUG] [SENSORS] Sensores inicializados exitosamente: {[sensor.get_name() for sensor in sensors]}")
     return sensors
 
 def initialize_components(config_path):
