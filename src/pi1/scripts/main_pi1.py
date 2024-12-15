@@ -42,10 +42,60 @@ except ImportError:
 # Agregar la ruta del proyecto al PYTHONPATH
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
-# Configuración de logging
-#logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+# Funciones auxiliares
 
-# Cargar configuración desde el archivo config.yaml
+def initialize_mux(config):
+    """
+    Inicializa y configura el MUX TCA9548A.
+    """
+    if 'mux' not in config or 'address' not in config['mux']:
+        logging.error("[MAIN] [MUX] La configuración del MUX es inválida o incompleta.")
+        sys.exit(1)
+
+    mux = TCA9548A_Manager(address=config['mux']['address'])
+    mux_channels = [entry['channel'] for entry in config['mux']['channels']]
+
+    logging.info(f"[MAIN] [MUX] Habilitando canales: {mux_channels}")
+    mux.enable_multiple_channels(mux_channels)
+    logging.info("[MAIN] [MUX] Canales habilitados correctamente.")
+
+    return mux
+
+def initialize_sensors(config, mux):
+    """
+    Inicializa y configura los sensores AS7265x conectados al MUX.
+    """
+    sensors = []
+    for channel_entry in config["mux"]["channels"]:
+        channel = channel_entry["channel"]
+        sensor_name = channel_entry["sensor_name"]
+
+        logging.info(f"[MAIN] [SENSOR] Inicializando sensor en canal {channel}...")
+        try:
+            mux.enable_channel(channel)
+            time.sleep(0.5)  # Esperar estabilización
+
+            sensor = AS7265x_Manager(i2c_bus=1, address=0x49, config=config)
+            sensor.reset()
+            time.sleep(10)
+
+            if not sensor.check_sensor_status():
+                logging.critical("[MAIN] [SENSOR] Sensor no está listo después del reinicio.")
+                continue
+
+            sensor.initialize_sensor()
+            sensors.append(sensor)
+            logging.info(f"[MAIN] [SENSOR] Sensor {sensor_name} inicializado correctamente.")
+        except Exception as e:
+            logging.error(f"[MAIN] [SENSOR] Error al inicializar el sensor en canal {channel}: {e}")
+        finally:
+            mux.disable_channel(channel)
+
+    if not sensors:
+        logging.error("[MAIN] No se pudieron inicializar sensores. Finalizando...")
+        sys.exit(1)
+
+    return sensors
 
 def initialize_components(config_path):
     """
@@ -57,8 +107,9 @@ def initialize_components(config_path):
     components = {}
 
     # Cargar configuración
-    config_manager = ConfigManager(config_path)
+    cconfig_manager = ConfigManager(config_path)
     config = config_manager.config
+    configure_logging(config)
 
     # Inicializar el logger
     logging.basicConfig(
@@ -72,15 +123,17 @@ def initialize_components(config_path):
     logging.info("[MAIN] Sistema inicializando...")
 
     # Inicializar gestores
-    components['network_manager'] = NetworkManager(config)
-    components['mqtt_publisher'] = MQTTPublisher(config)
-    components['alert_manager'] = AlertManager(mqtt_client=components['mqtt_publisher'])
-    components['real_time_config'] = RealTimeConfigManager(config_path)
-    components['greengrass_manager'] = GreengrassManager(config_path)
-    components['function_monitor'] = FunctionMonitor(config_path)
+    components = {
+        'network_manager': NetworkManager(config),
+        'mqtt_publisher': MQTTPublisher(config),
+        'alert_manager': AlertManager(mqtt_client=MQTTPublisher(config)),
+        'real_time_config': RealTimeConfigManager(config_path),
+        'greengrass_manager': GreengrassManager(config_path),
+        'function_monitor': FunctionMonitor(config_path)
+    }
 
     logging.info("[MAIN] Componentes inicializados correctamente.")
-    return components
+    return components, config
 
 def scan_i2c_bus():
     """
@@ -106,22 +159,12 @@ def main():
 
     # Cargar configuración
     config_path = "/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config_optimized.yaml"
-    monitor = FunctionMonitor(config_path=config_path)
 
-     # Inicializar componentes
-    components = initialize_components(config_path)
+    # Inicializar componentes
+    components, config = initialize_components(config_path)
     components['network_manager'].start_monitoring()
     components['real_time_config'].start_monitoring()
     components['function_monitor'].monitor_changes()
-
-    
-
-    # Configuración de logging
-    monitor.start()
-    logging.info("=" * 50)
-    logging.info("[MAIN] Sistema iniciado en Raspberry Pi #1...")
-    logging.info("[MAIN] Análisis Espectral y Clasificación del Plástico.")
-    logging.info("=" * 50)
 
     # Configuración de red
     network_manager = NetworkManager(config=config_path)
@@ -147,7 +190,8 @@ def main():
     if 'mux' not in config or 'address' not in config['mux']:
         logging.error("[MAIN] [MUX] La configuración del MUX es inválida o incompleta.")
         sys.exit(1)
-    mux = TCA9548A_Manager(address=config['mux']['address'])
+    mux = initialize_mux(config)
+    sensors = initialize_sensors(config, mux)
 
     # Habilitar canales del MUX
     logging.info("[MAIN] [MUX] Habilitando canales...")
@@ -158,65 +202,8 @@ def main():
 
     # Inicializar sensores en los canales
     logging.info("[MAIN] [SENSOR] Inicializando...")
-    sensors = []
+    sensors = initialize_sensors(config, mux)
 
-    for channel_entry in config["mux"]["channels"]:
-        channel = channel_entry["channel"]
-        sensor_name = channel_entry["sensor_name"]
-
-        
-        logging.info("=" * 50)
-        logging.info(f"[MAIN] [SENSOR] Inicializando sensor en canal {channel}...")
-        try:
-            logging.debug(f"[MAIN] [MUX] Habilitando canal {channel}.")
-            mux.enable_channel(channel)
-            logging.info(
-                f"[MAIN] [MUX] El canal {channel} ha sido habilitado. "
-                f"Esperando estabilización del sensor..."
-                )
-            time.sleep(0.5)    # esperar a que el sensor se estabilice
-            logging.debug(f"[MAIN] [MUX] Canal {channel} habilitado.")
-        
-            # Crea instancia High Level para el sensor
-            sensor = AS7265x_Manager(i2c_bus=1, address=0x49, config=config)
-            sensor.reset()
-            time.sleep(10)  # Esperar después del reset.
-            
-            # Leer el estado del sensor desde el Manager
-            try:
-                sensor.check_sensor_status()
-                raise Exception("[MAIN] [SENSOR] El sensor no está listo después del reinicio.")
-
-                if not sensor.check_sensor_status():
-                    logging.critical("[MAIN] [SENSOR] Sensor falló irreparablemente. Notificando al sistema.")
-
-                sensor.initialize_sensor()
-                logging.info(f"[MAIN] [SENSOR] Sensor en canal {channel} inicializado correctamente.")
-
-                sensors.append(sensor)
-            except RuntimeError as e:
-                logging.error(f"[MAIN] [SENSOR] Error al verificar el estado del sensor: {e}")
-                continue
-            logging.info(f"[MAIN] [SENSOR] Sensor {sensor_name} inicializado y configurado correctamente.")
-
-        except Exception as e:
-            logging.error(f"[MAIN] [SENSOR] Error al configurar el sensor: {e}")
-            continue
-            
-            # logging.info(
-            #     f"[CANAL {channel} Sensor configurado: {sensor_name}] "
-            #     f"Integración={integration_time}ms, Ganancia={gain}x, Modo={mode}."
-            #    )
-
-            # Deshabilitar todos los canales después de configurar el sensor
-        except Exception as e:
-            logging.error(f"[MAIN] [SENSOR] Error con el sensor en canal {channel}: {e}")
-            continue
-        finally:
-            # Deshabilitar todos los canales después de configurar el sensor
-            mux.disable_all_channels()
-            logging.info(f"[MAIN] [MUX] Canal {channel} deshabilitado después de inicialización.")
-            logging.info("=" * 50)
 
      # Seleccionar flujo según configuración
     if not sensors:
