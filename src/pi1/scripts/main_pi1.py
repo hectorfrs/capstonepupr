@@ -54,7 +54,7 @@ def initialize_mux(config):
         # Crear instancia del controlador MUX
         mux_address = config['mux']['address']
         mux = TCA9548A_Manager(address=mux_address)
-        logging.info(f"[MANAGER] [MUX] TCA9548A inicializado en la dirección {hex(mux_address)}.")
+        logging.info(f"[MAIN] [MUX] TCA9548A inicializado en la dirección {hex(mux_address)}.")
 
         # Validar y habilitar canales
         mux_channels = [entry['channel'] for entry in config['mux']['channels']]
@@ -66,7 +66,7 @@ def initialize_mux(config):
                 continue
             mux.enable_channel(channel)
 
-        logging.info(f"[MANAGER] [MUX] Canales {mux_channels} habilitados.")
+        logging.info(f"[MAIN] [MUX] Canales {mux_channels} habilitados.")
         return mux
 
     except Exception as e:
@@ -81,35 +81,32 @@ def initialize_sensors(config, mux):
     sensors = []
     for channel_entry in config["mux"]["channels"]:
         channel = channel_entry["channel"]
+        if not (0 <= channel <= 7):
+            logging.error(f"[MAIN] [MUX] Canal {channel} fuera de rango permitido (0-7).")
+            continue
         sensor_name = channel_entry["sensor_name"]
 
         logging.info(f"[MAIN] [SENSOR] Inicializando sensor en canal {channel}...")
         try:
+            # Habilitar el canal
             mux.enable_channel(channel)
             time.sleep(0.5)  # Esperar estabilización
             logging.info(f"[MAIN] [MUX] Canal {channel} habilitado correctamente.")
-            logging.info(f"[MAIN] [SENSOR] Inicializando sensor en canal {channel}...")
 
-            #sensor = AS7265x_Manager(i2c_bus=1, address=0x49, config=config)
-            # Código para inicializar el sensor
+            # Inicializar el sensor
+            sensor = AS7265x_Manager.initialize_sensor(channel)
             if sensor is None:
-                logging.error(f"[MAIN] [SENSOR] El sensor en el canal {channel} no está inicializado.")
-                continue
+                raise RuntimeError(f"[MAIN] [SENSOR] El sensor en el canal {channel} no está inicializado.")
             sensor.reset()
             time.sleep(10)
 
             if not sensor.check_sensor_status():
-                logging.critical("[MAIN] [SENSOR] Sensor no está listo después del reinicio.")
-                continue
+                raise RuntimeError(f"[MAIN] [SENSOR] Sensor en canal {channel} no está listo después del reinicio.")
 
-            # Código para inicializar el sensor
-            #sensor = AS7265x_Manager.initialize_sensor(i2c_bus=1, address=0x49, config=config)
-            sensor = AS7265x_Manager.initialize_sensors(channel)
             sensors.append(sensor)
             logging.info(f"[MAIN] [SENSOR] Sensor {sensor_name} inicializado correctamente.")
         except Exception as e:
             logging.error(f"[MAIN] [SENSOR] Error al inicializar el sensor en canal {channel}: {e}")
-            sensor = None # Marcar sensor como no inicializado
         finally:
             try:
                 mux.disable_channel(channel)
@@ -118,10 +115,11 @@ def initialize_sensors(config, mux):
                 logging.warning(f"[MAIN] [MUX] No se pudo deshabilitar el canal {channel}: {e}")
 
     if not sensors:
-        logging.error("[MAIN] No se pudieron inicializar sensores. Finalizando...")
+        logging.error("[MAIN] [SENSOR] No se pudieron inicializar sensores. Finalizando...")
         sys.exit(1)
 
     return sensors
+
 
 def initialize_components(config_path):
     """
@@ -171,9 +169,9 @@ def scan_i2c_bus():
     """
     devices = qwiic.scan()
     if devices:
-        logging.info(f"[SCAN] Dispositivos detectados en el bus I2C: {[hex(addr) for addr in devices]}")
+        logging.info(f"[MAIN] [SCAN] Dispositivos detectados en el bus I2C: {[hex(addr) for addr in devices]}")
     else:
-        logging.warning("[SCAN] No se detectaron dispositivos en el bus I2C.")
+        logging.warning("[MAIN] [SCAN] No se detectaron dispositivos en el bus I2C.")
     return devices
 
 # Función principal

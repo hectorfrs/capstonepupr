@@ -70,7 +70,7 @@ class MUX_TCA9548A:
         """
         if channel < 0 or channel > 7:
             raise ValueError(f"[CONTROLLER] [MUX] Canal {channel} fuera de rango (0-7).")
-        success = self.mux.disable_channel(channel)  # Asegúrate de que este método existe y funciona
+        success = self.mux.disable_channels(channel)  # Asegúrate de que este método existe y funciona
         if not success:
             raise RuntimeError(f"[CONTROLLER] [MUX] No se pudo deshabilitar el canal {channel}.")
 
