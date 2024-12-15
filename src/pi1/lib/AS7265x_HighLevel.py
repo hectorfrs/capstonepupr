@@ -4,7 +4,7 @@
 
 import json
 import logging
-from classes.AS7265x_Controller import SENSOR_AS7265x
+from classes.AS7265x_Controller_v1 import SENSOR_AS7265x
 import time
 import yaml
 
