@@ -234,7 +234,7 @@ def main():
         except Exception as e:
             logging.critical(f"[MAIN] Error crítico en la ejecución principal: {e}", exc_info=True)
 
-generate_summary(successful_reads, failed_reads, error_details)
+    generate_summary(successful_reads, failed_reads, error_details)
     
 
 if __name__ == "__main__":
