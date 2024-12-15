@@ -19,16 +19,15 @@ from lib.AS7265x_HighLevel import generate_summary
 from utils.process_manager import process_individual, process_with_conveyor
 
 # Importar módulos personalizados
-from utils import mqtt_publisher, greengrass, network_manager, alert_manager, performance_tracker, real_time_config, config_manager, logging_manager
-import MQTTPublisher
-import GreengrassManager
-import NetworkManager
+from utils.mqtt_publisher import MQTTPublisher
+from utils.greengrass import GreengrassManager
+from utils.network_manager import NetworkManager
+from utils.alert_manager import AlertManager    
+from utils.performance_tracker import PerformanceTracker    
+from utils.real_time_config import RealTimeConfigManager
+from utils.config_manager import ConfigManager
+from utils.logging_manager import FunctionMonitor
 from utils.json_logger import log_detection
-import AlertManager
-import PerformanceTracker
-import RealTimeConfigManager
-import ConfigManager
-import FunctionMonitor
 
 try:
     from qwiic import QwiicKx13X, QwiicAs6212
