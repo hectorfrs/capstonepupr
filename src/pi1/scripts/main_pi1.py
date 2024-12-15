@@ -114,7 +114,7 @@ def initialize_components(config_path):
     # Inicializar el logger
     logging.basicConfig(
         level=logging.DEBUG if config['system'].get('enable_logging') else logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s',
+        format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S',
         handlers=[
             logging.FileHandler(config['logging']['log_file']),
             logging.StreamHandler()
@@ -131,7 +131,7 @@ def initialize_components(config_path):
         'greengrass_manager': GreengrassManager(config_path),
         'function_monitor': FunctionMonitor(config_path)
     }
-
+    
     logging.info("[MAIN] Componentes inicializados correctamente.")
     return components, config
 
@@ -162,6 +162,7 @@ def main():
 
     # Inicializar componentes
     components, config = initialize_components(config_path)
+    logging.debug(f"Configuración cargada: {config}")
     components['network_manager'].start_monitoring()
     components['real_time_config'].start_monitoring()
     components['function_monitor'].monitor_changes()
