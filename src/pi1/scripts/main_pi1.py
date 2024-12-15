@@ -234,8 +234,9 @@ def main():
     logging.info(f"[MAIN] [MUX] Canales habilitados correctamente.")
 
     # Inicializar sensores en los canales
-    logging.info("[MAIN] [SENSOR] Inicializando...")
+    logging.debug("[MAIN] [SENSOR] Inicializando sensores...")
     sensors = initialize_sensors(config, mux)
+    
 
 
     # Seleccionar flujo según configuración
