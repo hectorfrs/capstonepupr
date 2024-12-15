@@ -163,8 +163,10 @@ def main():
     components, config = initialize_components(config_path)
     logging.debug(f"Configuración cargada: {config}")
     components['network_manager'].start_monitoring()
+    components['mqtt_publisher'].connect()
     components['real_time_config'].start_monitoring()
     components['logging_manager'].monitor_changes()
+    
     
 
     # Configuración de red
