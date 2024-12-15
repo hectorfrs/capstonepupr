@@ -2,7 +2,7 @@ from smbus2 import SMBus
 import time
 import sys
 import logging
-import qwiic_tca9548a
+from qwiic_tca9548a import QwiicTCA9548A
 
 # Configuración de logging
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -30,7 +30,7 @@ class MUX_TCA9548A:
         """
         self.i2c_bus = i2c_bus
         self.address = address
-        self.mux = qwiic_tca9548a.QwiicTCA9548A(address)
+        self.mux = QwiicTCA9548A(address)
 
         if not self.mux.is_connected():
             raise ConnectionError(f"[CONTROLLER] [MUX] No se pudo conectar al MUX en la dirección {hex(address)}.")
@@ -38,23 +38,29 @@ class MUX_TCA9548A:
 
     def enable_channel(self, channel):
         try:
+            if not self.mux.is_connected():
+                raise ConnectionError("[CONTROLLER] [MUX] El MUX TCA9548A no está conectado.")
             if channel not in CHANNELS:
-                raise ValueError("Entries must be in range of available channels (0-7).")
-            self.mux.write_byte_data(self.address, 0x00, CHANNELS[channel])
+                raise ValueError("[CONTROLLER] [MUX] Entries must be in range of available channels (0-7).")
+
+            self.mux.enable_channels([channel])
             logging.info(f"[CONTROLLER] [MUX] Canal {channel} habilitado correctamente.")
-            return True  # Devuelve True si tuvo éxito
+            return True
         except Exception as e:
-            logging.error(f"[MUX] No se pudo habilitar el canal {channel}: {e}")
-            return False  # Devuelve False si hubo un fallo
+            logging.error(f"[CONTROLLER] [MUX] No se pudo habilitar el canal {channel}: {e}")
+            return False
 
     def disable_channel(self, channel):
         try:
-            self.mux.write_byte_data(self.address, 0x00, 0x00)  # Apaga todos los canales
+            if not self.mux.is_connected():
+                raise ConnectionError("El MUX TCA9548A no está conectado.")
+
+            self.mux.disable_channels([channel])
             logging.info(f"[CONTROLLER] [MUX] Canal {channel} deshabilitado correctamente.")
-            return True  # Devuelve True si tuvo éxito
+            return True
         except Exception as e:
-            logging.error(f"[MUX] No se pudo deshabilitar el canal {channel}: {e}")
-            return False  # Devuelve False si hubo un fallo
+            logging.error(f"[CONTROLLER] [MUX] No se pudo deshabilitar el canal {channel}: {e}")
+            return False
 
     def disable_all_channels(self):
         """
