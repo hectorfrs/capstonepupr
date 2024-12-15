@@ -54,7 +54,7 @@ def initialize_mux(config):
         # Crear instancia del controlador MUX
         mux_address = config['mux']['address']
         mux = TCA9548A_Manager(address=mux_address)
-        logging.info(f"[MAIN] [MUX] TCA9548A inicializado en la dirección {hex(mux_address)}.")
+        logging.info(f"[MANAGER] [MUX] TCA9548A inicializado en la dirección {hex(mux_address)}.")
 
         # Validar y habilitar canales
         mux_channels = [entry['channel'] for entry in config['mux']['channels']]
@@ -63,16 +63,16 @@ def initialize_mux(config):
         for channel in mux_channels:
             if channel < 0 or channel > 7:
                 logging.error(f"[MAIN] Canal {channel} fuera de rango permitido (0-7).")
-                continue  # Saltar canales fuera de rango
+                continue
             mux.enable_channels(channel)
-            logging.info(f"[MAIN] Canal {channel} habilitado correctamente.")
 
-        logging.info(f"[MAIN] [MUX] Canales {mux_channels} habilitados.")
+        logging.info(f"[MANAGER] [MUX] Canales {mux_channels} habilitados.")
         return mux
 
     except Exception as e:
         logging.critical(f"[MAIN] [MUX] Error crítico al inicializar el MUX: {e}")
         raise
+
 
 def initialize_sensors(config, mux):
     """
