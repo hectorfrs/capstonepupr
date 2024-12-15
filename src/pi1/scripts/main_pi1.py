@@ -61,6 +61,7 @@ def initialize_mux(config):
         diagnostics = run_mux_diagnostics(
             mux,
             mux_channels,
+            alert_manager=None,
             restart_failed=True
         )
         for channel, status in diagnostics.items():
