@@ -95,12 +95,16 @@ def initialize_sensors(config, mux):
 
             # Inicializar el sensor
             try:
+                logging.info(f"[MAIN] [SENSOR] Inicializando sensor {sensor_name} en canal {channel}...")
                 sensor = AS7265x_Manager(i2c_bus=1, address=0x49)
+                logging.info(f"[MAIN] [SENSOR] Sensor {sensor_name} inicializado correctamente.")
                 if not sensor:
                     raise RuntimeError(f"Sensor en canal {channel} no inicializado correctamente.")
 
+                logging.info(f"[MAIN] [SENSOR] Reiniciando sensor {sensor_name}...")
                 sensor.reset()
                 time.sleep(2)  # Esperar reinicio del sensor
+                logging.info(f"[MAIN] [SENSOR] Sensor {sensor_name} reiniciado correctamente.")
 
                 if not sensor.check_sensor_status():
                     raise RuntimeError(f"Sensor en canal {channel} no está listo después del reinicio.")
