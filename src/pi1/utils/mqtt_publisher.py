@@ -104,10 +104,12 @@ class MQTTPublisher:
         :param message: Mensaje a publicar.
         """
         try:
+            if not topic:
+                raise ValueError("[MQTT] El tópico no puede ser None.")
             self.client.publish(topic, message)
-            logging.info(f"[MQTT] Mensaje publicado en {topic}: {message}")
+            self.logger.info(f"[MQTT] Mensaje publicado en {topic}: {message}")
         except Exception as e:
-            logging.error(f"[MQTT] Error al publicar mensaje en {topic}: {e}")
+            self.logger.error(f"[MQTT] Error publicando en {topic}: {e}")
             raise
 
     def subscribe(self, topic, callback):
