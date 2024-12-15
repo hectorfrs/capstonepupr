@@ -13,7 +13,7 @@ from logging.handlers import RotatingFileHandler
 
 
 class FunctionMonitor:
-    def __init__(self, config_path, log_file="/var/log/centralized.log", mqtt_config=None,mqtt_publisher=None, reload_interval=5):
+    def __init__(self, config_path, log_file="/var/log/centralized.log", mqtt_config=None, mqtt_publisher=None, reload_interval=5):
         """
         Inicializa el monitor de funciones.
 
@@ -29,6 +29,7 @@ class FunctionMonitor:
         self.mqtt_publisher = mqtt_publisher
 
         self.logger = None  # El logger se inicializará al cargar la configuración
+        self.monitor_thread = None
 
         initial_config = self._load_config()
         if initial_config:
@@ -109,7 +110,6 @@ class FunctionMonitor:
         except Exception as e:
             self.logger.error(f"[MONITOR] [LOG] Error configurando MQTT: {e}")
 
-
     def _load_config(self):
         """
         Carga el archivo de configuración YAML.
@@ -129,7 +129,6 @@ class FunctionMonitor:
         message = f"[MONITOR] [LOG] [{socket.gethostname()}] Funcionalidad: {function}, Estado: {'Activado' if status else 'Desactivado'}"
         self.logger.info(message)
 
-        # Publicar solo una vez la configuración de MQTT al iniciar
         if not hasattr(self, '_mqtt_config_logged'):
             self.logger.debug(f"[MONITOR] [LOG] Configuración de MQTT: {self.config['mqtt']}")
             setattr(self, '_mqtt_config_logged', True)
@@ -139,15 +138,12 @@ class FunctionMonitor:
                 topic = self.config['mqtt']['topics'].get('functions')
                 if not topic:
                     raise KeyError("[MONITOR] [LOG] Tópico 'functions' no configurado en MQTT.")
-                self.mqtt_handler.publish(topic, message)
-                time.sleep(0.2)
+                self.mqtt_publisher.publish(topic, message)
             except KeyError as e:
                 self.logger.error(f"[MONITOR] [LOG] Error: {e}")
             except Exception as e:
                 self.logger.error(f"[MONITOR] [LOG] Error publicando mensaje en MQTT: {e}")
 
-
-    
     def monitor_changes(self):
         """
         Monitorea cambios en el archivo de configuración.
@@ -171,10 +167,14 @@ class FunctionMonitor:
         """
         Inicia el monitoreo en un hilo separado.
         """
-        monitor_thread = Thread(target=self.monitor_changes, daemon=True)
-        monitor_thread.start()
+        self.monitor_thread = Thread(target=self.monitor_changes, daemon=True)
+        self.monitor_thread.start()
 
     def stop(self):
-        """Detiene el monitoreo."""
+        """
+        Detiene el monitoreo.
+        """
         self.logger.info("[MONITOR] [LOG] Deteniendo monitoreo de funciones.")
         self.stop_monitor = True
+        if self.monitor_thread and self.monitor_thread.is_alive():
+            self.monitor_thread.join()
