@@ -47,22 +47,40 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 
 # Cargar configuración desde el archivo config.yaml
 
-def load_config(config_path):
-    try:
-        with open(config_path, "r") as file:
-            config = yaml.safe_load(file)
-            if not config:
-                raise ValueError(f"El archivo de configuración está vacío: {config_path}")
-            return config
-    except FileNotFoundError:
-        logging.error(f"Archivo de configuración no encontrado: {config_path}")
-        sys.exit(1)
-    except yaml.YAMLError as e:
-        logging.error(f"Error al analizar el archivo YAML: {e}")
-        sys.exit(1)
-    except Exception as e:
-        logging.error(f"Error inesperado al cargar la configuración: {e}")
-        sys.exit(1)
+def initialize_components(config_path):
+    """
+    Inicializa y configura los componentes necesarios.
+
+    :param config_path: Ruta al archivo de configuración.
+    :return: Diccionario con las instancias inicializadas.
+    """
+    components = {}
+
+    # Cargar configuración
+    config_manager = ConfigManager(config_path)
+    config = config_manager.config
+
+    # Inicializar el logger
+    logging.basicConfig(
+        level=logging.DEBUG if config['system'].get('enable_logging') else logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler(config['logging']['log_file']),
+            logging.StreamHandler()
+        ]
+    )
+    logging.info("[MAIN] Sistema inicializando...")
+
+    # Inicializar gestores
+    components['network_manager'] = NetworkManager(config)
+    components['mqtt_publisher'] = MQTTPublisher(config)
+    components['alert_manager'] = AlertManager(mqtt_client=components['mqtt_publisher'])
+    components['real_time_config'] = RealTimeConfigManager(config_path)
+    components['greengrass_manager'] = GreengrassManager(config_path)
+    components['function_monitor'] = FunctionMonitor(config_path)
+
+    logging.info("[MAIN] Componentes inicializados correctamente.")
+    return components
 
 def scan_i2c_bus():
     """
@@ -89,6 +107,14 @@ def main():
     # Cargar configuración
     config_path = "/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config_optimized.yaml"
     monitor = FunctionMonitor(config_path=config_path)
+
+     # Inicializar componentes
+    components = initialize_components(CONFIG_PATH)
+    components['network_manager'].start_monitoring()
+    components['real_time_config'].start_monitoring()
+    components['function_monitor'].monitor_changes()
+
+    
 
     # Configuración de logging
     monitor.start()
