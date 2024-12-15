@@ -13,8 +13,9 @@ import os
 #from colorlog import ColoredFormatter
 
 # Importar módulos criticos
-
-
+from lib.AS7265x_HighLevel import AS7265x_Manager
+from lib.AS7265x_HighLevel import generate_summary
+from TCA9548A_HighLevel import MUX_TCA9548A
 from utils.process_manager import process_individual, process_with_conveyor
 
 # Importar módulos personalizados
@@ -44,14 +45,14 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 # Funciones auxiliares
 
 def initialize_mux(config):
-    from TCA9548A_HighLevel import MUX_TCA9548A
+    
     """
     Inicializa y configura el MUX TCA9548A.
     """
     if 'mux' not in config or 'address' not in config['mux']:
         logging.error("[MAIN] [MUX] La configuración del MUX es inválida o incompleta.")
         sys.exit(1)
-        
+
     i2c_bus = config.get('i2c_bus', 1)
     address = config['mux']['address']
     mux = TCA9548A_Manager(address=address, i2c_bus=i2c_bus)
@@ -64,8 +65,7 @@ def initialize_mux(config):
     return mux
 
 def initialize_sensors(config, mux):
-    from lib.AS7265x_HighLevel import AS7265x_Manager
-    from lib.AS7265x_HighLevel import generate_summary
+    
     """
     Inicializa y configura los sensores AS7265x conectados al MUX.
     """
