@@ -33,7 +33,7 @@ class MUX_TCA9548A:
         self.mux = qwiic_tca9548a.QwiicTCA9548A()
         if not self.mux.connected:
             raise Exception("[CONTROLLER] [MUX] TCA9548A no detectado en el bus I2C.")
-        logging.info("[CONTROLLER]MUX TCA9548A conectado correctamente.")
+        logging.info("[CONTROLLER] [MUX] TCA9548A conectado correctamente.")
 
     def enable_channel(self, channel):
         """
