@@ -21,7 +21,7 @@ class MQTTPublisher:
         """
         #self.config = self.load_config(config_path)
         self.config_path = config_path
-        self.config = {}
+        self.config = config_path
         self.monitor = monitor
 
         # Configuración del broker MQTT
