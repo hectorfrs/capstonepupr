@@ -3,7 +3,7 @@ import ssl
 import time
 import yaml
 from threading import Thread
-import logging
+from logging_manager import FunctionMonitor
 
 
 class MQTTPublisher:
@@ -78,11 +78,11 @@ class MQTTPublisher:
                 time.sleep(5)
                 try:
                     self.client.connect(self.broker, self.port, keepalive=60)
-                    print("Conexión al broker MQTT exitosa en reintento.")
+                    logging.info("[MQTT] Conexión al broker MQTT exitosa en reintento.")
                     return
                 except Exception as retry_error:
-                    print(f"Reintento {i+1} fallido: {retry_error}")
-            raise ConnectionError(f"No se pudo conectar con el broker MQTT después de 3 intentos: {e}")
+                    logging.info(f"[MQTT] Reintento {i+1} fallido: {retry_error}")
+            raise ConnectionError(f"[MQTT] No se pudo conectar con el broker MQTT después de 3 intentos: {e}")
 
     def publish_parallel(self, topic, message):
         """
@@ -103,9 +103,9 @@ class MQTTPublisher:
         """
         try:
             self.client.publish(topic, message)
-            print(f"Mensaje publicado en {topic}: {message}")
+            logging.info(f"[MQTT] Mensaje publicado en {topic}: {message}")
         except Exception as e:
-            print(f"Error al publicar mensaje en {topic}: {e}")
+            logging.error(f"[MQTT] Error al publicar mensaje en {topic}: {e}")
             raise
 
     def subscribe(self, topic, callback):
@@ -116,12 +116,12 @@ class MQTTPublisher:
         :param callback: Función callback para manejar mensajes recibidos.
         """
         def on_message(client, userdata, msg):
-            print(f"Mensaje recibido en {msg.topic}: {msg.payload.decode()}")
+            logging.info(f"[MQTT] Mensaje recibido en {msg.topic}: {msg.payload.decode()}")
             callback(msg)
 
         self.client.on_message = on_message
         self.client.subscribe(topic)
-        print(f"Suscrito al tópico: {topic}")
+        logging.info(f"[MQTT] Suscrito al tópico: {topic}")
 
     def loop_forever(self):
         """
@@ -130,7 +130,7 @@ class MQTTPublisher:
         try:
             self.client.loop_forever()
         except KeyboardInterrupt:
-            print("Desconectando del cliente MQTT...")
+            logging.warning("[MQTT] Desconectando del cliente MQTT...")
             self.client.disconnect()
 
 # # Ejemplo de uso:
