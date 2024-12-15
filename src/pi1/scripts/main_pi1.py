@@ -98,11 +98,11 @@ def main():
     logging.info("=" * 50)
 
     # Configuración de red
-    network_manager = NetworkManager(config)
+    network_manager = NetworkManager(config=config_path)
     network_manager.start_monitoring()
 
     # Inicialización de MQTT Client
-    mqtt_client = MQTTPublisher(config)
+    mqtt_client = MQTTPublisher(config=config_path)
     mqtt_client.connect()
 
     # Escanear el bus I2C
