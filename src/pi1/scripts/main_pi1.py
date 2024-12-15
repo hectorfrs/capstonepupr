@@ -89,14 +89,8 @@ def main():
     # Cargar configuración
     config_path = "/home/raspberry-1/capstonepupr/src/pi1/config/pi1_config_optimized.yaml"
     monitor = FunctionMonitor(config_path=config_path)
-    required_keys = ['mux', 'sensors', 'system']
-    missing_keys = [key for key in required_keys if key not in config]
-    if missing_keys:
-        logging.error(f"[MAIN] Faltan keys requeridas en la configuración: {missing_keys}")
-        sys.exit(1)
 
     # Configuración de logging
-    monitor = FunctionMonitor(config_path=config_path)
     monitor.start()
     logging.info("=" * 50)
     logging.info("[MAIN] Sistema iniciado en Raspberry Pi #1...")
