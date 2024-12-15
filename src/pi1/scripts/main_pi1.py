@@ -95,6 +95,9 @@ def initialize_sensors(config, mux):
 
             # Inicializar el sensor
             sensor = AS7265x_Manager.initialize_sensor(channel)
+            if not isinstance(sensor, AS7265x_Manager):
+                logging.error(f"[MAIN] [SENSOR] Sensor en canal {channel} no inicializado correctamente. Objeto: {sensor}")
+                continue
             if sensor is None:
                 raise RuntimeError(f"[MAIN] [SENSOR] El sensor en el canal {channel} no está inicializado.")
             sensor.reset()
