@@ -40,7 +40,7 @@ class MUX_TCA9548A:
         try:
             if channel not in CHANNELS:
                 raise ValueError("Entries must be in range of available channels (0-7).")
-            self.bus.write_byte_data(self.address, 0x00, CHANNELS[channel])
+            self.mux.write_byte_data(self.address, 0x00, CHANNELS[channel])
             logging.info(f"[CONTROLLER] [MUX] Canal {channel} habilitado correctamente.")
             return True  # Devuelve True si tuvo éxito
         except Exception as e:
@@ -49,7 +49,7 @@ class MUX_TCA9548A:
 
     def disable_channel(self, channel):
         try:
-            self.bus.write_byte_data(self.address, 0x00, 0x00)  # Apaga todos los canales
+            self.mux.write_byte_data(self.address, 0x00, 0x00)  # Apaga todos los canales
             logging.info(f"[CONTROLLER] [MUX] Canal {channel} deshabilitado correctamente.")
             return True  # Devuelve True si tuvo éxito
         except Exception as e:
