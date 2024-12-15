@@ -21,8 +21,9 @@ class MQTTPublisher:
         :param local: Booleano que indica si se usará el broker local (True) o AWS IoT Core (False).
         """
         #self.config = self.load_config(config_path)
-        self.config = config
-        self.monitor = monitor
+        self.config_path = config_path
+        self.config = self.load_config(config_path)
+        self.logger = logging.getLogger('MQTTPublisher') 
 
         # Configuración del broker MQTT
         if local:
