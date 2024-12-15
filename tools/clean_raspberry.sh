@@ -8,9 +8,7 @@ VENV_DIR="/home/$RASPBERRY/venv"
 PYTHON_GLOBAL="/usr/bin/python3"
 LOG_FILE="/home/$RASPBERRY/clean_raspberry.log"
 
-CAPSTONE="/home/raspberry-1/capstonepupr/src/pi1"
-
-echo "Iniciando limpieza del Raspberry Pi..." | tee -a "$LOG_FILE"
+echo "Iniciando limpieza del Raspberry Pi$PI..." | tee -a "$LOG_FILE"
 
 # Paso 1: Verificar el ambiente virtual
 if [ -d "$VENV_DIR" ]; then
@@ -52,8 +50,8 @@ pip list
 
 # Paso 6: Configurar el PATH para usar el ambiente virtual
 echo "Configurando el PATH para usar el ambiente virtual por defecto..." | tee -a "$LOG_FILE"
-echo "source $VENV_DIR/bin/activate" >> $RASPBERRY/.bashrc
-source $RASPBERRY.bashrc
+echo "source $VENV_DIR/bin/activate" >> ~/.bashrc
+source ~/.bashrc
 
 # Finalizar limpieza
 echo "Limpieza completada. El ambiente virtual es el entorno principal." | tee -a "$LOG_FILE"
