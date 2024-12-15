@@ -22,7 +22,7 @@ class TCA9548A_Manager:
         """
         self.i2c_bus = i2c_bus
         self.address = address
-        self.mux = qwiic_tca9548a.QwiicTCA9548A(address=address, i2c_bus=i2c_bus)
+        self.mux = MUX_TCA9548A(address=address, i2c_bus=i2c_bus)
         logging.info(f"[MANAGER] [MUX] TCA9548A inicializado en la dirección {hex(address)}.")
 
     def enable_channel(self, channel):
