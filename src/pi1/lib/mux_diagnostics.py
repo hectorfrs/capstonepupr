@@ -25,44 +25,44 @@ def run_mux_diagnostics(mux, channels, alert_manager=None, restart_failed=False)
             mux.select_channel(channel)
             if mux.is_channel_active(channel):
                 diagnostics_results[channel] = "OK"
-                logging.info(f"Canal {channel} del MUX operativo.")
+                logging.info(f"[DIAGNOSTIC] [MUX] Canal {channel} del MUX operativo.")
             else:
                 diagnostics_results[channel] = "NOT_RESPONDING"
-                logging.warning(f"Canal {channel} del MUX no responde.")
+                logging.warning(f"[DIAGNOSTIC] [MUX] Canal {channel} del MUX no responde.")
                 if alert_manager:
                     alert_manager.send_alert(
                         level="WARNING",
-                        message=f"Canal {channel} del MUX no responde.",
+                        message=f"[DIAGNOSTIC] [MUX] Canal {channel} del MUX no responde.",
                         metadata={"channel": channel}
                     )
 
             # Medir tiempo tomado
             elapsed_time = time() - start_time
-            logging.info(f"Diagnóstico del canal {channel} completado en {elapsed_time:.2f} segundos.")
+            logging.info(f"[DIAGNOSTIC] [MUX] Diagnóstico del canal {channel} completado en {elapsed_time:.2f} segundos.")
 
         except Exception as e:
             # Registrar error y enviar alerta
-            diagnostics_results[channel] = f"ERROR: {str(e)}"
-            logging.error(f"Error diagnosticando canal {channel}: {e}")
+            diagnostics_results[channel] = f"[DIAGNOSTIC] [MUX] ERROR: {str(e)}"
+            logging.error(f"[DIAGNOSTIC] [MUX] Error diagnosticando canal {channel}: {e}")
             if alert_manager:
                 alert_manager.send_alert(
                     level="CRITICAL",
-                    message=f"Error diagnosticando canal {channel}",
+                    message=f"[DIAGNOSTIC] [MUX] Error diagnosticando canal {channel}",
                     metadata={"channel": channel, "error": str(e)}
                 )
 
             # Intentar reiniciar canal si está habilitado
             if restart_failed:
                 try:
-                    logging.info(f"Intentando reiniciar canal {channel}...")
+                    logging.info(f"[DIAGNOSTIC] [MUX] Intentando reiniciar canal {channel}...")
                     mux.reset_channel(channel)
-                    logging.info(f"Canal {channel} reiniciado exitosamente.")
+                    logging.info(f"[DIAGNOSTIC] [MUX] Canal {channel} reiniciado exitosamente.")
                 except Exception as reset_error:
-                    logging.error(f"Error reiniciando canal {channel}: {reset_error}")
+                    logging.error(f"[DIAGNOSTIC] [MUX] Error reiniciando canal {channel}: {reset_error}")
                     if alert_manager:
                         alert_manager.send_alert(
                             level="CRITICAL",
-                            message=f"Error reiniciando canal {channel}",
+                            message=f"[DIAGNOSTIC] [MUX] Error reiniciando canal {channel}",
                             metadata={"channel": channel, "error": str(reset_error)}
                         )
 
@@ -70,7 +70,7 @@ def run_mux_diagnostics(mux, channels, alert_manager=None, restart_failed=False)
     mux.disable_all_channels()
 
     # Resumen final
-    logging.info("Diagnósticos completados.")
-    logging.info(f"Resumen de diagnósticos: {diagnostics_results}")
+    logging.info("[DIAGNOSTIC] [MUX] Diagnósticos completados.")
+    logging.info(f"[DIAGNOSTIC] [MUX] Resumen de diagnósticos: {diagnostics_results}")
 
     return diagnostics_results
