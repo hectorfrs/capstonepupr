@@ -81,44 +81,46 @@ def initialize_sensors(config, mux):
     sensors = []
     for channel_entry in config["mux"]["channels"]:
         channel = channel_entry["channel"]
-        if not (0 <= channel <= 7):
-            logging.error(f"[MAIN] [MUX] Canal {channel} fuera de rango permitido (0-7).")
-            continue
-        sensor_name = channel_entry["sensor_name"]
+        sensor_name = channel_entry.get("sensor_name", f"Sensor_{channel}")
 
         logging.info(f"[MAIN] [SENSOR] Inicializando sensor en canal {channel}...")
+
         try:
-            # Habilitar el canal
-            mux.enable_channel(channel)
+            # Intentar habilitar el canal
+            if not mux.enable_channel(channel):
+                logging.error(f"[MAIN] [MUX] No se pudo habilitar el canal {channel}. Saltando inicialización del sensor.")
+                continue  # Saltar al siguiente canal si no se habilita correctamente
+
             time.sleep(0.5)  # Esperar estabilización
             logging.info(f"[MAIN] [MUX] Canal {channel} habilitado correctamente.")
 
             # Inicializar el sensor
             sensor = AS7265x_Manager(i2c_bus=1, address=0x49)
-            if not isinstance(sensor, AS7265x_Manager):
-                logging.error(f"[MAIN] [SENSOR] Sensor en canal {channel} no inicializado correctamente. Objeto: {sensor}")
-                continue
-            if sensor is None:
-                raise RuntimeError(f"[MAIN] [SENSOR] El sensor en el canal {channel} no está inicializado.")
+            if not sensor:
+                raise RuntimeError(f"[MAIN] [SENSOR] Sensor en canal {channel} no inicializado correctamente.")
+
             sensor.reset()
-            time.sleep(10)
+            time.sleep(2)  # Esperar reinicio del sensor
 
             if not sensor.check_sensor_status():
                 raise RuntimeError(f"[MAIN] [SENSOR] Sensor en canal {channel} no está listo después del reinicio.")
 
             sensors.append(sensor)
             logging.info(f"[MAIN] [SENSOR] Sensor {sensor_name} inicializado correctamente.")
+
         except Exception as e:
             logging.error(f"[MAIN] [SENSOR] Error al inicializar el sensor en canal {channel}: {e}")
+
         finally:
+            # Intentar deshabilitar el canal
             try:
-                mux.disable_channel(channel)
-                logging.info(f"[MAIN] [MUX] Canal {channel} deshabilitado después de la inicialización.")
+                if not mux.disable_channel(channel):
+                    logging.warning(f"[MAIN] [MUX] No se pudo deshabilitar el canal {channel}.")
             except Exception as e:
-                logging.warning(f"[MAIN] [MUX] No se pudo deshabilitar el canal {channel}: {e}")
+                logging.warning(f"[MAIN] [MUX] Error inesperado al deshabilitar el canal {channel}: {e}")
 
     if not sensors:
-        logging.error("[MAIN] [SENSOR] No se pudieron inicializar sensores. Finalizando...")
+        logging.critical("[MAIN] No se pudieron inicializar sensores. Finalizando...")
         sys.exit(1)
 
     return sensors
