@@ -64,6 +64,15 @@ class MUX_TCA9548A:
                     logging.info(f"[CONTROLLER] [MUX] Canal {channel} habilitado correctamente.")
             except Exception as e:
                 logging.error(f"[CONTROLLER] [MUX] Error habilitando el canal {channel}: {e}")
+    def disable_channel(self, channel):
+        """
+        Deshabilita un canal en el MUX.
+        
+        :param channel: Canal a deshabilitar.
+        """
+        if not self.mux.disable_channels(channel):  # Método de qwiic_tca9548a
+            raise RuntimeError(f"[CONTROLLER] [MUX] No se pudo deshabilitar el canal {channel}.")
+        logging.info(f"[CONTROLLER] [MUX] Canal {channel} deshabilitado correctamente.")
 
 
     def disable_all_channels(self):
