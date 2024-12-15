@@ -126,25 +126,26 @@ class FunctionMonitor:
             return {}
 
     def _document_change(self, function, status):
-        """
-        Documenta los cambios de estado de funcionalidades.
-        """
-        hostname = socket.gethostname()
-        message = f"[MONITOR] [LOG] [{hostname}] Funcionalidad: {function}, Estado: {'Activado' if status else 'Desactivado'}"
+        message = f"[MONITOR] [LOG] [{socket.gethostname()}] Funcionalidad: {function}, Estado: {'Activado' if status else 'Desactivado'}"
         self.logger.info(message)
+
+        # Publicar solo una vez la configuración de MQTT al iniciar
+        if not hasattr(self, '_mqtt_config_logged'):
+            self.logger.debug(f"[MONITOR] [LOG] Configuración de MQTT: {self.config['mqtt']}")
+            setattr(self, '_mqtt_config_logged', True)
 
         if self.mqtt_publisher:
             try:
-                # Depuración: imprimir configuración de MQTT
-                self.logger.debug(f"[MONITOR] [LOG] Configuración de MQTT: {self.config['mqtt']}")
                 topic = self.config['mqtt']['topics'].get('functions')
                 if not topic:
                     raise KeyError("[MONITOR] [LOG] Tópico 'functions' no configurado en MQTT.")
                 self.mqtt_publisher.publish(topic, message)
+                time.sleep(0.2)
             except KeyError as e:
                 self.logger.error(f"[MONITOR] [LOG] Error: {e}")
             except Exception as e:
                 self.logger.error(f"[MONITOR] [LOG] Error publicando mensaje en MQTT: {e}")
+
 
     
     def monitor_changes(self):
