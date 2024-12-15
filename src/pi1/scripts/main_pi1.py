@@ -108,7 +108,7 @@ def initialize_components(config_path):
 
     # Cargar configuración
     cconfig_manager = ConfigManager(config_path)
-    #config = config_manager.config
+    config = config_manager.config
 
     # Inicializar el logger
     logging.basicConfig(
