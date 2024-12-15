@@ -76,8 +76,11 @@ def initialize_sensors(config, mux):
         try:
             mux.enable_channel(channel)
             time.sleep(0.5)  # Esperar estabilización
+            logging.info(f"[MAIN] [MUX] Canal {channel} habilitado correctamente.")
+            logging.info(f"[MAIN] [SENSOR] Inicializando sensor en canal {channel}...")
 
-            sensor = AS7265x_Manager(i2c_bus=1, address=0x49, config=config)
+            #sensor = AS7265x_Manager(i2c_bus=1, address=0x49, config=config)
+            # Código para inicializar el sensor
             sensor.reset()
             time.sleep(10)
 
@@ -85,13 +88,18 @@ def initialize_sensors(config, mux):
                 logging.critical("[MAIN] [SENSOR] Sensor no está listo después del reinicio.")
                 continue
 
-            sensor.initialize_sensor()
+            # Código para inicializar el sensor
+            sensor = initialize_sensor_in_channel(channel)
             sensors.append(sensor)
             logging.info(f"[MAIN] [SENSOR] Sensor {sensor_name} inicializado correctamente.")
         except Exception as e:
             logging.error(f"[MAIN] [SENSOR] Error al inicializar el sensor en canal {channel}: {e}")
         finally:
-            mux.disable_channel(channel)
+            try:
+                mux.disable_channel(channel)
+                logging.info(f"[MAIN] [MUX] Canal {channel} deshabilitado después de la inicialización.")
+            except Exception as e:
+                logging.warning(f"[MAIN] [MUX] No se pudo deshabilitar el canal {channel}: {e}")
 
     if not sensors:
         logging.error("[MAIN] No se pudieron inicializar sensores. Finalizando...")
