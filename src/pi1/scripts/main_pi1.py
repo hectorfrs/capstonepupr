@@ -123,17 +123,17 @@ def initialize_components(config_path):
     logging.getLogger("botocore").setLevel(logging.WARNING)
     logging.getLogger("boto3").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
-    
+
     logging.info("[MAIN] Sistema inicializando...")
 
     # Inicializar gestores
     components = {
         'network_manager': NetworkManager(config),
-        'mqtt_publisher': MQTTPublisher(config),
-        'alert_manager': AlertManager(mqtt_client=MQTTPublisher(config)),
+        'mqtt_publisher': MQTTPublisher(config_path),
+        'alert_manager': AlertManager(mqtt_client=MQTTPublisher(config_path)),
         'real_time_config': RealTimeConfigManager(config_path),
         'greengrass_manager': GreengrassManager(config_path),
-        'logging_manager': FunctionMonitor(config_path, mqtt_publisher=MQTTPublisher(config))
+        'logging_manager': FunctionMonitor(config_path, mqtt_publisher=MQTTPublisher(config_path))
     }
     
     logging.info("[MAIN] Componentes inicializados correctamente.")
