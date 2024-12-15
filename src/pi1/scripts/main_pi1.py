@@ -109,7 +109,7 @@ def main():
     monitor = FunctionMonitor(config_path=config_path)
 
      # Inicializar componentes
-    components = initialize_components(CONFIG_PATH)
+    components = initialize_components(config_path)
     components['network_manager'].start_monitoring()
     components['real_time_config'].start_monitoring()
     components['function_monitor'].monitor_changes()
