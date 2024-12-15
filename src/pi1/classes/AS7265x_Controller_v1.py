@@ -149,15 +149,15 @@ class SENSOR_AS7265x:
         logging.info(f"LEDs {'encendidos' if enable else 'apagados'}.")
 
 # ------------------- Ejemplo de Uso -------------------
-if __name__ == "__main__":
-    sensor = AS7265xController()
-    try:
-        sensor.reset_sensor()
-        sensor.configure_integration_time(100)
-        sensor.configure_gain(3.7)
-        sensor.configure_mode(1)
-        sensor.select_device(0x00)  # Selecciona NIR
-        sensor.run_diagnostics()
-        sensor.control_led(True)
-    except Exception as e:
-        logging.error(f"Error durante la ejecución: {e}")
+# if __name__ == "__main__":
+#     sensor = AS7265xController()
+#     try:
+#         sensor.reset_sensor()
+#         sensor.configure_integration_time(100)
+#         sensor.configure_gain(3.7)
+#         sensor.configure_mode(1)
+#         sensor.select_device(0x00)  # Selecciona NIR
+#         sensor.run_diagnostics()
+#         sensor.control_led(True)
+#     except Exception as e:
+#         logging.error(f"Error durante la ejecución: {e}")

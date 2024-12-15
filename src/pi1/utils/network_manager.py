@@ -41,7 +41,7 @@ class NetworkManager:
         """
         Conmuta a Wi-Fi configurando la interfaz y reiniciando la red.
         """
-        logging.warning("Conmutando a red Wi-Fi...")
+        logging.warning("[NET] Conmutando a red Wi-Fi...")
         self.current_interface = "wifi"
         self._configure_network(self.config["network"]["wifi"])
         self.network_status["wifi"] = True
@@ -50,7 +50,7 @@ class NetworkManager:
         """
         Conmuta a Ethernet configurando la interfaz y reiniciando la red.
         """
-        logging.warning("Conmutando a red Ethernet...")
+        logging.warning("[NET] Conmutando a red Ethernet...")
         self.current_interface = "ethernet"
         self._configure_network(self.config["network"]["ethernet"])
         self.network_status["ethernet"] = True
@@ -85,10 +85,10 @@ class NetworkManager:
         self.keep_monitoring = True
         while self.keep_monitoring:
             if self.current_interface == "ethernet" and not self.is_connected():
-                logging.warning("Conexión Ethernet perdida. Intentando cambiar a Wi-Fi...")
+                logging.warning("[NET] Conexión Ethernet perdida. Intentando cambiar a Wi-Fi...")
                 self.switch_to_wifi()
             elif self.current_interface == "wifi" and not self.is_connected():
-                logging.warning("Conexión Wi-Fi perdida. Intentando cambiar a Ethernet...")
+                logging.warning("[NET] Conexión Wi-Fi perdida. Intentando cambiar a Ethernet...")
                 self.switch_to_ethernet()
             time.sleep(self.check_interval)
 

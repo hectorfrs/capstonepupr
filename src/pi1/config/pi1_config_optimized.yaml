@@ -40,9 +40,16 @@ logging:
   backup_count: 5                                               # Número de archivos de logs de respaldo
 
 mqtt:
-  broker: localhost
-  port: 1883
-  topic: pi1/data
+  broker_address: 
+  - "192.168.1.147"                               # Dirección IP del broker MQTT local (Ethernet Raspberry Pi #3)
+  - "192.168.2.147"                               # Dirección IP del broker MQTT local (Wi-Fi Raspberry Pi #3)
+  port: 1883                                      # Puerto del broker MQTT
+  username: "raspberry-1"                                  # Usuario para el broker local
+  password: "Elefante"                       # Contraseña para el broker local
+  topics:
+    sensor_data: "raspberry-1/sensor_data"                # Tópico para publicar datos de sensores
+    settings_update: "raspberry-1/settings_update"        # Tópico para recibir actualizaciones de configuración
+    alerts: "raspberry-1/alerts"                          # Tópico para enviar alertas
 mux:
   address: 112
   channels:
