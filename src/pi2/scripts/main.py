@@ -14,19 +14,29 @@ from utils.config_manager import ConfigManager
 def main():
     try:
         # Cargar configuración
+        logging.basicConfig(level=logging.INFO, format='[%(asctime)s] [%(levelname)s] %(message)s' , datefmt='%Y-%m-%d %H:%M:%S')
         config_path = "/home/raspberry-2/capstonepupr/src/pi2/config/config.yaml"
+
+        # Configuración
+        logging.info("[MAIN] Iniciando sistema de control de Relay")
+
+        logging.info("[MAIN] Cargando configuración...")
         config_manager = RealTimeConfigManager(config_path)
+        logging.info("[MAIN] Iniciando monitoreo de configuración...")
         config_manager.start_monitoring()
         config = config_manager.get_config()
 
         # Configuración de red
+        logging.info("[MAIN] Iniciando monitoreo de red...")
         network_manager = NetworkManager(config)
         network_manager.start_monitoring()
 
         # Inicializar el controlador de relés con la configuración desde config.yaml
+        logging.info("[MAIN] Inicializando controlador de relés...")
         relay_controller = RelayController(config['mux']['relays'])
 
         # Variables de configuración MQTT
+        logging.info("[MAIN] Inicializando cliente MQTT...")
         broker_addresses = config['mqtt']['broker_addresses']
         port = config['mqtt']['port']
         client_id = config['mqtt']['client_id']
@@ -56,19 +66,24 @@ def main():
                     publish_message(client, topic_status, {'bucket_info': f'Bucket para {material_type}'})
 
         # Crear cliente MQTT
+        logging.info("[MAIN] Conectando al broker MQTT...")
         mqtt_client = create_mqtt_client(client_id, broker_addresses, port, config['mqtt']['keepalive'], on_message)
 
         # Suscribirse al tema de acción
+        logging.info(f"[MAIN] Suscribiéndose al tema {topic_action}")
         subscribe_to_topic(mqtt_client, topic_action)
 
         # Iniciar bucle MQTT
+        logging.info("[MAIN] Iniciando bucle MQTT...")
         mqtt_client.loop_forever()
     except Exception as e:
         logging.error(f"[MAIN] Error crítico en la ejecución: {e}")
     finally:
             if network_manager:
+                logging.info("[MAIN] Apagando Monitoreo del Network...")
                 network_manager.stop_monitoring()
             if config_manager:
+                logging.info("[MAIN] Apagando sistema...")
                 config_manager.stop_monitoring()
             logging.info("[MAIN] Sistema apagado correctamente.")
 
