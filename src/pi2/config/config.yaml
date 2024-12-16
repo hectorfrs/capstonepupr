@@ -41,4 +41,4 @@ logging:
 mux:
   relays:
     - {mux_channel: 0, i2c_address: 0x18}  # Relay 1 (PET)
-    - {mux_channel: 1, i2c_address: 0x19}  # Relay 2 (HDPE)
+    - {mux_channel: 1, i2c_address: 0x18}  # Relay 2 (HDPE)

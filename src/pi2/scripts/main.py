@@ -23,12 +23,8 @@ def main():
         network_manager = NetworkManager(config)
         network_manager.start_monitoring()
 
-        # Configuración del controlador de relés
-        relay_config = {
-            0: {"mux_channel": 0, "i2c_address": 0x18},  # Relé 1 (PET) en canal MUX 0
-            1: {"mux_channel": 1, "i2c_address": 0x19}   # Relé 2 (HDPE) en canal MUX 1
-        }
-        relay_controller = RelayController(relay_config)
+        # Inicializar el controlador de relés con la configuración desde config.yaml
+        relay_controller = RelayController(config['mux']['relays'])
 
         # Variables de configuración MQTT
         broker_addresses = config['mqtt']['broker_addresses']
