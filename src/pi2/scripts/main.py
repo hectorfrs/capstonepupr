@@ -14,7 +14,7 @@ from utils.config_manager import ConfigManager
 def main():
     try:
         # Cargar configuración
-        config_path = "/home/raspberry-1/capstonepupr/src/pi2/config/config.yaml"
+        config_path = "/home/raspberry-2/capstonepupr/src/pi2/config/config.yaml"
         config_manager = RealTimeConfigManager(config_path)
         config_manager.start_monitoring()
         config = config_manager.get_config()
