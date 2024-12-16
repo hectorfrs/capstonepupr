@@ -1,6 +1,6 @@
 sparkfun-qwiic
 smbus2
-paho-mqtt
+paho-mqtt==2.1.0
 PyYAML
 sparkfun-qwiic-relay
 sparkfun-qwiic-i2c
