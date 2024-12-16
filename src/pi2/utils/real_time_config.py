@@ -42,7 +42,7 @@ class RealTimeConfigManager:
                     logging.info("[REALTIME] [CONFIG] Configuración cargada con éxito.")
                     if "log_file" not in self.config_data.get("logging", {}):
                         logging.warning("[REALTIME] [CONFIG] Clave 'log_file' no encontrada. Usando valor predeterminado.")
-                        self.config_data["logging"]["log_file"] = "/home/raspberry-1/logs/default.log"
+                        self.config_data["logging"]["log_file"] = "/home/raspberry-2/logs/default.log"
             else:
                 logging.error(f"[REALTIME] [CONFIG] El archivo de configuración no existe: {self.config_path}")
         except Exception as e:
