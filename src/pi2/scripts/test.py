@@ -26,7 +26,7 @@ if relay.connected:
     # Encender el relé
     print("[RELAY] Encendiendo el relé...")
     relay.set_relay_on()
-    relay.version()
+    relay.version
     time.sleep(2)
 
     # Verificar si el relé está encendido
