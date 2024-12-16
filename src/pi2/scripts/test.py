@@ -25,7 +25,7 @@ if relay.connected:
 
     # Encender el relé
     print("[RELAY] Encendiendo el relé...")
-    if myRelays.begin() == False:
+    if relay.begin() == False:
         print("The Qwiic Relay isn't connected to the system. Please check your connection", \
             file=sys.stderr)
 
