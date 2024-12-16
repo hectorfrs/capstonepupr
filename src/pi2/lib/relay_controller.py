@@ -29,6 +29,10 @@ class RelayController:
             i2c_address = config["i2c_address"]
             self._select_mux_channel(mux_channel)
             relay = qwiic_relay.QwiicRelay(address=i2c_address)
+            if relay.begin() == False:
+                raise Exception(f"[CONTROLLER] [RELAY] Error al inicializar Relay {index} en canal MUX {mux_channel}, dirección {hex(i2c_address)}")
+                print("The Qwiic Relay isn't connected to the system. Please check your connection", \
+            file=sys.stderr)
             if relay.connected:
                 self.relays[index] = {"mux_channel": mux_channel, "relay": relay}
                 logging.info(f"[CONTROLLER] [RELAY] Relay {index} conectado en canal MUX {mux_channel}, dirección {hex(i2c_address)}")
