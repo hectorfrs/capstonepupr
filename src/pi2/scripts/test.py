@@ -9,7 +9,7 @@ if not mux.is_connected():
     exit(1)
 
 # Configuración del canal MUX y dirección I2C del relé
-channel = 1  # Canal del MUX donde está conectado el relé
+channel = 0  # Canal del MUX donde está conectado el relé
 relay_address = 0x18  # Dirección I2C del relé
 
 # Activar el canal del MUX
