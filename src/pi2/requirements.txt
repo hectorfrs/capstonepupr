@@ -1,13 +1,12 @@
-sparkfun-qwiic==0.9.0               # Librería base para sensores Qwiic
-sparkfun-qwiic-relay==1.0.5         # Control de relés Qwiic
-sparkfun-qwiic-i2c==0.9.0           # Utilidades I2C para dispositivos Qwiic
-smbus2==0.4.2                       # Comunicación I2C para Raspberry Pi
-paho-mqtt==2.1.0                    # Cliente MQTT compatible con MQTT 5.0/3.1.1
-PyYAML==6.0                         # Manejo de archivos YAML
-boto3==1.28.78                      # Interacción con AWS (Rekognition, IoT Core, etc.)
-watchdog==2.3.0                     # Monitoreo de cambios en archivos (real-time config)
-RPi.GPIO==0.7.1                     # Control de GPIO para Raspberry Pi
-numpy==1.25.0                       # Operaciones matemáticas y manejo de matrices
-matplotlib==3.8.0                   # Gráficos y visualización de datos
-flask==2.3.0                        # Servidor web para control de la aplicación
-pytest==7.4.2                       # Pruebas unitarias
+sparkfun-qwiic               # Librería base para sensores Qwiic
+sparkfun-qwiic-relay         # Control de relés Qwiic
+sparkfun-qwiic-i2c           # Utilidades I2C para dispositivos Qwiic
+smbus2                       # Comunicación I2C para Raspberry Pi
+paho-mqtt                    # Cliente MQTT compatible con MQTT 5.0/3.1.1
+PyYAML                         # Manejo de archivos YAML
+boto3                      # Interacción con AWS (Rekognition, IoT Core, etc.)
+watchdog                     # Monitoreo de cambios en archivos (real-time config)
+RPi.GPIO                     # Control de GPIO para Raspberry Pi
+numpy                       # Operaciones matemáticas y manejo de matrices
+matplotlib                   # Gráficos y visualización de datos
+flask                        # Servidor web para control de la aplicación
