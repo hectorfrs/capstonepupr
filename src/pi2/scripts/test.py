@@ -30,7 +30,7 @@ if relay.connected:
             file=sys.stderr)
 
     relay.set_relay_on()
-    relay.version
+    relay.get_version()
     time.sleep(2)
 
     # Verificar si el relé está encendido
@@ -43,8 +43,10 @@ if relay.connected:
     time.sleep(1)
 
     # Verificar si el relé está apagado
-    if not relay.is_relay_on():
-        print("[RELAY] El relé se ha apagado correctamente.")
+    if relay.get_relay_state() is True:
+        print ("[RELAY] El relé esta encendido.")
+    else:
+        print("[RELAY] El relé se ha apagado.")
 else:
     print(f"[ERROR] Relé no detectado en dirección {hex(relay_address)}. Verifica conexiones.")
 
