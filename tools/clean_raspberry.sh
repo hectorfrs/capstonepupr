@@ -48,9 +48,12 @@ if [ -d "$USER_PACKAGES_DIR" ]; then
 fi
 
 # Paso 4: Reinstalar dependencias en el ambiente virtual
-if [ -f "$REQUIREMENTS_FILE" ]; then
-    echo "[INFO] Instalando dependencias desde $REQUIREMENTS_FILE en el ambiente virtual..." | tee -a "$LOG_FILE"
-    # Crear archivo requirements.txt si no existe
+# Actualizar pip y herramientas base
+echo "[SETUP] Actualizando pip, setuptools y wheel..."
+pip install --upgrade pip setuptools wheel
+
+echo "[INFO] Instalando dependencias desde $REQUIREMENTS_FILE en el ambiente virtual..." | tee -a "$LOG_FILE"
+# Crear archivo requirements.txt si no existe
 if [ ! -f "$REQUIREMENTS_FILE" ]; then
   echo "[SETUP] Creando archivo requirements.txt..."
   cat <<EOL > "$REQUIREMENTS_FILE"
