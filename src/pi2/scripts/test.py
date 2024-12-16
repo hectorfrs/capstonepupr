@@ -28,7 +28,8 @@ if relay.connected:
     if myRelays.begin() == False:
         print("The Qwiic Relay isn't connected to the system. Please check your connection", \
             file=sys.stderr)
-    return
+        return
+        
     relay.set_relay_on()
     relay.version
     time.sleep(2)
