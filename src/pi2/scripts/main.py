@@ -5,13 +5,19 @@
 
 import json
 import logging
-from config_loader import load_config
-from mqtt_client import create_mqtt_client, subscribe_to_topic, publish_message
-from relay_controller import RelayController
-from network_manager import NetworkManager
+from utils.mqtt_client import create_mqtt_client, subscribe_to_topic, publish_message
+from lib.relay_controller import RelayController
+from utils.network_manager import NetworkManager
+from utils.real_time_config import RealTimeConfigManager
+from utils.config_manager import ConfigManager
+
+
 
 # Cargar configuración
-config = load_config()
+config_path = "/home/raspberry-1/capstonepupr/src/pi2/config/config.yaml"
+config_manager = RealTimeConfigManager(config_path)
+config_manager.start_monitoring()
+config = config_manager.get_config()
 
 # Configuración de red
 network_manager = NetworkManager(config)
