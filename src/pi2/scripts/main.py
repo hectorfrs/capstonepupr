@@ -68,12 +68,12 @@ def main():
 
         # Crear cliente MQTT
         logging.info("[MAIN] Conectando al broker MQTT...")
-        mqtt_client = create_mqtt_client(client_id, broker_addresses, port, config['mqtt']['keepalive'], on_message, protocol=mqtt.MQTTv311)
+        mqtt_client = create_mqtt_client(client_id, broker_addresses, port, config['mqtt']['keepalive'], on_message)
 
         # Suscribirse al tema de acción
         logging.info(f"[MAIN] Suscribiéndose al tema {topic_action}")
         subscribe_to_topic(mqtt_client, topic_action)
-        mqtt_client.on_subscribe = lambda client, userdata, mid, granted_qos: print(f"[MAIN] [MQTT] Suscripción exitosa.")
+        #mqtt_client.on_subscribe = lambda client, userdata, mid, granted_qos: print(f"[MAIN] [MQTT] Suscripción exitosa.")
 
         # Iniciar bucle MQTT
         logging.info("[MAIN] Iniciando bucle MQTT...")

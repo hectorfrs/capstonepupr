@@ -1,3 +1,4 @@
+# test.py - Prueba de funcionamiento del relé Qwiic Relay (Qwiic Relay - SPX-15093)
 import qwiic_tca9548a
 import qwiic_relay
 import time
