@@ -73,6 +73,7 @@ def main():
         # Suscribirse al tema de acción
         logging.info(f"[MAIN] Suscribiéndose al tema {topic_action}")
         subscribe_to_topic(mqtt_client, topic_action)
+        mqtt_client.on_subscribe = lambda client, userdata, mid, granted_qos: print(f"[MAIN] [MQTT] Suscripción exitosa.")
 
         # Iniciar bucle MQTT
         logging.info("[MAIN] Iniciando bucle MQTT...")
