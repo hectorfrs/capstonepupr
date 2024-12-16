@@ -15,5 +15,5 @@ print(f"Canal {channel} habilitado en el MUX.")
 # Mantén el canal habilitado para escanear con i2cdetect
 print("Manteniendo el canal habilitado por 10 segundos. Ejecuta 'i2cdetect -y 1'")
 time.sleep(10)
-mux.disable_channels()
+mux.disable_channels(channel)
 print("Canal deshabilitado.")
