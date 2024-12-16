@@ -25,12 +25,16 @@ if relay.connected:
 
     # Encender el relé
     print("[RELAY] Encendiendo el relé...")
+    if myRelays.begin() == False:
+        print("The Qwiic Relay isn't connected to the system. Please check your connection", \
+            file=sys.stderr)
+        return
     relay.set_relay_on()
     relay.version
     time.sleep(2)
 
     # Verificar si el relé está encendido
-    if relay.is_relay_on():
+    if relay.is_connected():
         print("[RELAY] El relé está encendido correctamente.")
 
     # Apagar el relé
