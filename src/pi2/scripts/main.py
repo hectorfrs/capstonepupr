@@ -55,7 +55,7 @@ def main():
                 logging.info(f"[MAIN] [RELAY] Material desconocido: {material_type}")
 
         # Callback para manejar mensajes MQTT
-        def on_message(client, userdata, msg):
+        def on_message(client, userdata, msg, properties=None):
             payload = json.loads(msg.payload.decode())
             if msg.topic == topic_action:
                 material_type = payload.get('tipo')
@@ -63,7 +63,8 @@ def main():
                 if material_type and duration:
                     handle_relay_control(material_type, duration)
                     # Publicar estado del relé
-                    publish_message(client, topic_status, {'bucket_info': f'Bucket para {material_type}'})
+                    client.publish(topic_status, json.dumps({'bucket_info': f'Bucket para {material_type}'}))
+
 
         # Crear cliente MQTT
         logging.info("[MAIN] Conectando al broker MQTT...")
