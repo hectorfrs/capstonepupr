@@ -1,19 +1,45 @@
 import qwiic_tca9548a
+import qwiic_relay
 import time
 
 # Inicializa el MUX
 mux = qwiic_tca9548a.QwiicTCA9548A()
 if not mux.is_connected():
-    print("MUX TCA9548A no detectado. Verifica conexiones.")
+    print("[ERROR] MUX TCA9548A no detectado. Verifica conexiones.")
     exit(1)
 
-# Habilita un canal del MUX
-channel = 1  # Cambia esto según el canal esperado
-mux.enable_channels(1 << channel)
-print(f"Canal {channel} habilitado en el MUX.")
+# Definir el canal MUX y dirección I2C del relé
+channel = 1  # Canal del MUX donde está conectado el relé
+relay_address = 0x19  # Dirección I2C del relé
 
-# Mantén el canal habilitado para escanear con i2cdetect
-print("Manteniendo el canal habilitado por 10 segundos. Ejecuta 'i2cdetect -y 1'")
-time.sleep(10)
-mux.disable_channels(channel)
-print("Canal deshabilitado.")
+# Habilitar el canal MUX
+mux.enable_channels(1 << channel)
+print(f"[MUX] Canal {channel} habilitado.")
+
+# Inicializar el relé
+relay = qwiic_relay.QwiicRelay(address=relay_address)
+
+if relay.connected:
+    print(f"[RELAY] Relé detectado en canal {channel}, dirección {hex(relay_address)}.")
+
+    # Comandos de prueba para el relé
+    print("[RELAY] Encendiendo el relé...")
+    relay.turn_on()
+    time.sleep(2)  # Mantener el relé encendido por 2 segundos
+
+    if relay.is_relay_on():
+        print("[RELAY] El relé está encendido correctamente.")
+
+    print("[RELAY] Apagando el relé...")
+    relay.turn_off()
+    time.sleep(1)
+
+    if not relay.is_relay_on():
+        print("[RELAY] El relé se ha apagado correctamente.")
+
+else:
+    print(f"[ERROR] No se pudo detectar el relé en dirección {hex(relay_address)}. Verifica las conexiones.")
+
+# Deshabilitar el canal MUX
+mux.disable_channels(1 << channel)
+print(f"[MUX] Canal {channel} deshabilitado.")
