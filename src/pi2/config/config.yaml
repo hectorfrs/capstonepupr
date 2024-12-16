@@ -37,3 +37,8 @@ logging:
   error_log_file: "/home/raspberry-2/logs/pi2_error_logs.log"   # Logs de errores
   max_size_mb: 5                                                # Tamaño máximo del archivo de logs en MB
   backup_count: 5                                               # Número de archivos de logs de respaldo
+
+mux:
+  relays:
+    - {mux_channel: 0, i2c_address: 0x18}  # Relay 1 (PET)
+    - {mux_channel: 1, i2c_address: 0x19}  # Relay 2 (HDPE)
