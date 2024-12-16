@@ -1,4 +1,4 @@
-from paho.mqtt.client import Client
+from paho.mqtt.client import Client, MQTTv311
 import json
 import logging
 
