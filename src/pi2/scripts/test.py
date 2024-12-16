@@ -15,6 +15,7 @@ relay_address = 0x18  # Dirección I2C del relé
 # Activar el canal del MUX
 mux.enable_channels(1 << channel)
 print(f"[MUX] Canal {channel} habilitado.")
+time.sleep(0.5)
 
 # Inicializar el relé en la dirección I2C especificada
 relay = qwiic_relay.QwiicRelay(address=relay_address)
@@ -25,6 +26,7 @@ if relay.connected:
     # Encender el relé
     print("[RELAY] Encendiendo el relé...")
     relay.set_relay_on()
+    relay.version()
     time.sleep(2)
 
     # Verificar si el relé está encendido
