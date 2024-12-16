@@ -28,13 +28,15 @@ class MUX_TCA9548A:
         """
         Inicializa el controlador del MUX TCA9548A.
         """
-        self.i2c_bus = i2c_bus
         self.address = address
         self.mux = QwiicTCA9548A(address)
+        self.i2c_bus = SMBus(1) if i2c_bus is None else i2c_bus
 
         if not self.mux.is_connected():
             raise ConnectionError(f"[CONTROLLER] [MUX] No se pudo conectar al MUX en la dirección {hex(address)}.")
         logging.info(f"[CONTROLLER] [MUX] TCA9548A conectado correctamente {hex(address)}.")
+        
+        self.active_channels = set()
 
     def enable_channel(self, channel):
         try:
