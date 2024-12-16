@@ -1,11 +1,8 @@
-# mqtt_client.py - Utilidades para la conexión y publicación de mensajes MQTT.
-# Desarrollado por Héctor F. Rivera Santiago
-# Copyright (c) 2024
-# Proyecto: Smart Recycling Bin
-
 from paho.mqtt.client import Client
 import json
 import logging
+
+logging.basicConfig(level=logging.INFO, format='[%(asctime)s] [%(levelname)s] %(message)s' , datefmt='%Y-%m-%d %H:%M:%S')
 
 def create_mqtt_client(client_id, broker_addresses, port, keepalive, on_message=None):
     """

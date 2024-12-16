@@ -68,7 +68,7 @@ def main():
 
         # Crear cliente MQTT
         logging.info("[MAIN] Conectando al broker MQTT...")
-        mqtt_client = create_mqtt_client(client_id, broker_addresses, port, config['mqtt']['keepalive'], on_message)
+        mqtt_client = create_mqtt_client(client_id, broker_addresses, port, config['mqtt']['keepalive'], on_message, protocol=mqtt.MQTTv311)
 
         # Suscribirse al tema de acción
         logging.info(f"[MAIN] Suscribiéndose al tema {topic_action}")
