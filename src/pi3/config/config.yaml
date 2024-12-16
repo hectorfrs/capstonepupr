@@ -1,0 +1,50 @@
+network:
+  ethernet:
+    ip: "192.168.1.147"           # Dirección IP estática para Ethernet
+    gateway: "192.168.1.1"        # Puerta de enlace para Ethernet
+  wifi:
+    ssid: "Capstone"              # Nombre de la red Wi-Fi
+    password: "Elefante"          # Contraseña de la red Wi-Fi
+    ip: "192.168.2.147"            # Dirección IP estática para Wi-Fi
+    gateway: "192.168.2.1"        # Puerta de enlace para Wi-Fi
+
+mqtt:
+  broker_address: "localhost"
+  port: 1883                                  # Puerto para el broker MQTT local
+  client_id: "RaspberryPi-3"
+  keepalive: 60 
+  topics:
+    entry: "material/entrada"
+    detection: "material/deteccion"
+    action: "valvula/accion"
+    status: "valvula/estado"
+
+i2c:
+  bus: 1
+
+sensors:
+  weight:
+    addresses: [0x2C, 0x2D]
+
+camera:
+  port: 0
+
+aws:
+  credentials:
+    access_key_id: "tu_access_key_id"
+    secret_access_key: "tu_secret_access_key"
+  region: "tu_region"
+  iot_endpoint: "tu_endpoint_de_iot"
+
+simulation:
+  duration: 3600                                                  # Duración total de la simulación en segundos
+  detection_interval: 5                                         # Intervalo en segundos entre detecciones de material
+
+communication:
+  delay_to_pi1: 2                                               # Tiempo de espera en segundos entre Raspberry Pi 3 y Raspberry Pi 1
+
+logging:
+  log_file: "/home/raspberry-3/logs/pi3_logs.log"               # Archivo de logs para registrar las operaciones
+  error_log_file: "/home/raspberry-3/logs/pi3_error_logs.log"   # Logs de errores
+  max_size_mb: 5                                                # Tamaño máximo del archivo de logs en MB
+  backup_count: 5                                               # Número de archivos de logs de respaldo

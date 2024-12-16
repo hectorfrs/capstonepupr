@@ -1,6 +1,7 @@
 import os
 import subprocess
 import yaml
+import logging
 
 
 class NetworkManager:
@@ -9,7 +10,7 @@ class NetworkManager:
     Incluye configuración para Ethernet y Wi-Fi según los parámetros del archivo YAML.
     """
 
-    def __init__(self, config_path="config/pi2_config.yaml"):
+    def __init__(self, config_path="config/config.yaml"):
         """
         Inicializa el NetworkManager cargando la configuración de red.
 
