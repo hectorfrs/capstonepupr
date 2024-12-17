@@ -6,8 +6,8 @@
 import logging
 import time
 from utils.mqtt_handler import MQTTHandler
-from utils.weight_sensor_simulation import simulate_weight_sensor
-from utils.waste_type_simulation import simulate_waste_detection
+from utils.weight_sensor import WeightSensor
+from utils.waste_type import WasteTypeDetector
 from utils.real_time_config import RealTimeConfigManager
 from utils.network_manager import NetworkManager
 from utils.camera_simulation import simulate_camera_detection

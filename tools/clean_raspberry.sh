@@ -47,7 +47,9 @@ fi
 # Paso 2: Crear un nuevo entorno virtual
 echo "[INFO] Creando un nuevo entorno virtual en $VENV_DIR..." | tee -a "$LOG_FILE"
 $PYTHON_GLOBAL -m venv "$VENV_DIR"
-echo "[SUCCESS] Nuevo entorno virtual creado en $VENV_DIR." | tee -a "$LOG_FILE"
+# Asignar permisos correctos
+chown -R $SUDO_USER:$SUDO_USER "$VENV_DIR"
+echo "[SUCCESS] Entorno virtual creado correctamente y asignado a $SUDO_USER." | tee -a "$LOG_FILE"
 
 # Paso 3: Activar el entorno virtual
 source "$VENV_DIR/bin/activate" | tee -a "$LOG_FILE"
@@ -138,7 +140,6 @@ echo "[SUCCESS] Configuración de ~/.bashrc completada correctamente." | tee -a 
 # Aplicar cambios
 echo "[INFO] Aplicando cambios del bashrc..." | tee -a "$LOG_FILE"
 source "$BASHRC_FILE"
-sudo chown -R $(whoami):$(whoami) $VENV_DIR
 
 # Finalización
 echo "[SUCCESS] Entorno virtual reconstruido correctamente. Reinicia sesión o ejecuta 'source ~/.bashrc'." | tee -a "$LOG_FILE"
