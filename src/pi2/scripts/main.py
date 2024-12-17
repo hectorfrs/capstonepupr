@@ -18,9 +18,9 @@ def main():
         config_path = "/home/raspberry-2/capstonepupr/src/pi2/config/config.yaml"
 
         # Configuración
-        logging.info("=====================================================================")
+        logging.info("=" * 80)
         logging.info("        [MAIN] Iniciando sistema de control de Relay")
-        logging.info("=====================================================================")
+        logging.info("=" * 80)
 
         logging.info("[MAIN] Cargando configuración...")
         config_manager = RealTimeConfigManager(config_path)

@@ -15,17 +15,6 @@ from utils.config_manager import ConfigManager
 from utils.mqtt_publisher import start_publisher
 from utils.mqtt_client import create_mqtt_client, subscribe_to_topic
 
-# Configuración de logging
-logging.basicConfig(level=logging.INFO, format="[%(asctime)s] [%(levelname)s] %(message)s", datefmt='%Y-%m-%d %H:%M:%S')
-
-# Función para cargar configuración desde config.yaml
-def load_config(config_path):
-    if os.path.exists(config_path):
-        with open(config_path, "r") as file:
-            return yaml.safe_load(file)
-    else:
-        raise FileNotFoundError(f"[ERROR] No se encontró el archivo de configuración: {config_path}")
-
 # Función principal
 def main():
     try:
@@ -36,9 +25,9 @@ def main():
         config_path = "/home/raspberry-1/capstonepupr/src/pi1/config/config.yaml"
         
         # Configuración
-        logging.info("=====================================================================")
+        logging.info("=" * 70)
         logging.info("    [MAIN] Iniciando sistema de detección de materiales")
-        logging.info("=====================================================================")
+        logging.info("=" * 70)
 
         logging.info("[MAIN] Cargando configuración...")
         config_manager = RealTimeConfigManager(config_path)
