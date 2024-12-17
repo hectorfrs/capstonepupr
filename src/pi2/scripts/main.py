@@ -78,7 +78,7 @@ def main():
         #mqtt_client.on_subscribe = lambda client, userdata, mid, granted_qos: print(f"[MAIN] [MQTT] Suscripción exitosa.")
 
         # Iniciar bucle MQTT
-        logging.info("[MAIN] Iniciando bucle MQTT...")
+        logging.info("[MAIN] Esperando señales desde Raspberry Pi 1...")
         mqtt_client.loop_forever()
     except Exception as e:
         logging.error(f"[MAIN] Error crítico en la ejecución: {e}")
