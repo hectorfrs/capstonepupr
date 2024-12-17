@@ -25,8 +25,8 @@ class MQTTHandler:
         self.client = mqtt.Client()
 
         # Configuración de autenticación si es necesaria
-        if self.username and self.password:
-            self.client.username_pw_set(self.username, self.password)
+        #if self.username and self.password:
+            #self.client.username_pw_set(self.username, self.password)
 
         # Configuración de callbacks
         self.client.on_connect = self.on_connect
