@@ -96,7 +96,11 @@ def main():
 
         
         # Conectar al broker
-        mqtt_handler.connect()
+        try:
+            mqtt_handler.connect()
+        except ConnectionError as e:
+            logging.critical(f"[MAIN] No se pudo conectar a ningún broker MQTT: {e}")
+            exit(1)
         logging.info("[MAIN] [MQTT] Conectado al broker MQTT.")
 
         # Suscribirse a los tópicos requeridos

@@ -36,17 +36,20 @@ class MQTTHandler:
         """
         Intenta conectarse a cada dirección de broker hasta que tenga éxito.
         """
-        for broker in self.brokers:
+        for broker in self.config["broker_addresses"]:
             try:
-                self.logger.info(f"[MQTT] Intentando conectar al broker {self.broker}:{self.port}...")
-                self.client.connect(self.broker, self.port, self.config.get("keepalive", 60))
+                self.logger.info(f"[MQTT] Intentando conectar al broker {broker}:{self.port}...")
+                self.client.connect(broker, self.port, self.keepalive)
                 self.client.loop_start()  # Inicia el loop de la biblioteca MQTT
-                self.logger.info("[MQTT] Conexión al broker exitosa.")
+                self.logger.info(f"[MQTT] Conexión exitosa al broker {broker}:{self.port}.")
+                return  # Sale del método si la conexión tiene éxito
             except Exception as e:
                 self.logger.warning(f"[MQTT] No se pudo conectar al broker {broker}:{self.port}. Error: {e}")
 
+        # Si ninguna conexión tuvo éxito
         self.logger.critical("[MQTT] No se pudo conectar a ninguno de los brokers disponibles.")
         raise ConnectionError("No se pudo conectar a ningún broker MQTT.")
+
 
     def disconnect(self):
         """
