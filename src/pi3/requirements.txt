@@ -1,6 +1,16 @@
-paho-mqtt
+sparkfun-qwiic
+sparkfun-qwiic-relay
+sparkfun-qwiic-i2c
+smbus2
+paho-mqtt==1.6.1
 boto3
 opencv-python
 Pillow
 PyYAML
 customtkinter
+watchdog
+RPi.GPIO
+numpy
+matplotlib
+flask
+logging
