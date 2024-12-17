@@ -88,32 +88,22 @@ def main():
         network_manager = NetworkManager(config)
         network_manager.start_monitoring()
 
-        # Configurar cliente MQTT
-        logging.info("[MAIN] Inicializando cliente MQTT...")
-        mqtt_config = config["mqtt"]
-        client_id = mqtt_config["client_id"]
-        broker_address = mqtt_config["broker_address"]
-        port = mqtt_config["port"]
-        keepalive = mqtt_config["keepalive"]
-        topic_action = mqtt_config["topics"]["action"]
+       # Inicializar el manejador MQTT
+        logging.info("[MAIN] Configurando cliente MQTT...")
+        mqtt_handler = MQTTHandler(config["mqtt"])
+        mqtt_handler.client.on_message = on_message_received  # Asignar el callback
 
-        # Crear cliente MQTT
-        mqtt_client = create_mqtt_client(client_id, broker_address, port, keepalive)
-        mqtt_client.on_message = on_message_received  # Asignar el callback
-        mqtt_config = config["mqtt"]
+        # Conectar al broker MQTT
+        mqtt_handler.connect()
 
-        # Suscribirse al tópico 'material/entrada'
-        topic_entry = mqtt_config["topics"]["entry"]
-        topic_detection = mqtt_config["topics"]["detection"]
-        logging.info(f"[MAIN] Suscribiéndose al tópico '{topic_entry}'...")
-        client.subscribe(topic_entry)
-        logging.info(f"[MAIN] Suscribiéndose al tópico '{topic_detection}'...")
-        client.subscribe(topic_detection)
-        client.message_callback_add(topic_entry, topic_detection, on_message)
+        # Suscribirse a los tópicos necesarios
+        topic_action = config["mqtt"]["topics"]["action"]
+        logging.info(f"[MAIN] Suscribiéndose al tópico '{topic_action}'...")
+        mqtt_handler.client.subscribe(topic_action)
 
-        # Iniciar bucle MQTT
-        logging.info("[MAIN] Esperando señales desde Raspberry Pi 3...")
-        client.loop_forever()
+        # Iniciar bucle infinito
+        logging.info("[MAIN] Esperando señales MQTT...")
+        mqtt_handler.client.loop_forever()
 
     except KeyboardInterrupt:
         logging.info("[MAIN] Apagando Monitoreo del Network...")
