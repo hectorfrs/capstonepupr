@@ -13,9 +13,9 @@ class MQTTHandler:
         Args:
             config (dict): Configuración para el cliente MQTT.
         """
-        self.logger = logging.getLogger("MQTTHandler")
+        self.logger = logging.getLogger("MQTTHandler")          # Logger personalizado
         self.config = config
-        self.broker = config["broker_addresses"][0]  # Utilizar el primer broker como predeterminado
+        self.broker = config["broker_addresses"][0]             # Utilizar el primer broker como predeterminado
         self.port = config.get("port", 1883)
         self.keepalive = config.get("keepalive", 60)
         self.client_id = config.get("client_id", "MQTTClient")
@@ -39,11 +39,10 @@ class MQTTHandler:
         """
         for broker in self.brokers:
             try:
-                self.logger.info(f"[MQTT] Intentando conectar al broker {broker}:{self.port}...")
-                self.client.connect(broker, self.port, self.keepalive)
-                self.client.loop_start()
-                self.logger.info(f"[MQTT] Conexión exitosa al broker: {broker}:{self.port}")
-                return  # Salir del bucle si la conexión es exitosa
+                self.logger.info(f"[MQTT] Intentando conectar al broker {self.broker}:{self.port}...")
+                self.client.connect(self.broker, self.port, self.config.get("keepalive", 60))
+                self.client.loop_start()  # Inicia el loop de la biblioteca MQTT
+                self.logger.info("[MQTT] Conexión al broker exitosa.")
             except Exception as e:
                 self.logger.warning(f"[MQTT] No se pudo conectar al broker {broker}:{self.port}. Error: {e}")
 
