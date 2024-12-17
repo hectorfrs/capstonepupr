@@ -5,6 +5,7 @@
 
 import logging
 import time
+import yaml
 from utils.mqtt_handler import MQTTHandler
 from utils.weight_sensor import WeightSensor
 from utils.waste_type import WasteTypeDetector
