@@ -56,7 +56,12 @@ def main():
 
         # Iniciar la simulación de la cámara
         logging.info("[MAIN] Simulando cámara y detección de materiales...")
-        simulate_camera_detection(mqtt_handler, mqtt_config["topics"]["entry"], [1, 3])
+        # Simulación de la cámara y detección de materiales
+        simulate_camera_detection(
+            mqtt_handler=mqtt_handler, 
+            topic=mqtt_config["topics"]["entry"],
+            delay_range=[1, 3]  # Delay entre 1 y 3 segundos
+        )
 
         # Configuración inicial de los buckets
         buckets = {
@@ -91,7 +96,7 @@ def main():
             )
 
             # Simular detección de residuos y publicación
-            waste_data = waste_detection()
+            waste_data = WasteTypeDetector()
             mqtt_handler.publish(
                 topic=mqtt_config["topics"]["detection"],
                 payload=waste_data
