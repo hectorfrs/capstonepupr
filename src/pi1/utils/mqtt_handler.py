@@ -17,8 +17,8 @@ class MQTTHandler:
         self.config = config
         self.broker = config["broker_address"][0]  # Utilizar el primer broker como predeterminado
         self.port = config.get("port", 1883)
-        self.username = config.get("username", None)
-        self.password = config.get("password", None)
+        #self.username = config.get("username", None)
+        #self.password = config.get("password", None)
         self.client = mqtt.Client()
 
         # Configuración de autenticación si es necesaria
