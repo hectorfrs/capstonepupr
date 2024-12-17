@@ -18,6 +18,8 @@ mqtt:
   topics:
     entry: "material/entrada"
     detection: "material/deteccion"
+    action: "valvula/accion"
+    status: "valvula/estado"
 
 i2c:
   bus: 1
