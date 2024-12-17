@@ -22,7 +22,6 @@ class MQTTHandler:
         self.client = mqtt.Client(client_id=self.client_id)
         #self.username = config.get("username", None)
         #self.password = config.get("password", None)
-        self.client = mqtt.Client()
 
         # Configuración de autenticación si es necesaria
         #if self.username and self.password:
