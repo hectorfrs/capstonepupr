@@ -9,7 +9,7 @@ network:
     gateway: "192.168.2.1"        # Puerta de enlace para Wi-Fi
 
 mqtt:
-  broker_address: 
+  broker_addresses: 
     - "192.168.1.147"                                             # Dirección IP del broker MQTT local (Ethernet Raspberry Pi #3)
     - "192.168.2.147"                                             # Dirección IP del broker MQTT local (Wi-Fi Raspberry Pi #3)
   port: 1883                                                      # Puerto del broker MQTT
