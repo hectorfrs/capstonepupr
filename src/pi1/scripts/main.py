@@ -84,12 +84,12 @@ def main():
         config = config_manager.get_config()
 
         # Configuración de red
-        logging.info("[MAIN] Iniciando monitoreo de red...")
+        logging.info("[MAIN] [NET] Iniciando monitoreo de red...")
         network_manager = NetworkManager(config)
         network_manager.start_monitoring()
 
        # Inicializar el manejador MQTT
-        logging.info("[MAIN] Configurando cliente MQTT...")
+        logging.info("[MAIN] [MQTT] Configurando cliente MQTT...")
         mqtt_config = config["mqtt"]
         mqtt_handler = MQTTHandler(mqtt_config)
         mqtt_handler.client.on_message = on_message_received  # Asignar el callback
@@ -97,16 +97,15 @@ def main():
         
         # Conectar al broker
         mqtt_handler.connect()
+        logging.info("[MAIN] [MQTT] Conectado al broker MQTT.")
 
-
-                # Suscribirse a los tópicos necesarios
-        topic_action = config["mqtt"]["topics"]["action"]
-        logging.info(f"[MAIN] Suscribiéndose al tópico '{topic_action}'...")
-        mqtt_handler.client.subscribe(topic_action)
+        # Suscribirse a los tópicos requeridos
+        mqtt_handler.subscribe(mqtt_config["topics"]["entry"])
+        mqtt_handler.subscribe(mqtt_config["topics"]["detection"])
 
         # Iniciar bucle infinito
         logging.info("[MAIN] Esperando señales MQTT...")
-        mqtt_handler.client.loop_forever()
+        mqtt_handler.forever_loop()
 
     except KeyboardInterrupt:
         logging.info("[MAIN] Apagando Monitoreo del Network...")
