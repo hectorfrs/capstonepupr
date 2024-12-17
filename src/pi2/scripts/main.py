@@ -80,16 +80,16 @@ def main():
         # Iniciar bucle MQTT
         logging.info("[MAIN] Esperando señales desde Raspberry Pi 1...")
         mqtt_client.loop_forever()
+    except KeyboardInterrupt:
+        logging.info("[MAIN] Apagando Monitoreo del Network...")
+        network_manager.stop_monitoring()
+        logging.info("[MAIN] Sistema apagado correctamente.")
     except Exception as e:
         logging.error(f"[MAIN] Error crítico en la ejecución: {e}")
     finally:
-            if network_manager:
-                logging.info("[MAIN] Apagando Monitoreo del Network...")
-                network_manager.stop_monitoring()
-            if config_manager:
-                logging.info("[MAIN] Apagando sistema...")
-                config_manager.stop_monitoring()
-            logging.info("[MAIN] Sistema apagado correctamente.")
+        logging.info("[MAIN] Finalizando ejecución del script.")
+        mqtt_client.disconnect()
+        logging.info("[MAIN] Cliente MQTT desconectado.")
 
 if __name__ == "__main__":
     try:

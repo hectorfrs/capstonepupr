@@ -71,11 +71,15 @@ def main():
         mqtt_client.loop_forever()
 
     except KeyboardInterrupt:
-        logging.info("[MAIN] Simulación detenida por el usuario.")
+        logging.info("[MAIN] Apagando Monitoreo del Network...")
+        network_manager.stop_monitoring()
+        logging.info("[MAIN] Sistema apagado correctamente.")
     except Exception as e:
         logging.error(f"[MAIN] Error crítico en la ejecución: {e}")
     finally:
         logging.info("[MAIN] Finalizando ejecución del script.")
+        mqtt_client.disconnect()
+        logging.info("[MAIN] Cliente MQTT desconectado.")
 
 if __name__ == "__main__":
     main()
