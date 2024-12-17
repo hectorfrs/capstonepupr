@@ -28,34 +28,35 @@ def simulate_camera_detection(mqtt_handler, topic, detection_range):
     :param detection_range: Rango de tiempo aleatorio entre detecciones (en segundos).
     """
     logging.info("[CAMERA] Iniciando simulación de detección de materiales...")
+    try:
+        while True:
+                # Simular detección de materiales usando waste_type
+                waste_data = simulate_waste_detection()
 
-    while True:
-        try:
-            # Simular detección aleatoria de materiales
-            material_detected = random.choice(["PET", "HDPE", "PVC", "LDPE", "PP", "PS", "Other"])
-            detection_id = str(uuid.uuid4())
-            timestamp = time.time()
+                # Extraer un material aleatorio de los detectados
+                detected_materials = waste_data.get("detected_items", [])
+                if detected_materials:
+                    material = detected_materials[0]["Name"]  # Tomar el primer material detectado
+                else:
+                    material = "Unknown"
 
-            payload = {
-                "id": detection_id,
-                "status": "material_detected",
-                "material": material_detected,
-                "timestamp": timestamp
-            }
+                # Crear mensaje de detección
+                detection_message = {
+                    "id": str(uuid.uuid4()),  # ID único
+                    "status": "material_detected",
+                    "material": material,  # Material detectado
+                    "timestamp": time.time()
+                }
 
-            # Publicar en el tópico MQTT usando la instancia de MQTTHandler
-            mqtt_handler.publish(topic, payload)
+                # Publicar en el tópico MQTT
+                mqtt_handler.publish(topic, detection_message)
+                logging.info(f"[CAMERA] Material detectado: {material}. Enviado al tópico '{topic}'.")
 
-            logging.info(f"[CAMERA] Material detectado: {material} | ID: {detection_id} | Enviado al tópico '{topic}'.")
+                # Simular delay aleatorio
+                wait_time = random.uniform(*delay_range)
+                logging.info(f"[CAMERA] Esperando {wait_time:.2f} segundos antes de la próxima detección.")
+                time.sleep(wait_time)
 
-            # Simular el tiempo de detección
-            wait_time = random.uniform(*detection_range)
-            logging.info(f"[CAMERA] Esperando {wait_time:.2f} segundos antes de la próxima detección.")
-            time.sleep(wait_time)
-
-        except KeyboardInterrupt:
-            logging.info("[CAMERA] Simulación de cámara detenida por el usuario.")
-            break
-        except Exception as e:
-            logging.error(f"[CAMERA] Error durante la simulación de detección: {e}")
-            break
+    except Exception as e:
+        logging.error(f"[CAMERA] Error durante la simulación de detección: {e}")
+        raise
