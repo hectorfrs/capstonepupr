@@ -50,7 +50,16 @@ class MQTTHandler:
 
     def on_disconnect(self, client, userdata, rc):
         """Callback al desconectar del broker."""
-        logging.warning("[MQTT] Cliente desconectado del broker.")
+        logging.warning(f"[MQTT] Cliente desconectado del broker.")
+        logging.warning(f"[MQTT] Código de retorno: {rc}")
+        while rc != 0:
+            try:
+                logging.info("[MQTT] Intentando reconectar...")
+                rc = client.reconnect()
+            except Exception as e:
+                logging.error(f"[MQTT] Error al reconectar: {e}")
+                time.sleep(5)
+
 
     def connect(self):
         """Conecta el cliente MQTT al broker."""

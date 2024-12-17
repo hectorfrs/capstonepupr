@@ -42,6 +42,31 @@ def on_message(client, userdata, msg):
     except Exception as e:
         logging.error(f"[MAIN] Error procesando mensaje: {e}")
 
+def on_message_received(client, userdata, msg):
+    """
+    Callback para procesar mensajes recibidos.
+    """
+    try:
+        payload = json.loads(msg.payload.decode())
+        detection_id = payload.get("id", "N/A")
+        material = payload.get("material", "Unknown")
+
+        logging.info(f"[MAIN] Mensaje recibido | ID: {detection_id} | Material: {material}")
+
+        if material in ["PET", "HDPE"]:
+            action_time = round(random.uniform(1, 5), 2)
+            action_payload = {"id": detection_id, "tipo": material, "tiempo": action_time}
+
+            # Publicar mensaje para activar válvula
+            publish_message(client, "valvula/accion", action_payload)
+            logging.info(f"[MAIN] Acción enviada | ID: {detection_id} | Tipo: {material} | Tiempo: {action_time}s")
+        else:
+            logging.info(f"[MAIN] Material '{material}' ignorado | ID: {detection_id}")
+
+    except Exception as e:
+        logging.error(f"[MAIN] Error procesando mensaje: {e}")
+
+
 # Función principal
 def main():
     try:

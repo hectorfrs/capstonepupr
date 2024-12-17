@@ -7,6 +7,7 @@ import time
 import random
 import json
 import logging
+import uuid
 from datetime import datetime
 from utils.mqtt_handler import MQTTHandler
 from utils.waste_type import WasteTypeDetector
@@ -32,9 +33,11 @@ def simulate_camera_detection(mqtt_handler, topic, detection_range):
         try:
             # Simular detección aleatoria de materiales
             material_detected = random.choice(["PET", "HDPE", "PVC", "LDPE", "PP", "PS", "Other"])
+            detection_id = str(uuid.uuid4())
             timestamp = time.time()
 
             payload = {
+                "id": detection_id,
                 "status": "material_detected",
                 "material": material_detected,
                 "timestamp": timestamp
@@ -43,7 +46,7 @@ def simulate_camera_detection(mqtt_handler, topic, detection_range):
             # Publicar en el tópico MQTT usando la instancia de MQTTHandler
             mqtt_handler.publish(topic, payload)
 
-            logging.info(f"[CAMERA] Material detectado: {material_detected}. Enviado al tópico '{topic}'.")
+            logging.info(f"[CAMERA] Material detectado: {material} | ID: {detection_id} | Enviado al tópico '{topic}'.")
 
             # Simular el tiempo de detección
             wait_time = random.uniform(*detection_range)

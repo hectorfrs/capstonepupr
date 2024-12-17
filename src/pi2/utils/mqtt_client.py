@@ -47,3 +47,14 @@ def subscribe_to_topic(client, topic):
     """
     client.subscribe(topic)
     logging.info(f"[MQTT] [CLIENT] Suscrito al tema: {topic}")
+
+def on_disconnect(self, client, userdata, rc):
+    logging.warning(f"[MQTT] Desconectado. Código de retorno: {rc}")
+    while rc != 0:
+        try:
+            logging.info("[MQTT] Intentando reconectar...")
+            rc = client.reconnect()
+        except Exception as e:
+            logging.error(f"[MQTT] Error al reconectar: {e}")
+            time.sleep(5)
+    logging.info("[MQTT] Reconectado exitosamente.")

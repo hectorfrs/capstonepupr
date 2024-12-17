@@ -17,6 +17,17 @@ def main():
         logging.basicConfig(level=logging.INFO, format='[%(asctime)s] [%(levelname)s] %(message)s' , datefmt='%Y-%m-%d %H:%M:%S')
         config_path = "/home/raspberry-2/capstonepupr/src/pi2/config/config.yaml"
 
+        # Configuración de BucketLogger
+        bucket_logger = logging.getLogger("BucketLogger")
+        bucket_logger.setLevel(logging.INFO)
+        file_handler = logging.FileHandler("/home/raspberry-2/logs/bucket_status.log")
+        file_handler.setFormatter(logging.Formatter('[%(asctime)s] %(message)s'))
+        bucket_logger.addHandler(file_handler)
+
+        # Registro en BucketLogger
+        bucket_logger.info(f"[BUCKET] {material_type} | ID: {detection_id} | Peso total actual: {current_weight}g")
+
+
         # Configuración
         logging.info("=" * 80)
         logging.info("        [MAIN] Iniciando sistema de control de Relay")
@@ -66,6 +77,33 @@ def main():
                     handle_relay_control(material_type, duration)
                     # Publicar estado del relé
                     client.publish(topic_status, json.dumps({'bucket_info': f'Bucket para {material_type}'}))
+
+        def on_message_received(client, userdata, msg):
+            """
+            Callback para procesar mensajes MQTT y activar relés.
+            """
+            try:
+                payload = json.loads(msg.payload.decode())
+                detection_id = payload.get("id", "N/A")
+                material_type = payload.get("tipo")
+                action_time = payload.get("tiempo")
+
+                if material_type and action_time:
+                    logging.info(f"[MAIN] Señal recibida | ID: {detection_id} | Material: {material_type} | Tiempo: {action_time}s")
+
+                    # Activar relé correspondiente
+                    if material_type == "PET":
+                        relay_controller.activate_relay(0, action_time)
+                    elif material_type == "HDPE":
+                        relay_controller.activate_relay(1, action_time)
+
+                    logging.info(f"[MAIN] Relé activado | ID: {detection_id} | Material: {material_type} | Tiempo: {action_time}s")
+                else:
+                    logging.warning(f"[MAIN] Mensaje inválido recibido: {payload}")
+
+            except Exception as e:
+                logging.error(f"[MAIN] Error al procesar mensaje: {e}")
+
 
 
         # Crear cliente MQTT

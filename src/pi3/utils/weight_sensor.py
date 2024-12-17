@@ -25,6 +25,9 @@ class WeightSensor:
             "Bucket 1 (PET)": (8, 12),   # Incremento aleatorio por botella PET
             "Bucket 2 (HDPE)": (18, 22)  # Incremento aleatorio por botella HDPE
         }
+        if self.buckets[bucket] >= self.weight_limits[bucket]:
+            logging.warning(f"[WEIGHT SENSOR] ALERTA: {bucket} está lleno (peso: {self.weight_limits[bucket]}g)")
+
 
     def simulate_weight(self):
         """
