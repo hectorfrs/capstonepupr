@@ -27,7 +27,8 @@ sensors:
     addresses: [0x49, 0x4A, 0x4B]
 
 simulation:
-  detection_interval: 5
+  detection_interval: [2, 15]                                   # Intervalo aleatorio entre detecciones (en segundos)
+  valve_duration: [0.5, 5]                                       # Tiempo aleatorio de apertura de las válvulas (en segundos)
 
 communication:
   delay_to_pi2: 1                                               # Tiempo de espera entre detección y envío a Raspberry Pi 2

@@ -30,7 +30,8 @@ valves:
   relay_pins: [17, 27]
 
 simulation:
-  detection_interval: 5
+  detection_interval: 5                                         # Intervalo de tiempo para detectar un cambio en el estado de la válvula
+  detection_delay: 3                                            # Delay entre recepción del mensaje y activación del relé
 
 logging:
   log_file: "/home/raspberry-2/logs/pi2_logs.log"               # Archivo de logs para registrar las operaciones

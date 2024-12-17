@@ -121,13 +121,13 @@ sed -i '/# Activar entorno virtual automáticamente/,/# sudo \/etc\/init.d\/xrdp
 # Escribir el bloque exactamente como se requiere
 cat <<EOL >> "$BASHRC_FILE"
 # Activar entorno virtual automáticamente
-source /home/$RASPBERRY/venv/bin/activate
+source $VENV_DIR/bin/activate
 
 # Configurar PYTHONPATH para el proyecto Capstone
-export PYTHONPATH=/home/$RASPBERRY/capstonepupr/src/pi$PI:\$PYTHONPATH
+export PYTHONPATH=$CAPSTONE:\$PYTHONPATH
 
 # Priorizar entorno virtual en PATH
-export PATH=/home/$RASPBERRY/venv/bin:\$PATH
+export PATH=$VENV_DIR/bin:\$PATH
 
 # Nota: Para evitar sudo en ~/.bashrc, configura xrdp con systemd
 # sudo /etc/init.d/xrdp start > /dev/null   # Esta línea se debería mover fuera de ~/.bashrc
@@ -138,6 +138,7 @@ echo "[SUCCESS] Configuración de ~/.bashrc completada correctamente." | tee -a 
 # Aplicar cambios
 echo "[INFO] Aplicando cambios del bashrc..." | tee -a "$LOG_FILE"
 source "$BASHRC_FILE"
+sudo chown -R $(whoami):$(whoami) $VENV_DIR
 
 # Finalización
 echo "[SUCCESS] Entorno virtual reconstruido correctamente. Reinicia sesión o ejecuta 'source ~/.bashrc'." | tee -a "$LOG_FILE"
