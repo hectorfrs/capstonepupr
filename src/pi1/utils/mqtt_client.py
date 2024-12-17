@@ -31,3 +31,10 @@ def create_mqtt_client(client_id, broker_addresses, port, keepalive):
             logging.error(f"[MQTT] Error al conectar con {broker}: {e}")
 
     raise Exception("[MQTT] No se pudo conectar a ningún broker MQTT.")
+
+def subscribe_to_topic(client, topic):
+    """
+    Se suscribe a un tema MQTT.
+    """
+    client.subscribe(topic)
+    logging.info(f"[MQTT] [CLIENT] Suscrito al tema: {topic}")

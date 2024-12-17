@@ -24,13 +24,13 @@ def start_publisher(client, topic_action, simulation_config):
 
             # Publicar mensaje en el tópico
             client.publish(topic_action, json.dumps(message))
-            logging.info(f"[PUBLISHER] Mensaje publicado en {topic_action}: {message}")
+            logging.info(f"[PUBLISHER] [MQTT] Mensaje publicado en {topic_action}: {message}")
 
             # Espera aleatoria entre detecciones
             wait_time = random.randint(*detection_interval)
-            logging.info(f"[PUBLISHER] Esperando {wait_time} segundos antes de la próxima detección.")
+            logging.info(f"[PUBLISHER] [MQTT] Esperando {wait_time} segundos antes de la próxima detección.")
             time.sleep(wait_time)
 
         except Exception as e:
-            logging.error(f"[PUBLISHER] Error durante la simulación: {e}")
+            logging.error(f"[PUBLISHER] [MQTT] Error durante la simulación: {e}")
             break
