@@ -14,7 +14,7 @@ import paho.mqtt.client as mqtt
 from utils.network_manager import NetworkManager
 from utils.real_time_config import RealTimeConfigManager
 from utils.config_manager import ConfigManager
-from utils.mqtt_client import create_mqtt_client, subscribe_to_topic
+from utils.mqtt_handler import MQTTHandler
 
 # Función para manejar mensajes recibidos desde material/entrada
 def on_message(client, userdata, msg):
