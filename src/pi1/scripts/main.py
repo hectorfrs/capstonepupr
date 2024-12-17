@@ -115,7 +115,7 @@ def main():
         logging.info("[MAIN] Finalizando ejecución del script.")
         if 'mqtt_handler' in locals() and mqtt_handler.is_connected():
             logging.info("[MAIN] Desconectando cliente MQTT...")
-        mqtt_handler.client.disconnect()
+        mqtt_handler.disconnect()
         logging.info("[MAIN] Cliente MQTT desconectado.")
 
 
