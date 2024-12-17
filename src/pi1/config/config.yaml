@@ -29,7 +29,7 @@ sensors:
     addresses: [0x49, 0x4A, 0x4B]
 
 simulation:
-  detection_interval: [2, 15]                                   # Intervalo aleatorio entre detecciones (en segundos)
+  detection_interval: [1, 15]                                   # Intervalo aleatorio entre detecciones (en segundos)
   valve_duration: [0.5, 5]                                       # Tiempo aleatorio de apertura de las válvulas (en segundos)
 
 communication:
