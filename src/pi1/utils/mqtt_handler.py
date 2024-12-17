@@ -93,3 +93,23 @@ class MQTTHandler:
         Callback ejecutado al completar una publicación.
         """
         self.logger.debug(f"[MQTT] Publicación completada con ID: {mid}")
+    
+    def loop_forever(self):
+        """Inicia el bucle principal de MQTT para manejar la comunicación."""
+        try:
+            logging.info("[MQTT] Iniciando bucle MQTT...")
+            self.client.loop_forever()
+        except KeyboardInterrupt:
+            logging.info("[MQTT] Interrumpido manualmente. Finalizando bucle.")
+            self.client.disconnect()
+    
+    def disconnect(self):
+        """
+        Desconecta el cliente MQTT.
+        """
+        try:
+            self.client.loop_stop()
+            self.client.disconnect()
+            logging.info("[MQTT] Cliente MQTT desconectado exitosamente.")
+        except Exception as e:
+            logging.error(f"[MQTT] Error al desconectar el cliente MQTT: {e}")
