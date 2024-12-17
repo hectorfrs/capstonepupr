@@ -9,7 +9,7 @@ import json
 import logging
 from datetime import datetime
 from utils.mqtt_handler import MQTTHandler
-from waste_type import generate_waste_data
+from utils.waste_type import WasteTypeDetector
 
 # Configuración del logging
 logging.basicConfig(
