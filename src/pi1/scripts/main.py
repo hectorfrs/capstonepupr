@@ -103,12 +103,13 @@ def main():
             exit(1)
         logging.info("[MAIN] [MQTT] Conectado al broker MQTT.")
 
-        # Suscribirse a los tópicos requeridos
-        mqtt_handler.subscribe(mqtt_config["topics"]["entry"])
-        mqtt_handler.subscribe(mqtt_config["topics"]["detection"])
+        # Suscribirse a los tópicos
+        topics = [mqtt_config["topics"]["entry"], mqtt_config["topics"]["detection"]]
+        mqtt_handler.subscribe(topics)
+
 
         # Iniciar bucle infinito
-        logging.info("[MAIN] Esperando señales MQTT...")
+        logging.info("[MAIN] Esperando señales MQTT de Raspberry-3...")
         mqtt_handler.forever_loop()
 
     except KeyboardInterrupt:

@@ -94,20 +94,26 @@ class MQTTHandler:
             else:
                 self.logger.warning(f"[MQTT] Mensaje inválido: {msg}")
 
-    def subscribe(self, topics_callbacks):
+    def subscribe(self, topics):
         """
-        Se suscribe a múltiples tópicos y asigna funciones de manejo de mensajes.
-        
+        Suscribe el cliente MQTT a uno o más tópicos.
+
         Args:
-            topics_callbacks (dict): Diccionario donde la clave es el tópico y el valor es la función callback.
+            topics (str | list): Un tópico como string o una lista de tópicos.
         """
         try:
-            for topic, callback in topics_callbacks.items():
-                self.client.subscribe(topic)
-                self.client.message_callback_add(topic, callback)
-                self.logger.info(f"[MQTT] Suscrito al tópico: {topic}")
+            if isinstance(topics, str):  # Si es un solo tópico
+                self.client.subscribe(topics)
+                self.logger.info(f"[MQTT] Suscrito al tópico: {topics}")
+            elif isinstance(topics, list):  # Si es una lista de tópicos
+                for topic in topics:
+                    self.client.subscribe(topic)
+                    self.logger.info(f"[MQTT] Suscrito al tópico: {topic}")
+            else:
+                self.logger.error(f"[MQTT] Tipo de datos no válido para suscripción: {type(topics)}")
         except Exception as e:
             self.logger.error(f"[MQTT] Error al suscribirse a los tópicos: {e}")
+
 
     def subscribe_multiple(self, topics_callbacks):
         """
