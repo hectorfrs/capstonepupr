@@ -16,9 +16,8 @@ def create_mqtt_client(client_id, broker_addresses, port, keepalive):
 
     # Callback de conexión
     def on_connect(client, userdata, flags, rc):
-        if rc == 0:
-            logging.info("[MQTT] Conectado exitosamente al broker MQTT.")
-        else:
+        logging.info("[MQTT] Conectado exitosamente al broker MQTT.")
+        if not rc == 0:
             logging.error(f"[MQTT] Error al conectar. Código: {rc}")
 
     client.on_connect = on_connect
