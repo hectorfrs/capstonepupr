@@ -58,12 +58,22 @@ def main():
         logging.info("[MAIN] Simulando cámara y detección de materiales...")
         simulate_camera_detection(mqtt_handler, mqtt_config["topics"]["entry"], [1, 3])
 
+        # Configuración inicial de los buckets
+        buckets = {
+            "Bucket 1 (PET)": 0,   # Peso inicial en gramos
+            "Bucket 2 (HDPE)": 0   # Peso inicial en gramos
+        }
+
+        # Inicializar el simulador de sensores de peso
+        weight_sensor = WeightSensor(buckets)
+
         # Bucle principal de la simulación
         while time.time() - start_time < simulation_duration:
             # Simular peso de los buckets
             weight_data = simulate_weight()
             buckets_status["PET"] += weight_data["PET"]
             buckets_status["HDPE"] += weight_data["HDPE"]
+            logging.info(f"[MAIN] Pesos actuales: {weights}")
 
             # Revisar si los buckets están llenos
             if buckets_status["PET"] >= bucket_full_limit or buckets_status["HDPE"] >= bucket_full_limit:
