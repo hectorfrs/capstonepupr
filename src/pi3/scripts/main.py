@@ -102,7 +102,7 @@ def main():
         logging.error(f"[MAIN] Error crítico en la ejecución: {e}")
     finally:
         logging.info("[MAIN] Finalizando ejecución del script.")
-        mqtt_client.disconnect()
+        mqtt_handler.disconnect()
         logging.info("[MAIN] Cliente MQTT desconectado.")
 
 if __name__ == "__main__":
