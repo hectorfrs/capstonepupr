@@ -11,6 +11,61 @@ from utils.network_manager import NetworkManager
 from utils.real_time_config import RealTimeConfigManager
 from utils.config_manager import ConfigManager
 
+def on_message(client, userdata, msg):
+    """
+    Callback ejecutado cuando se recibe un mensaje MQTT.
+    Procesa los mensajes para activar los relés correspondientes.
+    """
+    try:
+        payload = json.loads(msg.payload.decode())
+        detection_id = payload.get("id", "N/A")         # Obtener 'id' con valor por defecto
+        material_type = payload.get("tipo", "Unknown")  # Obtener 'tipo' con valor por defecto
+        tiempo = payload.get("tiempo", 0)               # Obtener 'tiempo' con valor por defecto
+
+        if material_type == "PET":
+            logging.info(f"[MAIN] [RELAY] Activando Relay 1 (PET) por {tiempo} segundos")
+            relay_controller.activate_relay(0, tiempo)
+        elif material_type == "HDPE":
+            logging.info(f"[MAIN] [RELAY] Activando Relay 2 (HDPE) por {tiempo} segundos")
+            relay_controller.activate_relay(1, tiempo)
+        else:
+            logging.warning(f"[MAIN] Tipo de material desconocido o inválido: {material_type}")
+
+    except json.JSONDecodeError:
+        logging.error(f"[MAIN] Error decodificando mensaje MQTT: {msg.payload}")
+    except KeyError as e:
+        logging.error(f"[MAIN] Clave faltante en el payload: {e}")
+    except Exception as e:
+        logging.error(f"[MAIN] Error procesando mensaje: {e}")
+
+def on_message_received(client, userdata, msg):
+    """
+    Callback para procesar mensajes MQTT y activar relés.
+    """
+    try:
+        payload = json.loads(msg.payload.decode())
+        detection_id = payload.get("id", "N/A")
+        material_type = payload.get("tipo")
+        action_time = payload.get("tiempo")
+
+        if material_type and action_time:
+            logging.info(f"[MAIN] Señal recibida | ID: {detection_id} | Material: {material_type} | Tiempo: {action_time}s")
+
+            # Activar relé correspondiente
+            if material_type == "PET":
+                relay_controller.activate_relay(0, action_time)
+            elif material_type == "HDPE":
+                relay_controller.activate_relay(1, action_time)
+            else:
+                logging.warning(f"[MAIN] Material desconocido: {material_type}")
+
+            logging.info(f"[MAIN] Relé activado | ID: {detection_id} | Material: {material_type} | Tiempo: {action_time}s")
+        else:
+            logging.warning(f"[MAIN] Mensaje inválido recibido: {payload}")
+
+    except Exception as e:
+        logging.error(f"[MAIN] Error al procesar mensaje: {e}")
+
 def main():
     try:
         # Cargar configuración
@@ -48,13 +103,11 @@ def main():
         logging.info("[MAIN] Inicializando controlador de relés...")
         relay_controller = RelayController(config['mux']['relays'])
 
-        # Variables de configuración MQTT
         logging.info("[MAIN] Inicializando cliente MQTT...")
-        broker_addresses = config['mqtt']['broker_addresses']
-        port = config['mqtt']['port']
-        client_id = config['mqtt']['client_id']
-        topic_action = config['mqtt']['topics']['action']
-        topic_status = config['mqtt']['topics']['status']
+        mqtt_client = create_mqtt_client(client_id, broker_address, config["mqtt"]["port"], config["mqtt"]["keepalive"])
+        mqtt_client.on_message = on_message
+        mqtt_client.subscribe(topic_action)
+        logging.info(f"[MAIN] Suscrito al tema '{topic_action}'")
 
         # Función para manejar el control de los relés según el tipo de material
         def handle_relay_control(material_type, duration):
@@ -78,34 +131,6 @@ def main():
                     # Publicar estado del relé
                     client.publish(topic_status, json.dumps({'bucket_info': f'Bucket para {material_type}'}))
 
-        def on_message_received(client, userdata, msg):
-            """
-            Callback para procesar mensajes MQTT y activar relés.
-            """
-            try:
-                payload = json.loads(msg.payload.decode())
-                detection_id = payload.get("id", "N/A")
-                material_type = payload.get("tipo")
-                action_time = payload.get("tiempo")
-
-                if material_type and action_time:
-                    logging.info(f"[MAIN] Señal recibida | ID: {detection_id} | Material: {material_type} | Tiempo: {action_time}s")
-
-                    # Activar relé correspondiente
-                    if material_type == "PET":
-                        relay_controller.activate_relay(0, action_time)
-                    elif material_type == "HDPE":
-                        relay_controller.activate_relay(1, action_time)
-
-                    logging.info(f"[MAIN] Relé activado | ID: {detection_id} | Material: {material_type} | Tiempo: {action_time}s")
-                else:
-                    logging.warning(f"[MAIN] Mensaje inválido recibido: {payload}")
-
-            except Exception as e:
-                logging.error(f"[MAIN] Error al procesar mensaje: {e}")
-
-
-
         # Crear cliente MQTT
         logging.info("[MAIN] Conectando al broker MQTT...")
         mqtt_client = create_mqtt_client(client_id, broker_addresses, port, config['mqtt']['keepalive'], on_message)
@@ -126,6 +151,8 @@ def main():
         logging.error(f"[MAIN] Error crítico en la ejecución: {e}")
     finally:
         logging.info("[MAIN] Finalizando ejecución del script.")
+        if 'mqtt_client' in locals() and mqtt_client.is_connected():
+            logging.info("[MAIN] Desconectando cliente MQTT...")
         mqtt_client.disconnect()
         logging.info("[MAIN] Cliente MQTT desconectado.")
 
