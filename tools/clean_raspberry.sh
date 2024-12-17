@@ -2,102 +2,142 @@
 
 set -e  # Detener la ejecución ante errores
 
+# Verificar si el script se ejecutó con "sudo -E"
+if [ -z "$SUDO_USER" ] || [ "$SUDO_USER" == "root" ] || [ -z "$HOME" ] || [ "$HOME" == "/root" ]; then
+    echo "[ERROR] Este script debe ejecutarse usando 'sudo -E ./clean_raspberry.sh'."
+    echo "Ejemplo: sudo -E $0"
+    exit 1
+fi
+
+# Continuar ejecución del script
+echo "[INFO] Script ejecutado correctamente con 'sudo -E' por el usuario: $SUDO_USER"
+
+# Solicitar al usuario el número de Raspberry Pi
+read -p "Introduce el número de Raspberry Pi (1, 2, 3...): " PI
+PI=${PI:-1}  # Si no se introduce un valor, usar "1" como predeterminado
+
+# Obtener el nombre de usuario activo y validarlo
+USER_LOGNAME=$(logname)
+
+if [[ "$USER_LOGNAME" =~ ^raspberry-(1|2|3)$ ]]; then
+    echo "[INFO] Usuario activo detectado como $USER_LOGNAME."
+    RASPBERRY="$USER_LOGNAME"
+else
+    echo "[ERROR] Usuario $USER_LOGNAME no válido. Debe ser raspberry-1, raspberry-2 o raspberry-3."
+    exit 1
+fi
+
 # Variables
-PI="1"
-RASPBERRY="raspberry-$PI"
 CAPSTONE="/home/$RASPBERRY/capstonepupr/src/pi$PI"
 VENV_DIR="/home/$RASPBERRY/venv"
 PYTHON_GLOBAL="/usr/bin/python3"
 LOG_FILE="/home/$RASPBERRY/clean_raspberry.log"
 REQUIREMENTS_FILE="$CAPSTONE/requirements.txt"
-BASHRC_FILE="$HOME/.bashrc"
+BASHRC_FILE="/home/$RASPBERRY/.bashrc"
 
-echo "=== Iniciando limpieza del Raspberry Pi$PI... ===" | tee -a "$LOG_FILE"
+echo "=== Iniciando limpieza y reconstrucción del entorno virtual en Raspberry Pi$PI ===" | tee -a "$LOG_FILE"
 
-# Paso 1: Verificar el ambiente virtual
+# Paso 1: Eliminar el entorno virtual si existe
 if [ -d "$VENV_DIR" ]; then
-    echo "[INFO] Ambiente virtual encontrado en $VENV_DIR. Procediendo con la limpieza." | tee -a "$LOG_FILE"
-else
-    echo "[INFO] No se encontró un ambiente virtual en $VENV_DIR. Creándolo..." | tee -a "$LOG_FILE"
-    $PYTHON_GLOBAL -m venv "$VENV_DIR"
-    source "$VENV_DIR/bin/activate"
-    pip install --upgrade pip
-    echo "[SUCCESS] Ambiente virtual creado en $VENV_DIR." | tee -a "$LOG_FILE"
+    echo "[INFO] Se encontró un entorno virtual en $VENV_DIR. Eliminándolo..." | tee -a "$LOG_FILE"
+    rm -rf "$VENV_DIR"
+    echo "[SUCCESS] Entorno virtual eliminado." | tee -a "$LOG_FILE"
 fi
 
-# Paso 2: Activar el ambiente virtual
-echo "[INFO] Activando el ambiente virtual..." | tee -a "$LOG_FILE"
-source "$VENV_DIR/bin/activate" || { echo "[ERROR] No se pudo activar el ambiente virtual."; exit 1; }
+# Paso 2: Crear un nuevo entorno virtual
+echo "[INFO] Creando un nuevo entorno virtual en $VENV_DIR..." | tee -a "$LOG_FILE"
+$PYTHON_GLOBAL -m venv "$VENV_DIR"
+echo "[SUCCESS] Nuevo entorno virtual creado en $VENV_DIR." | tee -a "$LOG_FILE"
 
-# Paso 3: Desinstalar paquetes globales innecesarios
-echo "[INFO] Eliminando instalaciones globales innecesarias..." | tee -a "$LOG_FILE"
-pip freeze | xargs -n1 pip uninstall -y || echo "[WARNING] No se encontraron paquetes para desinstalar."
+# Paso 3: Activar el entorno virtual
+source "$VENV_DIR/bin/activate" | tee -a "$LOG_FILE"
+echo "[INFO] Entorno virtual activado correctamente." | tee -a "$LOG_FILE"
 
-# Confirmar eliminación de paquetes globales (opcional, cuidado con sudo)
-GLOBAL_PACKAGES_DIR="/usr/local/lib/python3.11/dist-packages"
-USER_PACKAGES_DIR="$RASPBERRY/.local/lib/python3.11/site-packages"
+# Paso 4: Actualizar herramientas base
+echo "[SETUP] Actualizando pip, setuptools y wheel..." | tee -a "$LOG_FILE"
+sudo apt update && sudo apt upgrade -y  || { echo "[ERROR] Fallo en la actualización de paquetes."; exit 1; }
+sudo apt install -y libjpeg-dev libpng-dev libtiff-dev zlib1g-dev libopenjp2-7 libopenjp2-7-dev || { echo "[ERROR] Fallo en la instalación de paquetes."; exit 1; }
+$VENV_DIR/bin/pip install --upgrade pip setuptools wheel | tee -a "$LOG_FILE"
 
-if [ -d "$GLOBAL_PACKAGES_DIR" ]; then
-    echo "[INFO] Limpiando directorio global de paquetes: $GLOBAL_PACKAGES_DIR" | tee -a "$LOG_FILE"
-    sudo rm -rf "$GLOBAL_PACKAGES_DIR"/* || echo "[WARNING] No se pudo limpiar el directorio global."
-fi
-
-if [ -d "$USER_PACKAGES_DIR" ]; then
-    echo "[INFO] Limpiando directorio de usuario de paquetes: $USER_PACKAGES_DIR" | tee -a "$LOG_FILE"
-    rm -rf "$USER_PACKAGES_DIR"/* || echo "[WARNING] No se pudo limpiar el directorio de usuario."
-fi
-
-# Paso 4: Reinstalar dependencias en el ambiente virtual
-# Actualizar pip y herramientas base
-echo "[SETUP] Actualizando pip, setuptools y wheel..."
-pip install --upgrade pip setuptools wheel
-
-echo "[INFO] Instalando dependencias desde $REQUIREMENTS_FILE en el ambiente virtual..." | tee -a "$LOG_FILE"
-# Crear archivo requirements.txt si no existe
+# Paso 5: Instalar dependencias desde requirements.txt
+echo "[INFO] Instalando dependencias desde $REQUIREMENTS_FILE..." | tee -a "$LOG_FILE"
 if [ ! -f "$REQUIREMENTS_FILE" ]; then
-  echo "[SETUP] Creando archivo requirements.txt..."
-  cat <<EOL > "$REQUIREMENTS_FILE"
+    echo "[INFO] Creando archivo requirements.txt..." | tee -a "$LOG_FILE"
+    cat <<EOL > "$REQUIREMENTS_FILE"
 sparkfun-qwiic
 sparkfun-qwiic-relay
 sparkfun-qwiic-i2c
 smbus2
-paho-mqtt
+paho-mqtt==1.6.1
 PyYAML
 boto3
 watchdog
 RPi.GPIO
-numpy                       
-matplotlib                  
-flask                       
+numpy
+matplotlib
+flask
+logging
 EOL
-else
-  echo "[SETUP] requirements.txt ya existe."
-fi
-    pip install -r "$REQUIREMENTS_FILE" || { echo "[ERROR] No se pudieron instalar las dependencias."; exit 1; }
-else
-    echo "[ERROR] No se encontró el archivo de dependencias: $REQUIREMENTS_FILE" | tee -a "$LOG_FILE"
-    exit 1
 fi
 
-# Paso 5: Verificar la instalación
-echo "[INFO] Verificando instalación en el ambiente virtual..." | tee -a "$LOG_FILE"
-pip list | tee -a "$LOG_FILE"
+$VENV_DIR/bin/pip install -r "$REQUIREMENTS_FILE" | tee -a "$LOG_FILE"
 
-# Paso 6: Configurar el PATH para usar el ambiente virtual
-if ! grep -Fxq "source $VENV_DIR/bin/activate" ~/.bashrc; then
-    echo "[INFO] Configurando el PATH para usar el ambiente virtual por defecto..." | tee -a "$LOG_FILE"
-    echo -e "\n# Activar ambiente virtual del proyecto $PROJECT_NAME\n$ACTIVATE_SCRIPT" >> "$BASHRC_FILE"
-    #echo "source $VENV_DIR/bin/activate" >> ~/.bashrc
-    if [ $? -eq 0 ]; then
-    echo "[SETUP] Activación automática añadida exitosamente a $BASHRC_FILE."
-    else
-    echo "[SETUP] Error al intentar escribir en $BASHRC_FILE. Ejecuta el script como el usuario correcto o verifica permisos."
-    exit 1
-    fi
-    echo "[SUCCESS] PATH configurado correctamente." | tee -a "$LOG_FILE"
-else
-    echo "[INFO] El PATH ya estaba configurado previamente." | tee -a "$LOG_FILE"
+# # Paso 6: Configurar PYTHONPATH
+# PYTHONPATH_LINE="export PYTHONPATH=$CAPSTONE:\$PYTHONPATH"
+# if ! grep -qxF "$PYTHONPATH_LINE" "$BASHRC_FILE"; then
+#     echo "[INFO] Configurando PYTHONPATH en ~/.bashrc..." | tee -a "$LOG_FILE"
+#     echo "$PYTHONPATH_LINE" >> "$BASHRC_FILE"
+#     echo "[SUCCESS] PYTHONPATH configurado correctamente." | tee -a "$LOG_FILE"
+# else
+#     echo "[INFO] PYTHONPATH ya está configurado en ~/.bashrc." | tee -a "$LOG_FILE"
+# fi
+
+# # Paso 7: Priorizar el entorno virtual en el PATH
+# PATH_LINE="export PATH=$VENV_DIR/bin:\$PATH"
+# if ! grep -qxF "$PATH_LINE" "$BASHRC_FILE"; then
+#     echo "[INFO] Configurando PATH para priorizar el entorno virtual..." | tee -a "$LOG_FILE"
+#     echo "$PATH_LINE" >> "$BASHRC_FILE"
+#     echo "[SUCCESS] PATH configurado correctamente." | tee -a "$LOG_FILE"
+# else
+#     echo "[INFO] PATH ya está configurado en ~/.bashrc." | tee -a "$LOG_FILE"
+# fi
+
+# Paso 8: Limpiar archivos temporales
+echo "[INFO] Limpiando archivos temporales innecesarios..." | tee -a "$LOG_FILE"
+sudo find /tmp -type f -atime +1 -delete | tee -a "$LOG_FILE"
+sudo find /tmp -type d -empty -delete | tee -a "$LOG_FILE"
+TEMP_USER_DIR="/home/$USER/.cache"
+if [ -d "$TEMP_USER_DIR" ]; then
+    rm -rf "$TEMP_USER_DIR"/* | tee -a "$LOG_FILE"
 fi
-# Finalizar limpieza
-echo "[SUCCESS] Limpieza completada. El ambiente virtual es el entorno principal." | tee -a "$LOG_FILE"
-source ~/.bashrc
+echo "[SUCCESS] Archivos temporales limpiados correctamente." | tee -a "$LOG_FILE"
+
+# Paso 9: Reescribir o añadir configuración específica en ~/.bashrc
+echo "[INFO] Configurando ~/.bashrc con configuraciones específicas..." | tee -a "$LOG_FILE"
+
+# Eliminar bloques anteriores si existen
+sed -i '/# Activar entorno virtual automáticamente/,/# sudo \/etc\/init.d\/xrdp start > \/dev\/null/d' "$BASHRC_FILE"
+
+# Escribir el bloque exactamente como se requiere
+cat <<EOL >> "$BASHRC_FILE"
+# Activar entorno virtual automáticamente
+source /home/$RASPBERRY/venv/bin/activate
+
+# Configurar PYTHONPATH para el proyecto Capstone
+export PYTHONPATH=/home/$RASPBERRY/capstonepupr/src/pi$PI:\$PYTHONPATH
+
+# Priorizar entorno virtual en PATH
+export PATH=/home/$RASPBERRY/venv/bin:\$PATH
+
+# Nota: Para evitar sudo en ~/.bashrc, configura xrdp con systemd
+# sudo /etc/init.d/xrdp start > /dev/null   # Esta línea se debería mover fuera de ~/.bashrc
+EOL
+
+echo "[SUCCESS] Configuración de ~/.bashrc completada correctamente." | tee -a "$LOG_FILE"
+
+# Aplicar cambios
+echo "[INFO] Aplicando cambios del bashrc..." | tee -a "$LOG_FILE"
+source "$BASHRC_FILE"
+
+# Finalización
+echo "[SUCCESS] Entorno virtual reconstruido correctamente. Reinicia sesión o ejecuta 'source ~/.bashrc'." | tee -a "$LOG_FILE"
