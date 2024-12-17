@@ -91,7 +91,7 @@ def main():
             )
 
             # Simular detección de residuos y publicación
-            waste_data = simulate_waste_detection()
+            waste_data = waste_detection()
             mqtt_handler.publish(
                 topic=mqtt_config["topics"]["detection"],
                 payload=waste_data

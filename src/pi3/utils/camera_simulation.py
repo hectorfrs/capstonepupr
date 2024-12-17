@@ -31,7 +31,7 @@ def simulate_camera_detection(mqtt_handler, topic, detection_range):
     try:
         while True:
                 # Simular detección de materiales usando waste_type
-                waste_data = simulate_waste_detection()
+                waste_data = waste_detection()
 
                 # Extraer un material aleatorio de los detectados
                 detected_materials = waste_data.get("detected_items", [])
