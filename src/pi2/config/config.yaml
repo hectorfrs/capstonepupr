@@ -1,8 +1,10 @@
 network:
   ethernet:
+    interface: "eth0"             # Interfaz de red Ethernet
     ip: "192.168.1.137"           # Dirección IP estática para Ethernet
     gateway: "192.168.1.1"        # Puerta de enlace para Ethernet
   wifi:
+    interface: "wlan0"            # Interfaz de red Wi-Fi
     ssid: "Capstone"              # Nombre de la red Wi-Fi
     password: "Elefante"          # Contraseña de la red Wi-Fi
     ip: "192.168.2.11"            # Dirección IP estática para Wi-Fi
