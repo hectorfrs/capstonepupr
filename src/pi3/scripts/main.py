@@ -61,7 +61,7 @@ def main():
         # Bucle principal de la simulación
         while time.time() - start_time < simulation_duration:
             # Simular peso de los buckets
-            weight_data = simulate_weight_sensor()
+            weight_data = simulate_weight()
             buckets_status["PET"] += weight_data["PET"]
             buckets_status["HDPE"] += weight_data["HDPE"]
 
@@ -94,10 +94,19 @@ def main():
 
         logging.info("[MAIN] Simulación completada. Finalizando script.")
 
+    except KeyboardInterrupt:
+        logging.info("[MAIN] Apagando Monitoreo del Network...")
+        network_manager.stop_monitoring()
+        logging.info("[MAIN] Sistema apagado correctamente.")
     except Exception as e:
         logging.error(f"[MAIN] Error crítico en la ejecución: {e}")
     finally:
         logging.info("[MAIN] Finalizando ejecución del script.")
+        mqtt_handler.disconnect()
+        logging.info("[MAIN] Cliente MQTT desconectado.")
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        print(f"Error crítico en la ejecución: {e}")

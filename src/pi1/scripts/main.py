@@ -6,26 +6,52 @@
 import time
 import json
 import logging
+import yaml
+import os
 from utils.network_manager import NetworkManager
 from utils.real_time_config import RealTimeConfigManager
 from utils.config_manager import ConfigManager
 from utils.mqtt_publisher import start_publisher
 from utils.mqtt_client import create_mqtt_client, subscribe_to_topic
 
-# Configurar logging
-logging.basicConfig(level=logging.INFO, format='[%(asctime)s] [%(levelname)s] %(message)s')
+# Función para manejar mensajes recibidos desde material/entrada
+def on_message(client, userdata, msg):
+    logging.info(f"[MQTT] Mensaje recibido en {msg.topic}: {msg.payload.decode()}")
 
+    try:
+        # Decodificar mensaje
+        payload = json.loads(msg.payload.decode())
+        material = payload.get("material", "")
+        timestamp = payload.get("timestamp", "")
+
+        logging.info(f"[MAIN] Material detectado: {material} a las {timestamp}")
+
+        # Solo procesar materiales PET o HDPE
+        if material in ["PET", "HDPE"]:
+            duration = round(random.uniform(1, 5), 2)  # Tiempo aleatorio entre 1 y 5 segundos
+            action_message = {"tipo": material, "tiempo": duration}
+
+            # Publicar en valvula/accion
+            client.publish("valvula/accion", json.dumps(action_message))
+            logging.info(f"[MAIN] Publicado en 'valvula/accion': {action_message}")
+        else:
+            logging.info(f"[MAIN] Material '{material}' no relevante para activación de relés.")
+
+    except Exception as e:
+        logging.error(f"[MAIN] Error procesando mensaje: {e}")
+
+# Función principal
 def main():
     try:
-        # Configuración inicial
-        config_path = "/home/raspberry-1/capstonepupr/src/pi1/config/config.yaml"
-        
+        logging.basicConfig(level=logging.INFO, format='[%(asctime)s] [%(levelname)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+
+        # Configuración
         logging.info("=" * 70)
         logging.info("[MAIN] Iniciando sistema de detección de materiales en Raspberry Pi 1")
         logging.info("=" * 70)
 
         # Cargar configuración
-        logging.info("[MAIN] Cargando configuración...")
+        config_path = "/home/raspberry-1/capstonepupr/src/pi1/config/config.yaml"
         config_manager = RealTimeConfigManager(config_path)
         config_manager.start_monitoring()
         config = config_manager.get_config()
@@ -36,39 +62,22 @@ def main():
         network_manager.start_monitoring()
 
         # Configuración MQTT
-        broker_addresses = config["mqtt"]["broker_addresses"]
-        port = config["mqtt"]["port"]
-        keepalive = config["mqtt"]["keepalive"]
-        client_id = config["mqtt"]["client_id"]
-        topic_entry = config["mqtt"]["topics"]["entry"]
-        topic_action = config["mqtt"]["topics"]["action"]
-
-        # Crear cliente MQTT
-        logging.info("[MAIN] Inicializando cliente MQTT...")
-        mqtt_client = create_mqtt_client(client_id, broker_addresses, port, keepalive)
-        logging.info("[MAIN] Cliente MQTT conectado exitosamente.")
-
-        # Callback para manejar la señal desde Raspberry Pi 3
-        def on_material_entry(client, userdata, msg):
-            payload = json.loads(msg.payload.decode())
-            logging.info(f"[MAIN] Mensaje recibido en '{topic_entry}': {payload}")
-
-            if payload.get("status") == "material_detected":
-                weight = payload.get("weight", 0)
-                logging.info(f"[MAIN] Material detectado con peso: {weight} g")
-                
-                # Simular detección de materiales y publicar
-                logging.info("[MAIN] Iniciando simulación de detección de materiales...")
-                start_publisher(mqtt_client, topic_action, config["simulation"])
+        mqtt_config = config["mqtt"]
+        client = create_mqtt_client(
+            client_id=mqtt_config["client_id"],
+            broker_addresses=mqtt_config["broker_addresses"],
+            port=mqtt_config["port"],
+            keepalive=mqtt_config["keepalive"]
+        )
 
         # Suscribirse al tópico 'material/entrada'
+        topic_entry = mqtt_config["topics"]["entry"]
         logging.info(f"[MAIN] Suscribiéndose al tópico '{topic_entry}'...")
-        subscribe_to_topic(mqtt_client, topic_entry)
-        mqtt_client.message_callback_add(topic_entry, on_material_entry)
+        client.subscribe(topic_entry)
+        client.message_callback_add(topic_entry, on_message)
 
-        # Esperar mensajes
         logging.info("[MAIN] Esperando señales desde Raspberry Pi 3...")
-        mqtt_client.loop_forever()
+        client.loop_forever()
 
     except KeyboardInterrupt:
         logging.info("[MAIN] Apagando Monitoreo del Network...")
@@ -78,7 +87,7 @@ def main():
         logging.error(f"[MAIN] Error crítico en la ejecución: {e}")
     finally:
         logging.info("[MAIN] Finalizando ejecución del script.")
-        mqtt_client.disconnect()
+        mqtt_handler.disconnect()
         logging.info("[MAIN] Cliente MQTT desconectado.")
 
 if __name__ == "__main__":
