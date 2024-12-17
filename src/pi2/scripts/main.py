@@ -45,8 +45,8 @@ def on_message_received(client, userdata, msg):
     try:
         payload = json.loads(msg.payload.decode())
         detection_id = payload.get("id", "N/A")
-        material_type = payload.get("tipo")
-        action_time = payload.get("tiempo")
+        material_type = payload.get("tipo", None)
+        action_time = payload.get("tiempo", None)
 
         if material_type and action_time:
             logging.info(f"[MAIN] Señal recibida | ID: {detection_id} | Material: {material_type} | Tiempo: {action_time}s")
