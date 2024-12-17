@@ -11,32 +11,32 @@ from utils.network_manager import NetworkManager
 from utils.real_time_config import RealTimeConfigManager
 from utils.config_manager import ConfigManager
 
-def on_message(client, userdata, msg):
-    """
-    Callback ejecutado cuando se recibe un mensaje MQTT.
-    Procesa los mensajes para activar los relés correspondientes.
-    """
-    try:
-        payload = json.loads(msg.payload.decode())
-        detection_id = payload.get("id", "N/A")         # Obtener 'id' con valor por defecto
-        material_type = payload.get("tipo", "Unknown")  # Obtener 'tipo' con valor por defecto
-        tiempo = payload.get("tiempo", 0)               # Obtener 'tiempo' con valor por defecto
+# def on_message(client, userdata, msg):
+#     """
+#     Callback ejecutado cuando se recibe un mensaje MQTT.
+#     Procesa los mensajes para activar los relés correspondientes.
+#     """
+#     try:
+#         payload = json.loads(msg.payload.decode())
+#         detection_id = payload.get("id", "N/A")         # Obtener 'id' con valor por defecto
+#         material_type = payload.get("tipo", "Unknown")  # Obtener 'tipo' con valor por defecto
+#         tiempo = payload.get("tiempo", 0)               # Obtener 'tiempo' con valor por defecto
 
-        if material_type == "PET":
-            logging.info(f"[MAIN] [RELAY] Activando Relay 1 (PET) por {tiempo} segundos")
-            relay_controller.activate_relay(0, tiempo)
-        elif material_type == "HDPE":
-            logging.info(f"[MAIN] [RELAY] Activando Relay 2 (HDPE) por {tiempo} segundos")
-            relay_controller.activate_relay(1, tiempo)
-        else:
-            logging.warning(f"[MAIN] Tipo de material desconocido o inválido: {material_type}")
+#         if material_type == "PET":
+#             logging.info(f"[MAIN] [RELAY] Activando Relay 1 (PET) por {tiempo} segundos")
+#             relay_controller.activate_relay(0, tiempo)
+#         elif material_type == "HDPE":
+#             logging.info(f"[MAIN] [RELAY] Activando Relay 2 (HDPE) por {tiempo} segundos")
+#             relay_controller.activate_relay(1, tiempo)
+#         else:
+#             logging.warning(f"[MAIN] Tipo de material desconocido o inválido: {material_type}")
 
-    except json.JSONDecodeError:
-        logging.error(f"[MAIN] Error decodificando mensaje MQTT: {msg.payload}")
-    except KeyError as e:
-        logging.error(f"[MAIN] Clave faltante en el payload: {e}")
-    except Exception as e:
-        logging.error(f"[MAIN] Error procesando mensaje: {e}")
+#     except json.JSONDecodeError:
+#         logging.error(f"[MAIN] Error decodificando mensaje MQTT: {msg.payload}")
+#     except KeyError as e:
+#         logging.error(f"[MAIN] Clave faltante en el payload: {e}")
+#     except Exception as e:
+#         logging.error(f"[MAIN] Error procesando mensaje: {e}")
 
 def on_message_received(client, userdata, msg):
     """
@@ -131,18 +131,26 @@ def main():
                     # Publicar estado del relé
                     client.publish(topic_status, json.dumps({'bucket_info': f'Bucket para {material_type}'}))
 
-        # Crear cliente MQTT
-        logging.info("[MAIN] Conectando al broker MQTT...")
-        mqtt_client = create_mqtt_client(client_id, broker_addresses, port, config['mqtt']['keepalive'], on_message)
+         # Configurar cliente MQTT
+        logging.info("[MAIN] Inicializando cliente MQTT...")
+        mqtt_config = config["mqtt"]
+        client_id = mqtt_config["client_id"]
+        broker_address = mqtt_config["broker_address"]
+        port = mqtt_config["port"]
+        keepalive = mqtt_config["keepalive"]
+        topic_action = mqtt_config["topics"]["action"]
 
-        # Suscribirse al tema de acción
-        logging.info(f"[MAIN] Suscribiéndose al tema {topic_action}")
-        subscribe_to_topic(mqtt_client, topic_action)
-        #mqtt_client.on_subscribe = lambda client, userdata, mid, granted_qos: print(f"[MAIN] [MQTT] Suscripción exitosa.")
+        mqtt_client = create_mqtt_client(client_id, broker_address, port, keepalive)
+        mqtt_client.on_message = on_message_received  # Asignar el callback
+
+        # Suscribirse al tópico de acción
+        logging.info(f"[MAIN] Suscribiéndose al tópico '{topic_action}'...")
+        mqtt_client.subscribe(topic_action)
 
         # Iniciar bucle MQTT
         logging.info("[MAIN] Esperando señales desde Raspberry Pi 1...")
         mqtt_client.loop_forever()
+
     except KeyboardInterrupt:
         logging.info("[MAIN] Apagando Monitoreo del Network...")
         network_manager.stop_monitoring()
