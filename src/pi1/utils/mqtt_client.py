@@ -3,14 +3,14 @@
 # Copyright (c) 2024
 # Proyecto: Smart Recycling Bin
 
-import paho.mqtt.client as Client, MQTTv311
+import paho.mqtt.client as mqtt
 import logging
 
 def create_mqtt_client(client_id, broker_addresses, port, keepalive):
     """
     Crea un cliente MQTT y lo conecta a uno de los brokers configurados.
     """
-    client = Client(client_id="Raspberry_Pi-1", protocol=MQTTv311)
+    client = mqtt.Client(client_id="Raspberry_Pi-1", protocol=MQTTv311)
 
     # Callback de conexión
     def on_connect(client, userdata, flags, rc):

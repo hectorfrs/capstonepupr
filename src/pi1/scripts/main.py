@@ -8,12 +8,11 @@ import json
 import logging
 import yaml
 import os
-import paho.mqtt.client as Client, MQTTv311
+import paho.mqtt.client as mqtt
 from utils.network_manager import NetworkManager
 from utils.real_time_config import RealTimeConfigManager
 from utils.config_manager import ConfigManager
 from utils.mqtt_publisher import start_publisher
-from utils.mqtt_client import Client, MQTTv311
 
 # Configuración de logging
 logging.basicConfig(level=logging.INFO, format="[%(asctime)s] [%(levelname)s] %(message)s", datefmt='%Y-%m-%d %H:%M:%S')
