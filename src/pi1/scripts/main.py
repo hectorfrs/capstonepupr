@@ -8,7 +8,7 @@ import json
 import logging
 import yaml
 import os
-import paho.mqtt.client as mqtt
+import paho.mqtt.client as Client, MQTTv311
 from utils.network_manager import NetworkManager
 from utils.real_time_config import RealTimeConfigManager
 from utils.config_manager import ConfigManager
