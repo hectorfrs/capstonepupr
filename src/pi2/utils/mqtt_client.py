@@ -15,7 +15,7 @@ def create_mqtt_client(client_id, broker_addresses, port, keepalive, on_message=
     """
     # Forzar el uso de MQTT 3.1.1 para mayor compatibilidad
     #client = Client(client_id, protocol=MQTTv311)
-    client = Client(client_id="Raspberry_Pi-2")
+    client = Client(client_id=client_id, protocol=MQTTv311) 
 
 
     # Configurar callback para mensajes

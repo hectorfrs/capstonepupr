@@ -10,7 +10,9 @@ def create_mqtt_client(client_id, broker_addresses, port, keepalive):
     """
     Crea un cliente MQTT y lo conecta a uno de los brokers configurados.
     """
-    client = mqtt.Client(client_id="Raspberry_Pi-1", protocol=MQTTv311)
+    #client = mqtt.Client(client_id="Raspberry_Pi-1", protocol=MQTTv311)
+    client = mqtt.Client(client_id=client_id, protocol=mqtt.MQTTv311)
+
 
     # Callback de conexión
     def on_connect(client, userdata, flags, rc):
