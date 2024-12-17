@@ -61,7 +61,6 @@ class MQTTHandler:
                 logging.error(f"[MQTT] Error al reconectar: {e}")
                 time.sleep(5)
 
-
     def connect(self):
         """Conecta el cliente MQTT al broker."""
         try:
@@ -100,3 +99,14 @@ class MQTTHandler:
         """
         self.client.subscribe(topic)
         logging.info(f"[MQTT] Suscrito manualmente al tópico: {topic}")
+    
+    def disconnect(self):
+        """
+        Desconecta el cliente MQTT.
+        """
+        try:
+            self.client.loop_stop()
+            self.client.disconnect()
+            logging.info("[MQTT] Cliente MQTT desconectado exitosamente.")
+        except Exception as e:
+            logging.error(f"[MQTT] Error al desconectar el cliente MQTT: {e}")
