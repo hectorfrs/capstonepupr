@@ -88,21 +88,30 @@ def main():
         network_manager = NetworkManager(config)
         network_manager.start_monitoring()
 
-        # Configuración MQTT
+        # Configurar cliente MQTT
+        logging.info("[MAIN] Inicializando cliente MQTT...")
         mqtt_config = config["mqtt"]
-        client = create_mqtt_client(
-            client_id=mqtt_config["client_id"],
-            broker_addresses=mqtt_config["broker_addresses"],
-            port=mqtt_config["port"],
-            keepalive=mqtt_config["keepalive"]
-        )
+        client_id = mqtt_config["client_id"]
+        broker_address = mqtt_config["broker_address"]
+        port = mqtt_config["port"]
+        keepalive = mqtt_config["keepalive"]
+        topic_action = mqtt_config["topics"]["action"]
+
+        # Crear cliente MQTT
+        mqtt_client = create_mqtt_client(client_id, broker_address, port, keepalive)
+        mqtt_client.on_message = on_message_received  # Asignar el callback
+        mqtt_config = config["mqtt"]
 
         # Suscribirse al tópico 'material/entrada'
         topic_entry = mqtt_config["topics"]["entry"]
+        topic_detection = mqtt_config["topics"]["detection"]
         logging.info(f"[MAIN] Suscribiéndose al tópico '{topic_entry}'...")
         client.subscribe(topic_entry)
-        client.message_callback_add(topic_entry, on_message)
+        logging.info(f"[MAIN] Suscribiéndose al tópico '{topic_detection}'...")
+        client.subscribe(topic_detection)
+        client.message_callback_add(topic_entry, topic_detection, on_message)
 
+        # Iniciar bucle MQTT
         logging.info("[MAIN] Esperando señales desde Raspberry Pi 3...")
         client.loop_forever()
 
@@ -114,10 +123,14 @@ def main():
         logging.error(f"[MAIN] Error crítico en la ejecución: {e}")
     finally:
         logging.info("[MAIN] Finalizando ejecución del script.")
+        if 'mqtt_client' in locals() and mqtt_client.is_connected():
+            logging.info("[MAIN] Desconectando cliente MQTT...")
         mqtt_client.disconnect()
         logging.info("[MAIN] Cliente MQTT desconectado.")
 
 
 if __name__ == "__main__":
-    main()
-
+    try:
+        main()
+    except Exception as e:
+        print(f"Error crítico en la ejecución: {e}")

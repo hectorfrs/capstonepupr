@@ -133,7 +133,7 @@ def main():
                     # Publicar estado del relé
                     client.publish(topic_status, json.dumps({'bucket_info': f'Bucket para {material_type}'}))
 
-         # Configurar cliente MQTT
+        # Configurar cliente MQTT
         logging.info("[MAIN] Inicializando cliente MQTT...")
         mqtt_config = config["mqtt"]
         client_id = mqtt_config["client_id"]
@@ -141,13 +141,18 @@ def main():
         port = mqtt_config["port"]
         keepalive = mqtt_config["keepalive"]
         topic_action = mqtt_config["topics"]["action"]
+        topic_status = mqtt_config["topics"]["status"]
 
+        # Crear cliente MQTT
         mqtt_client = create_mqtt_client(client_id, broker_address, port, keepalive)
         mqtt_client.on_message = on_message_received  # Asignar el callback
 
         # Suscribirse al tópico de acción
         logging.info(f"[MAIN] Suscribiéndose al tópico '{topic_action}'...")
         mqtt_client.subscribe(topic_action)
+        logging.info(f"[MAIN] Suscribiéndose al tópico '{topic_status}'...")
+        mqtt_client.subscribe(topic_status)
+        client.message_callback_add(topic_action, topic_status, on_message)
 
         # Iniciar bucle MQTT
         logging.info("[MAIN] Esperando señales desde Raspberry Pi 1...")
