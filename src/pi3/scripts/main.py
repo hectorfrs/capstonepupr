@@ -56,7 +56,7 @@ def main():
 
         # Iniciar la simulación de la cámara
         logging.info("[MAIN] Simulando cámara y detección de materiales...")
-        simulate_camera_detection(mqtt_handler.client, mqtt_config["topics"]["entry"], [1, 3])
+        simulate_camera_detection(mqtt_handler, mqtt_config["topics"]["entry"], [1, 3])
 
         # Bucle principal de la simulación
         while time.time() - start_time < simulation_duration:

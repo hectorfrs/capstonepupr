@@ -18,50 +18,41 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S"
 )
 
-def simulate_camera_detection(client, topic_entry, detection_interval):
+def simulate_camera_detection(mqtt_handler, topic, detection_range):
     """
-    Simula el uso de una cámara para detectar materiales y publica los resultados en MQTT.
+    Simula la detección de materiales usando una cámara y envía los resultados al tópico MQTT.
 
-    Args:
-        client: Cliente MQTT.
-        topic_entry (str): Tópico MQTT donde se publica la entrada del material.
-        detection_interval (list): Intervalo mínimo y máximo en segundos entre detecciones.
+    :param mqtt_handler: Instancia del manejador MQTT.
+    :param topic: Tópico MQTT donde se enviarán los mensajes.
+    :param detection_range: Rango de tiempo aleatorio entre detecciones (en segundos).
     """
-    logging.info("[CAMERA] Iniciando simulación de detección de materiales con la cámara...")
+    logging.info("[CAMERA] Iniciando simulación de detección de materiales...")
 
-    try:
-        while True:
-            # Generar datos simulados de detección de material
-            detected_material = generate_waste_data()
+    while True:
+        try:
+            # Simular detección aleatoria de materiales
+            material_detected = random.choice(["PET", "HDPE", "PVC", "LDPE", "PP", "PS", "Other"])
+            timestamp = time.time()
 
-            # Filtrar elementos detectables (solo plásticos PET o HDPE)
-            plastic_items = [
-                item for item in detected_material["detected_items"]
-                if item["Name"] in ["PET", "HDPE"]
-            ]
+            payload = {
+                "status": "material_detected",
+                "material": material_detected,
+                "timestamp": timestamp
+            }
 
-            # Simular detección de la cámara
-            if plastic_items:
-                material = random.choice(plastic_items)
-                camera_data = {
-                    "material": material["Name"],
-                    "confidence": material["Confidence"],
-                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                }
+            # Publicar en el tópico MQTT usando la instancia de MQTTHandler
+            mqtt_handler.publish(topic, payload)
 
-                # Publicar los datos simulados en el tópico MQTT
-                publish_message(client, topic_entry, camera_data)
-                logging.info(f"[CAMERA] Material detectado: {camera_data}")
+            logging.info(f"[CAMERA] Material detectado: {material_detected}. Enviado al tópico '{topic}'.")
 
-            else:
-                logging.info("[CAMERA] No se detectó ningún material relevante.")
-
-            # Esperar un tiempo aleatorio entre detecciones
-            wait_time = random.uniform(*detection_interval)
+            # Simular el tiempo de detección
+            wait_time = random.uniform(*detection_range)
             logging.info(f"[CAMERA] Esperando {wait_time:.2f} segundos antes de la próxima detección.")
             time.sleep(wait_time)
 
-    except KeyboardInterrupt:
-        logging.info("[CAMERA] Simulación de cámara finalizada manualmente.")
-    except Exception as e:
-        logging.error(f"[CAMERA] Error en la simulación de cámara: {e}")
+        except KeyboardInterrupt:
+            logging.info("[CAMERA] Simulación de cámara detenida por el usuario.")
+            break
+        except Exception as e:
+            logging.error(f"[CAMERA] Error durante la simulación de detección: {e}")
+            break
