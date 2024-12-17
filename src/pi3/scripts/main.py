@@ -20,11 +20,11 @@ def main():
     Script principal para la simulación de detección de materiales en Raspberry Pi 3.
     """
     try:
-        logging.info("=" * 80)
-        logging.info("[MAIN] Iniciando Sistema de Control de Materiales.")
-        logging.info("=" * 80)
+        logging.info("=" * 70)
+        logging.info("[MAIN] Iniciando simulación en Raspberry Pi 3")
+        logging.info("=" * 70)
 
-        # Cargar configuración en tiempo real
+        # Cargar configuración
         config_path = "/home/raspberry-3/capstonepupr/src/pi3/config/config.yaml"
         config_manager = RealTimeConfigManager(config_path)
         config_manager.start_monitoring()
@@ -42,45 +42,53 @@ def main():
             broker_address=mqtt_config["broker_address"],
             port=mqtt_config["port"],
             keepalive=mqtt_config["keepalive"],
-            topics=[mqtt_config["topics"]["action"], mqtt_config["topics"]["status"]]
+            topics=[mqtt_config["topics"]["entry"], mqtt_config["topics"]["detection"], mqtt_config["topics"]["action"]]
         )
         mqtt_handler.connect()
 
         # Configuración de simulación
         simulation_duration = config["simulation"]["duration"]
         communication_delay = config["communication"]["delay_to_pi1"]
+        bucket_full_limit = 5000  # Umbral de peso para considerar el bucket lleno (en gramos)
         start_time = time.time()
+        buckets_status = {"PET": 0, "HDPE": 0}
 
-        # Simular la cámara y enviar datos a Raspberry Pi 1
-        logging.info("[MAIN] Iniciando simulación de la cámara...")
+        # Iniciar la simulación de la cámara
+        logging.info("[MAIN] Simulando cámara y detección de materiales...")
         simulate_camera_detection(mqtt_handler.client, mqtt_config["topics"]["entry"], [1, 3])
 
-        logging.info(f"[MAIN] Iniciando simulación por {simulation_duration} segundos...")
+        # Bucle principal de la simulación
         while time.time() - start_time < simulation_duration:
-            # Simular datos de peso
+            # Simular peso de los buckets
             weight_data = simulate_weight_sensor()
-            logging.info(f"[MAIN] Peso simulado: {weight_data} g")
+            buckets_status["PET"] += weight_data["PET"]
+            buckets_status["HDPE"] += weight_data["HDPE"]
 
-            # Publicar mensaje de entrada de material
+            # Revisar si los buckets están llenos
+            if buckets_status["PET"] >= bucket_full_limit or buckets_status["HDPE"] >= bucket_full_limit:
+                logging.info(f"[MAIN] Bucket lleno detectado. Estado actual: {buckets_status}")
+                mqtt_handler.publish(
+                    topic=mqtt_config["topics"]["entry"],
+                    payload={"status": "simulation_ended", "buckets": buckets_status}
+                )
+                break
+
+            # Publicar datos simulados de peso
             mqtt_handler.publish(
                 topic=mqtt_config["topics"]["entry"],
-                payload={
-                    "status": "material_detected",
-                    "weight": weight_data,
-                    "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
-                }
+                payload={"status": "material_detected", "weight": weight_data, "timestamp": time.time()}
             )
 
-            # Simular detección de residuos y publicarlos
+            # Simular detección de residuos y publicación
             waste_data = simulate_waste_detection()
             mqtt_handler.publish(
                 topic=mqtt_config["topics"]["detection"],
                 payload=waste_data
             )
-            logging.info(f"[MAIN] Datos de detección publicados: {waste_data}")
 
-            # Simular delay en la comunicación con Raspberry Pi 1
-            logging.info(f"[MAIN] Esperando {communication_delay} segundos para enviar datos...")
+            # Log y delay de comunicación
+            logging.info(f"[MAIN] Estado actual de los buckets: {buckets_status}")
+            logging.info(f"[MAIN] Esperando {communication_delay} segundos para enviar los datos...")
             time.sleep(communication_delay)
 
         logging.info("[MAIN] Simulación completada. Finalizando script.")
