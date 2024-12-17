@@ -90,13 +90,16 @@ def main():
 
        # Inicializar el manejador MQTT
         logging.info("[MAIN] Configurando cliente MQTT...")
-        mqtt_handler = MQTTHandler(config["mqtt"])
+        mqtt_config = config["mqtt"]
+        mqtt_handler = MQTTHandler(mqtt_config)
         mqtt_handler.client.on_message = on_message_received  # Asignar el callback
 
-        # Conectar al broker MQTT
-        mqtt_handler.client.connect()
+        
+        # Conectar al broker
+        mqtt_handler.connect()
 
-        # Suscribirse a los tópicos necesarios
+
+                # Suscribirse a los tópicos necesarios
         topic_action = config["mqtt"]["topics"]["action"]
         logging.info(f"[MAIN] Suscribiéndose al tópico '{topic_action}'...")
         mqtt_handler.client.subscribe(topic_action)
