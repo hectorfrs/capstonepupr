@@ -14,7 +14,9 @@ def create_mqtt_client(client_id, broker_addresses, port, keepalive, on_message=
     Crea un cliente MQTT y lo conecta al primer broker disponible.
     """
     # Forzar el uso de MQTT 3.1.1 para mayor compatibilidad
-    client = Client(client_id, protocol=MQTTv311)
+    #client = Client(client_id, protocol=MQTTv311)
+    client = Client(client_id)
+
 
     # Configurar callback para mensajes
     if on_message:

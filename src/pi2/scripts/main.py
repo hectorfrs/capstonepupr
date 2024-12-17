@@ -55,7 +55,7 @@ def main():
                 logging.info(f"[MAIN] [RELAY] Material desconocido: {material_type}")
 
         # Callback para manejar mensajes MQTT
-        def on_message(client, userdata, msg, properties=None):
+        def on_message(client, userdata, msg):
             payload = json.loads(msg.payload.decode())
             if msg.topic == topic_action:
                 material_type = payload.get('tipo')
