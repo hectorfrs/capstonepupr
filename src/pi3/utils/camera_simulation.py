@@ -8,7 +8,7 @@ import random
 import json
 import logging
 from datetime import datetime
-from utils.mqtt_handler import publish_message
+from utils.mqtt_handler import MQTTHandler
 from waste_type import generate_waste_data
 
 # Configuración del logging
