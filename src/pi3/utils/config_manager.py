@@ -17,15 +17,15 @@ class ConfigManager:
         :return: Diccionario con la configuración cargada.
         """
         if not os.path.exists(self.config_path):
-            raise FileNotFoundError(f"El archivo de configuración no existe: {self.config_path}")
+            raise FileNotFoundError(f"[MANAGER] [CONFIG] El archivo de configuración no existe: {self.config_path}")
 
         with open(self.config_path, "r") as file:
             try:
                 config = yaml.safe_load(file)
-                logging.info(f"Archivo de configuración cargado correctamente desde {self.config_path}.")
+                logging.info(f"[MANAGER] [CONFIG] Archivo de configuración cargado correctamente desde {self.config_path}.")
                 return config
             except yaml.YAMLError as e:
-                logging.error(f"Error al cargar el archivo YAML: {e}")
+                logging.error(f"[MANAGER] [CONFIG] Error al cargar el archivo YAML: {e}")
                 raise
 
     def validate_config(self, default_values):
@@ -41,7 +41,7 @@ class ConfigManager:
                 elif isinstance(value, dict):
                     recursive_update(d[key], value)
 
-        logging.info("Validando configuración...")
+        logging.info("[MANAGER] [CONFIG] Validando configuración...")
         recursive_update(self.config, default_values)
 
     def get(self, key, default=None):

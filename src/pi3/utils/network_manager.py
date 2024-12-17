@@ -16,7 +16,7 @@ class NetworkManager:
     def __init__(self, config):
         self.config = config
         self.current_interface = "ethernet"  # Ethernet por defecto
-        self.ping_host = "localhost"  # Google DNS para pruebas de conectividad
+        self.ping_host = "192.168.1.147"  # Google DNS para pruebas de conectividad
         self.check_interval = 10  # Intervalo en segundos para verificar conectividad
         self.network_status = {"ethernet": False, "wifi": False}
         self.monitoring_thread = None
