@@ -67,6 +67,8 @@ def on_message_received(client, userdata, msg):
         logging.error(f"[MAIN] Error al procesar mensaje: {e}")
 
 def main():
+    global relay_controller  # Para ser accesible en el callback
+    mqtt_client = None  # Preasignar mqtt_client
     try:
         # Cargar configuración
         logging.basicConfig(level=logging.INFO, format='[%(asctime)s] [%(levelname)s] %(message)s' , datefmt='%Y-%m-%d %H:%M:%S')
