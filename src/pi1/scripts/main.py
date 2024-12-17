@@ -94,7 +94,7 @@ def main():
         mqtt_handler.client.on_message = on_message_received  # Asignar el callback
 
         # Conectar al broker MQTT
-        mqtt_handler.connect()
+        mqtt_handler.client.connect()
 
         # Suscribirse a los tópicos necesarios
         topic_action = config["mqtt"]["topics"]["action"]
@@ -113,9 +113,9 @@ def main():
         logging.error(f"[MAIN] Error crítico en la ejecución: {e}")
     finally:
         logging.info("[MAIN] Finalizando ejecución del script.")
-        if 'mqtt_client' in locals() and mqtt_client.is_connected():
+        if 'mqtt_handler' in locals() and mqtt_handler.is_connected():
             logging.info("[MAIN] Desconectando cliente MQTT...")
-        mqtt_client.disconnect()
+        mqtt_handler.client.disconnect()
         logging.info("[MAIN] Cliente MQTT desconectado.")
 
 
