@@ -19,7 +19,7 @@ class MQTTHandler:
         :param keepalive: Tiempo máximo para mantener la conexión activa.
         :param topics: Lista de tópicos para suscribirse.
         """
-        #self.logger = logging.getLogger("MQTTHandler")
+        self.logger = logging.getLogger("MQTTHandler")
         self.client_id = client_id
         self.broker_address = broker_address
         self.port = port
