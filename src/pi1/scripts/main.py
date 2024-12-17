@@ -3,15 +3,17 @@
 # Copyright (c) 2024
 # Proyecto: Smart Recycling Bin
 
+# main.py - Script principal para Raspberry Pi 1
 import time
 import json
 import logging
 import yaml
 import os
+import random  # Importar random
+import paho.mqtt.client as mqtt
 from utils.network_manager import NetworkManager
 from utils.real_time_config import RealTimeConfigManager
 from utils.config_manager import ConfigManager
-from utils.mqtt_publisher import start_publisher
 from utils.mqtt_client import create_mqtt_client, subscribe_to_topic
 
 # Función para manejar mensajes recibidos desde material/entrada
@@ -87,8 +89,10 @@ def main():
         logging.error(f"[MAIN] Error crítico en la ejecución: {e}")
     finally:
         logging.info("[MAIN] Finalizando ejecución del script.")
-        mqtt_handler.disconnect()
+        mqtt_client.disconnect()
         logging.info("[MAIN] Cliente MQTT desconectado.")
+
 
 if __name__ == "__main__":
     main()
+
