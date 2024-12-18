@@ -71,7 +71,7 @@ def main():
 
         # Configurar logger global
         global logger
-        logger = setup_logger("[MAIN PI1]", config_manager.get("logging", {}))
+        logger = LoggingManager.setup_logger("[MAIN PI1]", config_manager.get("logging", {}))
 
         logger.info("=" * 70)
         logger.info("[MAIN] Iniciando sistema de detección de materiales en Raspberry Pi 1")
