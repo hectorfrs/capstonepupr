@@ -3,20 +3,17 @@
 # Copyright (c) 2024
 # Proyecto: Smart Recycling Bin
 
-import yaml
 import os
 import time
 from threading import Thread
-from modules.logging_manager import LoggingManager
-from modules.config_manager import ConfigManager
-from modules.mqtt_handler import MQTTHandler
+import yaml
 
 class RealTimeConfigManager:
     """
     Clase para gestionar y monitorear cambios en el archivo de configuración.
     """
 
-    def __init__(self, config_manager: ConfigManager, mqtt_handler: MQTTHandler = None, reload_interval=5):
+    def __init__(self, config_manager, mqtt_handler=None, reload_interval=5):
         """
         Inicializa el gestor de configuración.
 
@@ -24,6 +21,8 @@ class RealTimeConfigManager:
         :param mqtt_handler: Instancia opcional de MQTTHandler para publicar cambios.
         :param reload_interval: Intervalo en segundos para verificar cambios en el archivo.
         """
+        from modules.logging_manager import LoggingManager
+
         self.config_manager = config_manager
         self.mqtt_handler = mqtt_handler
         self.config_path = config_manager.config_path
@@ -33,7 +32,7 @@ class RealTimeConfigManager:
         self._stop_monitoring = False
 
         # Configurar logger específico para RealTimeConfig
-        self.logger = setup_logger("[REALTIME_CONFIG]", config_manager.get("logging", {}))
+        self.logger = LoggingManager(config_manager).setup_logger("[REALTIME_CONFIG]")
 
         # Cargar configuración inicial
         self.load_config()
