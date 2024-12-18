@@ -3,11 +3,9 @@
 # Copyright (c) 2024
 # Proyecto: Smart Recycling Bin
 
-# alert_manager.py - Clase para manejar alertas críticas del sistema.
 import logging
 import json
 import os
-import socket
 from datetime import datetime
 from dataclasses import dataclass, field
 from typing import Any, Dict
@@ -33,7 +31,7 @@ class AlertManager:
     """
     ALLOWED_LEVELS = {"INFO", "WARNING", "CRITICAL"}
 
-    def __init__(self, mqtt_config=None, alert_topic=None, local_log_path="~/logs/alerts.json", rotate_logs=True, logger_config=None):
+    def __init__(self, mqtt_config=None, alert_topic=None, local_log_path="~/logs/alerts.json", rotate_logs=True, logger_config=None, enable_mqtt_alerts=True, enable_local_logging=True):
         """
         Inicializa el manejador de alertas.
 
@@ -42,7 +40,12 @@ class AlertManager:
         :param local_log_path: Ruta para almacenar alertas localmente.
         :param rotate_logs: Habilitar o deshabilitar la rotación de logs.
         :param logger_config: Configuración para el logger.
+        :param enable_mqtt_alerts: Habilita o deshabilita el envío de alertas por MQTT.
+        :param enable_local_logging: Habilita o deshabilita el registro de alertas en el log local.
         """
+        # Configurar logger centralizado
+        self.logger = setup_logger("[ALERT_MANAGER]", logger_config or {})
+
         # Generar el tópico dinámicamente si no se proporciona
         if alert_topic is None:
             hostname = socket.gethostname()  # Obtener el nombre del host
@@ -51,9 +54,8 @@ class AlertManager:
         self.alert_topic = alert_topic
         self.local_log_path = os.path.expanduser(local_log_path)
         self.rotate_logs = rotate_logs
-
-        # Configurar Logger centralizado
-        self.logger = setup_logger(__name__, logger_config or {})
+        self.enable_mqtt_alerts = enable_mqtt_alerts
+        self.enable_local_logging = enable_local_logging
 
         # Configurar MQTTHandler
         self.mqtt_handler = None
@@ -95,10 +97,11 @@ class AlertManager:
         alert = Alert(level=level, message=message, metadata=metadata or {})
 
         # Registrar alerta en el log
-        self._log_alert(alert)
+        if self.enable_local_logging:
+            self._log_alert(alert)
 
         # Enviar alerta por MQTT si está habilitado
-        if self.mqtt_handler:
+        if self.enable_mqtt_alerts and self.mqtt_handler:
             self._send_mqtt_alert(alert)
 
     def _send_mqtt_alert(self, alert):
@@ -151,27 +154,3 @@ class AlertManager:
             self.logger.info(f"Archivo de log de alertas rotado. Respaldo creado en {backup_path}.")
         except Exception as e:
             self.logger.error(f"Error rotando el archivo de log de alertas: {e}")
-
-# # Ejemplo de uso
-# if __name__ == "__main__":
-#     # Crear una instancia de AlertManager
-#     mqtt_config = {
-#         "broker_addresses": ["localhost"],
-#         "port": 1883,
-#         "topics": {}
-#     }
-#     logger_config = {
-#         "log_file": "~/logs/app.log",
-#         "error_log_file": "~/logs/error.log",
-#         "max_size_mb": 5,
-#         "backup_count": 3,
-#         "enable_debug": True
-#     }
-#     alert_manager = AlertManager(mqtt_config=mqtt_config, logger_config=logger_config, local_log_path="~/logs/alerts.json")
-
-#     # Enviar una alerta
-#     alert_manager.send_alert(
-#         level="CRITICAL",
-#         message="Prueba de alerta crítica",
-#         metadata={"sensor": "CPU", "value": "95°C"},
-#     )

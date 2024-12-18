@@ -1,21 +1,32 @@
 # config_manager.py - Clase para manejar la configuración del sistema desde un archivo YAML.
+# Desarrollado por Héctor F. Rivera Santiago
+# Copyright (c) 2024
+# Proyecto: Smart Recycling Bin
+
 import yaml
 import logging
 import os
+from modules.logging_manager import setup_logger
 
 class ConfigManager:
     """
     Clase para manejar la configuración del sistema desde un archivo YAML.
     """
 
-    def __init__(self, config_path):
+    def __init__(self, config_path, enable_validation=True):
         """
         Inicializa el ConfigManager cargando la configuración desde el archivo YAML.
 
         :param config_path: Ruta al archivo YAML.
+        :param enable_validation: Habilita o deshabilita la validación de configuración al cargar.
         """
         self.config_path = config_path
         self.config = {}
+        self.enable_validation = enable_validation
+
+        # Configurar logger centralizado
+        self.logger = setup_logger("[CONFIG_MANAGER]", {})
+
         self.default_config = {
             "system": {
                 "enable_sensors": True,
@@ -59,15 +70,20 @@ class ConfigManager:
                     if 'mux' in self.config and 'i2c_address' in self.config['mux']:
                         self.config['mux']['i2c_address'] = int(self.config['mux']['i2c_address'], 16) \
                             if isinstance(self.config['mux']['i2c_address'], str) else self.config['mux']['i2c_address']
-                    logging.info(f"[MANAGER] [CONFIG] Configuración cargada desde {self.config_path}")
+                    self.logger.info(f"Configuración cargada desde {self.config_path}")
             else:
-                logging.warning(f"[MANAGER] [CONFIG] El archivo de configuración no existe: {self.config_path}. Usando configuración predeterminada.")
+                self.logger.warning(f"El archivo de configuración no existe: {self.config_path}. Usando configuración predeterminada.")
                 self.config = self.default_config
+
+            # Validar configuración si está habilitado
+            if self.enable_validation:
+                self.validate_config()
+
         except yaml.YAMLError as e:
-            logging.error(f"[MANAGER] [CONFIG] Error al leer el archivo YAML: {e}. Usando configuración predeterminada.")
+            self.logger.error(f"Error al leer el archivo YAML: {e}. Usando configuración predeterminada.")
             self.config = self.default_config
         except Exception as e:
-            logging.error(f"[MANAGER] [CONFIG] Error cargando configuración: {e}")
+            self.logger.error(f"Error cargando configuración: {e}")
             self.config = self.default_config
 
     def save_config(self):
@@ -77,9 +93,9 @@ class ConfigManager:
         try:
             with open(self.config_path, "w") as file:
                 yaml.dump(self.config, file, default_flow_style=False)
-                logging.info(f"[MANAGER] [CONFIG] Configuración guardada en {self.config_path}")
+                self.logger.info(f"Configuración guardada en {self.config_path}")
         except Exception as e:
-            logging.error(f"[MANAGER] [CONFIG] Error al guardar la configuración: {e}")
+            self.logger.error(f"Error al guardar la configuración: {e}")
 
     def validate_config(self):
         """
@@ -87,12 +103,12 @@ class ConfigManager:
         """
         for section, defaults in self.default_config.items():
             if section not in self.config:
-                logging.warning(f"[MANAGER] [CONFIG] Sección {section} no encontrada en la configuración. Usando valores predeterminados.")
+                self.logger.warning(f"Sección {section} no encontrada en la configuración. Usando valores predeterminados.")
                 self.config[section] = defaults
             else:
                 for key, value in defaults.items():
                     if key not in self.config[section]:
-                        logging.warning(f"[MANAGER] [CONFIG] Clave {key} no encontrada en {section}. Estableciendo valor predeterminado: {value}.")
+                        self.logger.warning(f"Clave {key} no encontrada en {section}. Estableciendo valor predeterminado: {value}.")
                         self.config[section][key] = value
         self.save_config()
 
@@ -120,14 +136,10 @@ class ConfigManager:
         :param key_path: Ruta de la clave (por ejemplo, "system.enable_sensors").
         :param value: Valor a establecer.
         """
-        if section == 'mux' and key == 'i2c_address':
-            logging.warning("[MANAGER] [CONFIG] Intento de modificar `i2c_address` bloqueado. Este valor no debe ser cambiado.")
-        return
-
         keys = key_path.split(".")
         config_section = self.config
         for key in keys[:-1]:
             config_section = config_section.setdefault(key, {})
         config_section[keys[-1]] = value
         self.save_config()
-        logging.info(f"[MANAGER] [CONFIG] Configuración actualizada: [{section}][{key}] = {value}")
+        self.logger.info(f"Configuración actualizada: {key_path} = {value}")

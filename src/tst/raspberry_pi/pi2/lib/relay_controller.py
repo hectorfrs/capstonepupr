@@ -6,65 +6,87 @@
 import qwiic_tca9548a
 import qwiic_relay
 import time
-import logging
+from modules.logging_manager import setup_logger
 
 class RelayController:
-    def __init__(self, relay_config):
+    """
+    Controlador para gestionar relés utilizando un MUX I2C TCA9548A.
+    """
+    def __init__(self, relay_config, enable_relays=True):
         """
         Inicializa los relés y el MUX utilizando la configuración desde config.yaml.
-        Args:
-            relay_config (list): Lista de diccionarios con configuración de los relés.
-            Cada elemento tiene: {"mux_channel": int, "i2c_address": int}
+        :param relay_config: Lista de diccionarios con configuración de los relés.
+                             Cada elemento tiene: {"mux_channel": int, "i2c_address": int}
+        :param enable_relays: Habilita o deshabilita la funcionalidad de los relés.
         """
+        self.relay_config = relay_config
+        self.enable_relays = enable_relays
+
+        # Configurar logger centralizado
+        self.logger = setup_logger("[RELAY_CONTROLLER]", {})
+
+        if not self.enable_relays:
+            self.logger.warning("La funcionalidad de los relés está deshabilitada.")
+            return
+
         # Inicializar el MUX
         self.mux = qwiic_tca9548a.QwiicTCA9548A()
         if not self.mux.is_connected():
+            self.logger.critical("[MUX] TCA9548A no detectado.")
             raise Exception("[MUX] TCA9548A no detectado.")
-        print("[MUX] TCA9548A conectado correctamente.")
+        self.logger.info("[MUX] TCA9548A conectado correctamente.")
 
         # Inicializar los relés
         self.relays = {}
-        for index, config in enumerate(relay_config):
+        for index, config in enumerate(self.relay_config):
             mux_channel = config["mux_channel"]
             i2c_address = config["i2c_address"]
 
-            # Habilitar el canal MUX y verificar el relé
             self._select_mux_channel(mux_channel)
             relay = qwiic_relay.QwiicRelay(address=i2c_address)
 
             if relay.is_connected():
                 self.relays[index] = {"mux_channel": mux_channel, "relay": relay}
-                print(f"[RELAY] Relé {index} conectado en canal MUX {mux_channel}, dirección {hex(i2c_address)}")
+                self.logger.info(f"[RELAY] Relé {index} conectado en canal MUX {mux_channel}, dirección {hex(i2c_address)}")
             else:
-                raise Exception(f"[RELAY] Error al conectar Relé {index} en canal MUX {mux_channel}, dirección {hex(i2c_address)}")
+                self.logger.error(f"[RELAY] Error al conectar Relé {index} en canal MUX {mux_channel}, dirección {hex(i2c_address)}")
 
     def _select_mux_channel(self, channel):
         """
         Activa el canal especificado en el MUX.
-        Args:
-            channel (int): Número del canal a activar (0-7).
+        :param channel: Número del canal a activar (0-7).
         """
+        if not self.enable_relays:
+            self.logger.warning("La funcionalidad de los relés está deshabilitada.")
+            return
+
         if channel < 0 or channel > 7:
+            self.logger.error(f"[MUX] Canal inválido: {channel}")
             raise ValueError(f"[MUX] Canal inválido: {channel}")
+
         self.mux.enable_channels(1 << channel)
-        print(f"[MUX] Canal {channel} activado.")
+        self.logger.info(f"[MUX] Canal {channel} activado.")
 
     def activate_relay(self, relay_index, duration):
         """
         Activa un relé específico durante un tiempo determinado.
-        Args:
-            relay_index (int): Índice del relé.
-            duration (float): Tiempo en segundos para activar el relé.
+        :param relay_index: Índice del relé.
+        :param duration: Tiempo en segundos para activar el relé.
         """
+        if not self.enable_relays:
+            self.logger.warning("La funcionalidad de los relés está deshabilitada. Activación omitida.")
+            return
+
         if relay_index not in self.relays:
+            self.logger.error(f"[RELAY] Índice de relé inválido: {relay_index}")
             raise IndexError(f"[RELAY] Índice de relé inválido: {relay_index}")
 
         relay_info = self.relays[relay_index]
         self._select_mux_channel(relay_info["mux_channel"])
         relay = relay_info["relay"]
 
-        print(f"[RELAY] Activando relé {relay_index} en dirección {hex(relay.address)} por {duration} segundos.")
+        self.logger.info(f"[RELAY] Activando relé {relay_index} en dirección {hex(relay.address)} por {duration} segundos.")
         relay.set_relay_on()
         time.sleep(duration)
         relay.set_relay_off()
-        print(f"[RELAY] Relé {relay_index} desactivado.")
+        self.logger.info(f"[RELAY] Relé {relay_index} desactivado.")

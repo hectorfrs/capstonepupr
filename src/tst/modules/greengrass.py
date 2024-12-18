@@ -1,7 +1,11 @@
+# greengrass.py - Clase para manejar la interacción con AWS IoT Greengrass.
+# Desarrollado por Héctor F. Rivera Santiago
+# Copyright (c) 2024
+# Proyecto: Smart Recycling Bin
+
 import boto3
 import yaml
-import logging
-
+from modules.logging_manager import setup_logger
 
 class GreengrassManager:
     """
@@ -9,28 +13,24 @@ class GreengrassManager:
     Permite invocar funciones Lambda locales para procesamiento de datos.
     """
 
-    def __init__(self, config, config_path, monitor=None):
+    def __init__(self, config, config_path):
         """
         Inicializa el GreengrassManager usando la configuración YAML.
 
+        :param config: Configuración cargada desde el archivo YAML.
         :param config_path: Ruta al archivo YAML con la configuración.
         """
-        # Cargar configuración desde el archivo YAML
-        self.config = config
-        self.monitor = monitor
-        # with open(config_path, "r") as file:
-        #     self.config = yaml.safe_load(file)
-        # Obtener la región desde la configuración
-        self.region = self.config['aws']['region']
-        # Inicializar cliente de Lambda para Greengrass
-        self.lambda_client = boto3.client('lambda', region_name=self.region)
+        # Configurar logger centralizado
+        self.logger = setup_logger("[GREENGRASS]", config.get("logging", {}))
 
+        # Cargar configuración
         self.config = self.load_config(config_path)
+        self.region = self.config['aws']['region']
         self.group_name = self.config['greengrass']['group_name']
         self.functions = self.config['greengrass']['functions']
-        
 
-        
+        # Inicializar cliente de Lambda para Greengrass
+        self.lambda_client = boto3.client('lambda', region_name=self.region)
 
     @staticmethod
     def load_config(config_path):
@@ -59,7 +59,8 @@ class GreengrassManager:
                 break
 
         if not function_arn:
-            raise ValueError(f"[GREENGRASS] No se encontró una función Lambda llamada '{function_name}' en el archivo de configuración.")
+            self.logger.error(f"No se encontró una función Lambda llamada '{function_name}' en la configuración.")
+            raise ValueError(f"No se encontró una función Lambda llamada '{function_name}' en el archivo de configuración.")
 
         # Invocar la función Lambda en Greengrass
         try:
@@ -69,40 +70,8 @@ class GreengrassManager:
                 Payload=str(payload)
             )
             result = response['Payload'].read()
-            logging.info(f"[GREENGRASS] Respuesta de la función Lambda '{function_name}': {result}")
+            self.logger.info(f"Respuesta de la función Lambda '{function_name}': {result}")
             return result
         except Exception as e:
-            logging.error(f"[GREENGRASS] Error al invocar la función Lambda '{function_name}': {e}")
+            self.logger.error(f"Error al invocar la función Lambda '{function_name}': {e}")
             raise
-
-# # Ejemplo de uso:
-
-# # Invocar Funcion Lambda Localmente
-
-# from utils.greengrass import GreengrassManager
-
-# def main():
-#     # Inicializar el administrador de Greengrass
-#     greengrass_manager = GreengrassManager(config_path="config/pi1_config.yaml")
-
-#     # Datos para enviar a la función Lambda
-#     payload = {
-#         "sensor_id": "AS7265x_1",
-#         "spectral_data": {
-#             "violet": 150,
-#             "blue": 210,
-#             "green": 180,
-#             "yellow": 130,
-#             "orange": 110,
-#             "red": 90
-#         },
-#         "detected_material": "PET"
-#     }
-
-#     # Invocar la función Lambda "DetectPlasticType"
-#     response = greengrass_manager.invoke_function("DetectPlasticType", payload)
-#     print("Respuesta de Lambda:", response)
-
-
-# if __name__ == "__main__":
-#     main()
