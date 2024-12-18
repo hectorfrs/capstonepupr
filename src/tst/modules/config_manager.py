@@ -6,7 +6,7 @@
 import yaml
 import logging
 import os
-from modules.logging_manager import LoggingManager, setup_logger
+from modules.logging_manager import LoggingManager
 
 class ConfigManager:
     """
