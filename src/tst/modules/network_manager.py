@@ -7,7 +7,7 @@ import os
 import time
 import subprocess
 from threading import Thread
-from modules.logging_manager import setup_logger
+from modules.logging_manager import LoggingManager
 
 class NetworkManager:
     """

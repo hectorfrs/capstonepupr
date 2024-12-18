@@ -6,7 +6,7 @@
 import json
 from datetime import datetime
 import os
-from modules.logging_manager import setup_logger
+from modules.logging_manager import LoggingManager
 from modules.config_manager import ConfigManager
 
 class JSONLogger:

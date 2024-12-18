@@ -10,7 +10,7 @@ import uuid
 from datetime import datetime
 from dataclasses import dataclass, field
 from typing import Any, Dict
-from modules.logging_manager import setup_logger
+from modules.logging_manager import LoggingManager
 from modules.mqtt_handler import MQTTHandler
 
 @dataclass

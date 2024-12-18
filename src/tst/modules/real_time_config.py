@@ -7,7 +7,7 @@ import yaml
 import os
 import time
 from threading import Thread
-from modules.logging_manager import setup_logger
+from modules.logging_manager import LoggingManager
 from modules.config_manager import ConfigManager
 from modules.mqtt_handler import MQTTHandler
 

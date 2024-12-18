@@ -6,7 +6,7 @@
 import paho.mqtt.client as mqtt
 import uuid
 import boto3
-from modules.logging_manager import setup_logger
+from modules.logging_manager import LoggingManager
 from modules.config_manager import ConfigManager
 
 class MQTTHandler:

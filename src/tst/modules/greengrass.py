@@ -5,9 +5,9 @@
 
 import boto3
 import uuid
-import yaml
-from modules.logging_manager import setup_logger
+from modules.logging_manager import LoggingManager
 from modules.config_manager import ConfigManager
+from modules.mqtt_handler import MQTTHandler
 
 class GreengrassManager:
     """
@@ -15,15 +15,16 @@ class GreengrassManager:
     Permite invocar funciones Lambda locales para procesamiento de datos.
     """
 
-    def __init__(self, config_manager, logger_config=None):
+    def __init__(self, config_manager: ConfigManager, mqtt_handler: MQTTHandler = None):
         """
         Inicializa el GreengrassManager usando la configuración centralizada.
 
-        :param config_manager: Instancia de ConfigManager para manejar configuraciones.
-        :param logger_config: Configuración del logger.
+        :param config_manager: Instancia de ConfigManager para manejar configuraciones centralizadas.
+        :param mqtt_handler: Instancia opcional de MQTTHandler para publicar eventos relacionados con Greengrass.
         """
         self.config_manager = config_manager
-        self.logger = setup_logger("[GREENGRASS]", logger_config or {})
+        self.mqtt_handler = mqtt_handler
+        self.logger = setup_logger("[GREENGRASS_MANAGER]", config_manager.get("logging", {}))
 
         # Cargar configuración específica de Greengrass
         self.config = self.config_manager.get("greengrass", {})
@@ -66,6 +67,15 @@ class GreengrassManager:
             )
             result = response['Payload'].read()
             self.logger.info(f"Respuesta de la función Lambda '{function_name}': {result}")
+
+            # Publicar el evento en MQTT si está habilitado
+            if self.mqtt_handler and self.mqtt_handler.is_connected():
+                self.mqtt_handler.publish("greengrass/events", {
+                    "function_name": function_name,
+                    "payload": payload_with_id,
+                    "response": result
+                })
+
             return result
         except Exception as e:
             self.logger.error(f"Error al invocar la función Lambda '{function_name}': {e}")
