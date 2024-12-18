@@ -35,6 +35,9 @@ class MQTTHandler:
         self.client.on_disconnect = self.on_disconnect
         self.client.on_publish = self.on_publish
 
+    def set_on_message_callback(self, callback):
+        self.client.on_message = callback
+
     def connect(self):
         """
         Intenta conectarse a cada dirección de broker hasta que tenga éxito.
