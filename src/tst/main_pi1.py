@@ -98,8 +98,8 @@ def main():
 
         # Configurar MQTT
         logger.info("[MAIN] [MQTT] Configurando cliente MQTT...")
-        mqtt_config = config.get("mqtt", {})
         global mqtt_handler
+        mqtt_config = config.get("mqtt", {})
         mqtt_handler = MQTTHandler(mqtt_config)
         mqtt_handler.client.on_message = on_message_received
 
