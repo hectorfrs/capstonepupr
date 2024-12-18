@@ -4,8 +4,10 @@
 # Proyecto: Smart Recycling Bin
 
 import boto3
+import uuid
 import yaml
 from modules.logging_manager import setup_logger
+from modules.config_manager import ConfigManager
 
 class GreengrassManager:
     """
@@ -13,41 +15,30 @@ class GreengrassManager:
     Permite invocar funciones Lambda locales para procesamiento de datos.
     """
 
-    def __init__(self, config, config_path):
+    def __init__(self, config_manager, logger_config=None):
         """
-        Inicializa el GreengrassManager usando la configuración YAML.
+        Inicializa el GreengrassManager usando la configuración centralizada.
 
-        :param config: Configuración cargada desde el archivo YAML.
-        :param config_path: Ruta al archivo YAML con la configuración.
+        :param config_manager: Instancia de ConfigManager para manejar configuraciones.
+        :param logger_config: Configuración del logger.
         """
-        # Configurar logger centralizado
-        self.logger = setup_logger("[GREENGRASS]", config.get("logging", {}))
+        self.config_manager = config_manager
+        self.logger = setup_logger("[GREENGRASS]", logger_config or {})
 
-        # Cargar configuración
-        self.config = self.load_config(config_path)
-        self.region = self.config['aws']['region']
-        self.group_name = self.config['greengrass']['group_name']
-        self.functions = self.config['greengrass']['functions']
+        # Cargar configuración específica de Greengrass
+        self.config = self.config_manager.get("greengrass", {})
+        self.region = self.config.get("region", "us-east-1")
+        self.group_name = self.config.get("group_name", "default_group")
+        self.functions = self.config.get("functions", [])
 
         # Inicializar cliente de Lambda para Greengrass
         self.lambda_client = boto3.client('lambda', region_name=self.region)
-
-    @staticmethod
-    def load_config(config_path):
-        """
-        Carga la configuración desde un archivo YAML.
-
-        :param config_path: Ruta al archivo YAML.
-        :return: Diccionario con la configuración cargada.
-        """
-        with open(config_path, "r") as file:
-            return yaml.safe_load(file)
 
     def invoke_function(self, function_name, payload):
         """
         Invoca una función Lambda localmente en Greengrass.
 
-        :param function_name: Nombre de la función Lambda definida en el YAML.
+        :param function_name: Nombre de la función Lambda definida en la configuración.
         :param payload: Datos en formato JSON para enviar a la función Lambda.
         :return: Respuesta de la función Lambda.
         """
@@ -62,12 +53,16 @@ class GreengrassManager:
             self.logger.error(f"No se encontró una función Lambda llamada '{function_name}' en la configuración.")
             raise ValueError(f"No se encontró una función Lambda llamada '{function_name}' en el archivo de configuración.")
 
+        # Agregar ID único al payload para trazabilidad
+        payload_with_id = payload.copy() if isinstance(payload, dict) else {"data": payload}
+        payload_with_id["id"] = str(uuid.uuid4())
+
         # Invocar la función Lambda en Greengrass
         try:
             response = self.lambda_client.invoke(
                 FunctionName=function_arn,
                 InvocationType='RequestResponse',
-                Payload=str(payload)
+                Payload=str(payload_with_id)
             )
             result = response['Payload'].read()
             self.logger.info(f"Respuesta de la función Lambda '{function_name}': {result}")

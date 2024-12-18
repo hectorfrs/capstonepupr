@@ -5,7 +5,7 @@
 
 import time
 import json
-import random  # Importar random
+import random
 from modules.logging_manager import setup_logger
 from modules.network_manager import NetworkManager
 from modules.real_time_config import RealTimeConfigManager
@@ -67,7 +67,7 @@ def main():
         logger.info("=" * 70)
 
         # Cargar configuración dinámica
-        real_time_config = RealTimeConfigManager(config_path)
+        real_time_config = RealTimeConfigManager(config_manager)
         real_time_config.start_monitoring()
         config = real_time_config.get_config()
 

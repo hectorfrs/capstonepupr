@@ -6,6 +6,7 @@
 import logging
 import json
 import os
+import uuid
 from datetime import datetime
 from dataclasses import dataclass, field
 from typing import Any, Dict
@@ -48,7 +49,7 @@ class AlertManager:
 
         # Generar el tópico dinámicamente si no se proporciona
         if alert_topic is None:
-            hostname = socket.gethostname()  # Obtener el nombre del host
+            hostname = os.getenv("HOSTNAME", "raspberry")  # Usar variable de entorno o valor predeterminado
             alert_topic = f"{hostname}/alerts"
 
         self.alert_topic = alert_topic
@@ -106,13 +107,16 @@ class AlertManager:
 
     def _send_mqtt_alert(self, alert):
         """
-        Envía una alerta por MQTT.
+        Envía una alerta por MQTT, incluyendo un ID único.
 
         :param alert: Instancia de la clase Alert.
         """
         try:
-            self.mqtt_handler.publish(self.alert_topic, json.dumps(alert.__dict__))
-            self.logger.info(f"Alerta enviada a MQTT: {alert}")
+            alert_data = alert.__dict__.copy()
+            alert_data["id"] = str(uuid.uuid4())  # Agregar un ID único
+
+            self.mqtt_handler.publish(self.alert_topic, alert_data)
+            self.logger.info(f"Alerta enviada a MQTT: {alert_data}")
         except Exception as e:
             self.logger.error(f"Error enviando alerta a MQTT: {e}")
 

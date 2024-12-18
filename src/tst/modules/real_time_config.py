@@ -7,32 +7,30 @@ import yaml
 import os
 import time
 from threading import Thread
-from modules.logging_manager import setup_logger  # Importa el logger centralizado
+from modules.logging_manager import setup_logger
+from modules.config_manager import ConfigManager
 
 class RealTimeConfigManager:
     """
     Clase para gestionar y monitorear cambios en el archivo de configuración.
     """
 
-    def __init__(self, config_path, reload_interval=5, logger_config=None):
+    def __init__(self, config_manager, reload_interval=5):
         """
         Inicializa el gestor de configuración.
 
-        :param config_path: Ruta al archivo de configuración YAML.
+        :param config_manager: Instancia de ConfigManager para manejar configuraciones.
         :param reload_interval: Intervalo en segundos para verificar cambios en el archivo.
-        :param logger_config: Configuración del logger.
         """
-        if not isinstance(config_path, str):
-            raise ValueError("config_path debe ser una cadena con la ruta del archivo de configuración.")
-
-        self.config_path = config_path
+        self.config_manager = config_manager
+        self.config_path = config_manager.config_path
         self.reload_interval = reload_interval
         self.last_modified_time = None
         self.config_data = {}
         self._stop_monitoring = False
 
         # Configurar logger específico para RealTimeConfig
-        self.logger = setup_logger("[REALTIME]", logger_config or {})
+        self.logger = setup_logger("[REALTIME_CONFIG]", config_manager.get("logging", {}))
 
         # Cargar configuración inicial
         self.load_config()

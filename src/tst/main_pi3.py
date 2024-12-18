@@ -12,7 +12,7 @@ from modules.real_time_config import RealTimeConfigManager
 from modules.config_manager import ConfigManager
 from modules.mqtt_handler import MQTTHandler
 from modules.weight_sensor import WeightSensor
-from modules.camera_simulation import simulate_camera_detection
+from modules.simulation import simulate_camera_detection
 
 def on_message_received(client, userdata, msg):
     """
@@ -56,7 +56,7 @@ def main():
         logger.info("=" * 70)
 
         # Cargar configuración dinámica
-        real_time_config = RealTimeConfigManager(config_path)
+        real_time_config = RealTimeConfigManager(config_manager)
         real_time_config.start_monitoring()
         config = real_time_config.get_config()
 
@@ -112,14 +112,14 @@ def main():
                 logger.info(f"[MAIN] Bucket lleno detectado. Estado actual: {weight_data}")
                 mqtt_handler.publish(
                     topic=mqtt_config.get("topics", {}).get("status", "raspberry-3/status"),
-                    payload={"status": "simulation_ended", "buckets": weight_data}
+                    payload={"status": "simulation_ended", "buckets": weight_data, "id": str(uuid.uuid4())}
                 )
                 break
 
             # Publicar datos simulados de peso
             mqtt_handler.publish(
                 topic=mqtt_config.get("topics", {}).get("status", "raspberry-3/status"),
-                payload={"status": "material_detected", "weight": weight_data, "timestamp": time.time()}
+                payload={"status": "material_detected", "weight": weight_data, "timestamp": time.time(), "id": str(uuid.uuid4())}
             )
 
             time.sleep(communication_delay)

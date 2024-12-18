@@ -28,7 +28,7 @@ class JSONLogger:
 
     def log_detection(self, data):
         """
-        Registra datos en un archivo JSON, agregando un timestamp.
+        Registra datos en un archivo JSON, agregando un timestamp y un ID único.
 
         :param data: Diccionario con los datos a registrar.
         """
@@ -40,8 +40,9 @@ class JSONLogger:
             # Obtener la ruta del archivo de log desde la configuración
             file_path = self.config_manager.get("logging.log_file", "logs/default_log.json")
 
-            # Agregar timestamp al registro
+            # Agregar timestamp e ID único al registro
             data["timestamp"] = datetime.now().isoformat()
+            data["id"] = data.get("id", str(uuid.uuid4()))
 
             # Crear el directorio si no existe
             os.makedirs(os.path.dirname(file_path), exist_ok=True)

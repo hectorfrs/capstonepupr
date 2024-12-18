@@ -7,23 +7,24 @@ import qwiic_tca9548a
 import qwiic_relay
 import time
 from modules.logging_manager import setup_logger
+from modules.config_manager import ConfigManager
 
 class RelayController:
     """
     Controlador para gestionar relés utilizando un MUX I2C TCA9548A.
     """
-    def __init__(self, relay_config, enable_relays=True):
+    def __init__(self, config_manager, enable_relays=True):
         """
         Inicializa los relés y el MUX utilizando la configuración desde config.yaml.
-        :param relay_config: Lista de diccionarios con configuración de los relés.
-                             Cada elemento tiene: {"mux_channel": int, "i2c_address": int}
+        :param config_manager: Instancia de ConfigManager para configuraciones centralizadas.
         :param enable_relays: Habilita o deshabilita la funcionalidad de los relés.
         """
-        self.relay_config = relay_config
+        self.config_manager = config_manager
+        self.relay_config = config_manager.get("mux.relays", [])
         self.enable_relays = enable_relays
 
         # Configurar logger centralizado
-        self.logger = setup_logger("[RELAY_CONTROLLER]", {})
+        self.logger = setup_logger("[RELAY_CONTROLLER]", config_manager.get("logging", {}))
 
         if not self.enable_relays:
             self.logger.warning("La funcionalidad de los relés está deshabilitada.")

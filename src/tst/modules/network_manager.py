@@ -14,17 +14,24 @@ class NetworkManager:
     Maneja la conexión de red para conmutar entre Ethernet y Wi-Fi automáticamente.
     """
 
-    def __init__(self, config):
-        # Configurar logger centralizado
-        self.logger = setup_logger("[NETWORK_MANAGER]", config.get("logging", {}))
+    def __init__(self, config, enable_network_monitoring=True):
+        """
+        Inicializa el NetworkManager con la configuración proporcionada.
 
+        :param config: Configuración de red.
+        :param enable_network_monitoring: Habilita o deshabilita el monitoreo de red.
+        """
         self.config = config
+        self.enable_network_monitoring = enable_network_monitoring
         self.current_interface = "ethernet"  # Ethernet por defecto
-        self.ping_host = "192.168.1.147"  # Google DNS para pruebas de conectividad
+        self.ping_host = "192.168.1.147"  # Host para pruebas de conectividad
         self.check_interval = 10  # Intervalo en segundos para verificar conectividad
         self.network_status = {"ethernet": False, "wifi": False}
         self.monitoring_thread = None
         self.keep_monitoring = False
+
+        # Configurar logger centralizado
+        self.logger = setup_logger("[NETWORK_MANAGER]", config.get("logging", {}))
 
     def is_connected(self, host=None):
         """
@@ -85,6 +92,10 @@ class NetworkManager:
         """
         Monitorea la conexión de red y conmutación entre Ethernet y Wi-Fi.
         """
+        if not self.enable_network_monitoring:
+            self.logger.warning("El monitoreo de red está deshabilitado.")
+            return
+
         self.logger.info("Iniciando monitoreo de red...")
         self.keep_monitoring = True
         while self.keep_monitoring:

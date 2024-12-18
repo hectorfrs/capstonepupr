@@ -13,16 +13,14 @@ class ConfigManager:
     Clase para manejar la configuración del sistema desde un archivo YAML.
     """
 
-    def __init__(self, config_path, enable_validation=True):
+    def __init__(self, config_path):
         """
         Inicializa el ConfigManager cargando la configuración desde el archivo YAML.
 
         :param config_path: Ruta al archivo YAML.
-        :param enable_validation: Habilita o deshabilita la validación de configuración al cargar.
         """
         self.config_path = config_path
         self.config = {}
-        self.enable_validation = enable_validation
 
         # Configurar logger centralizado
         self.logger = setup_logger("[CONFIG_MANAGER]", {})
@@ -66,19 +64,10 @@ class ConfigManager:
             if os.path.exists(self.config_path):
                 with open(self.config_path, "r") as file:
                     self.config = yaml.safe_load(file)
-                    # Convertir la dirección I2C si está en formato hexadecimal como string
-                    if 'mux' in self.config and 'i2c_address' in self.config['mux']:
-                        self.config['mux']['i2c_address'] = int(self.config['mux']['i2c_address'], 16) \
-                            if isinstance(self.config['mux']['i2c_address'], str) else self.config['mux']['i2c_address']
                     self.logger.info(f"Configuración cargada desde {self.config_path}")
             else:
                 self.logger.warning(f"El archivo de configuración no existe: {self.config_path}. Usando configuración predeterminada.")
                 self.config = self.default_config
-
-            # Validar configuración si está habilitado
-            if self.enable_validation:
-                self.validate_config()
-
         except yaml.YAMLError as e:
             self.logger.error(f"Error al leer el archivo YAML: {e}. Usando configuración predeterminada.")
             self.config = self.default_config
