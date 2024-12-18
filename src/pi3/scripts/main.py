@@ -75,37 +75,37 @@ def main():
         # Bucle principal de la simulación
         while time.time() - start_time < simulation_duration:
             # Simular peso de los buckets
-            weight_data = simulate_weight()
-            buckets_status["PET"] += weight_data["PET"]
-            buckets_status["HDPE"] += weight_data["HDPE"]
-            logging.info(f"[MAIN] Pesos actuales: {weights}")
+            weight_sensor.simulate_weight()
+            weight_data = weight_sensor.get_weights()
+            logging.info(f"[MAIN] Pesos actuales: {weight_data}")
 
             # Revisar si los buckets están llenos
-            if buckets_status["PET"] >= bucket_full_limit or buckets_status["HDPE"] >= bucket_full_limit:
-                logging.info(f"[MAIN] Bucket lleno detectado. Estado actual: {buckets_status}")
+            if weight_data["Bucket 1 (PET)"] >= bucket_full_limit or weight_data["Bucket 2 (HDPE)"] >= bucket_full_limit:
+                logging.info(f"[MAIN] Bucket lleno detectado. Estado actual: {weight_data}")
                 mqtt_handler.publish(
                     topic=mqtt_config["topics"]["entry"],
-                    payload={"status": "simulation_ended", "buckets": buckets_status}
+                    payload={"status": "simulation_ended", "buckets": weight_data}
                 )
                 break
 
             # Publicar datos simulados de peso
             mqtt_handler.publish(
-                topic=mqtt_config["topics"]["entry"],
+                topic=mqtt_config["topics"]["status"],
                 payload={"status": "material_detected", "weight": weight_data, "timestamp": time.time()}
             )
 
             # Simular detección de residuos y publicación
-            waste_data = WasteTypeDetector()
+            waste_data = WasteTypeDetector().generate_waste_data()
             mqtt_handler.publish(
                 topic=mqtt_config["topics"]["detection"],
                 payload=waste_data
             )
 
             # Log y delay de comunicación
-            logging.info(f"[MAIN] Estado actual de los buckets: {buckets_status}")
+            logging.info(f"[MAIN] Estado actual de los buckets: {weight_data}")
             logging.info(f"[MAIN] Esperando {communication_delay} segundos para enviar los datos...")
             time.sleep(communication_delay)
+
 
         logging.info("[MAIN] Simulación completada. Finalizando script.")
 

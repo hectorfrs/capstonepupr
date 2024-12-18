@@ -47,15 +47,35 @@ def on_message_received(client, userdata, msg):
     Callback para procesar mensajes recibidos.
     """
     try:
-        payload = json.loads(msg.payload.decode())
+        # Decodificar el payload
+        raw_payload = msg.payload.decode()
+        logging.info(f"[MQTT] Mensaje recibido en '{msg.topic}': {raw_payload}")
+
+        # Validar si el payload es JSON válido
+        if not raw_payload.strip():
+            logging.warning("[MAIN] Mensaje recibido está vacío.")
+            return
+
+        try:
+            payload = json.loads(raw_payload)
+        except json.JSONDecodeError as e:
+            logging.error(f"[MAIN] Error decodificando JSON: {e}")
+            return
+
+        # Obtener parámetros
         detection_id = payload.get("id", "N/A")
         material = payload.get("material", "Unknown")
 
         logging.info(f"[MAIN] Mensaje recibido | ID: {detection_id} | Material: {material}")
 
+        # Verificar si el material es válido
         if material in ["PET", "HDPE"]:
             action_time = round(random.uniform(1, 5), 2)
-            action_payload = {"id": detection_id, "tipo": material, "tiempo": action_time}
+            action_payload = {
+                "id": detection_id,
+                "tipo": material,
+                "tiempo": action_time
+            }
 
             # Publicar mensaje para activar válvula
             publish_message(client, "valvula/accion", action_payload)
@@ -70,7 +90,7 @@ def on_message_received(client, userdata, msg):
 # Función principal
 def main():
     try:
-        logging.basicConfig(level=logging.INFO, format='[%(asctime)s] [%(levelname)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+        logging.basicConfig(level=logging.DEBUG, format='[%(asctime)s] [%(levelname)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
         # Configuración
         logging.info("=" * 70)
