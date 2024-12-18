@@ -71,9 +71,14 @@ def main():
     global relay_controller  # Para ser accesible en el callback
     mqtt_client = None  # Preasignar mqtt_client
     try:
-        # Cargar configuración
-        logging.basicConfig(level=logging.INFO, format='[%(asctime)s] [%(levelname)s] %(message)s' , datefmt='%Y-%m-%d %H:%M:%S')
-        config_path = "/home/raspberry-2/capstonepupr/src/tst/pi2/config/config.yaml"
+       # Cargar configuración desde el archivo YAML
+        config_path = ConfigManager("/home/raspberry-1/capstonepupr/src/tst/configs/p2_config.yaml").config
+        config_manager = RealTimeConfigManager(config_path)
+        config_manager.start_monitoring()
+        config = config_manager.get_config()
+
+        # Inicializar el logger global
+        logger = setup_logger(["MAIN PI2"], config.get("logging", {}))
 
         # Configuración de BucketLogger
         bucket_logger = logging.getLogger("BucketLogger")

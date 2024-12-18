@@ -21,20 +21,24 @@ def main():
     Script principal para la simulación de detección de materiales en Raspberry Pi 3.
     """
     try:
-        logging.info("=" * 70)
-        logging.info("[MAIN] Iniciando simulación en Raspberry Pi 3")
-        logging.info("=" * 70)
-
-        # Cargar configuración
-        config_path = "/home/raspberry-3/capstonepupr/src/tst/pi3/config/config.yaml"
+        # Cargar configuración desde el archivo YAML
+        config_path = ConfigManager("/home/raspberry-1/capstonepupr/src/tst/configs/p3_config.yaml").config
         config_manager = RealTimeConfigManager(config_path)
         config_manager.start_monitoring()
         config = config_manager.get_config()
+
+        # Inicializar el logger global
+        logger = setup_logger(["MAIN PI3"], config.get("logging", {}))
 
         # Inicializar monitoreo de red
         logging.info("[MAIN] Iniciando monitoreo de red...")
         network_manager = NetworkManager(config)
         network_manager.start_monitoring()
+
+        # Configuración
+        logging.info("=" * 70)
+        logging.info("[MAIN] Iniciando simulación de detección de materiales en Raspberry Pi 3...")
+        logging.info("=" * 70)
 
         # Configuración de MQTT
         logging.info("[MAIN] [MQTT] Configurando cliente MQTT...")
