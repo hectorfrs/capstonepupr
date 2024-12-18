@@ -1,4 +1,4 @@
-# json_manager.py - Manejo centralizado de datos JSON para almacenamiento y recuperación.
+# json_manager.py - Manejo centralizado de datos JSON para almacenamiento y transmisión.
 # Desarrollado por Héctor F. Rivera Santiago
 # Copyright (c) 2024
 # Proyecto: Smart Recycling Bin
@@ -9,19 +9,22 @@ from datetime import datetime
 import uuid
 from modules.logging_manager import setup_logger
 from modules.config_manager import ConfigManager
+from modules.mqtt_handler import MQTTHandler
 
 class JSONManager:
     """
     Clase para manejar operaciones relacionadas con datos JSON.
     """
 
-    def __init__(self, config_manager):
+    def __init__(self, config_manager: ConfigManager, mqtt_handler: MQTTHandler = None):
         """
         Inicializa el JSONManager con configuraciones centralizadas.
 
         :param config_manager: Instancia de ConfigManager para manejar configuraciones.
+        :param mqtt_handler: Instancia opcional de MQTTHandler para transmitir datos JSON.
         """
         self.config_manager = config_manager
+        self.mqtt_handler = mqtt_handler
         self.logger = setup_logger("[JSON_MANAGER]", config_manager.get("logging", {}))
 
     def generate_json(self, sensor_id, channel, spectral_data, detected_material, confidence):
@@ -61,6 +64,10 @@ class JSONManager:
                 file.write(json.dumps(data) + "\n")
 
             self.logger.info(f"Datos guardados en {file_path}.")
+
+            # Publicar datos mediante MQTT si está habilitado
+            if self.mqtt_handler and self.mqtt_handler.is_connected():
+                self.mqtt_handler.publish("data/json", data)
         except Exception as e:
             self.logger.error(f"Error guardando datos en {file_path}: {e}")
 

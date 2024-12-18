@@ -12,6 +12,17 @@ from modules.real_time_config import RealTimeConfigManager
 from modules.config_manager import ConfigManager
 from modules.mqtt_handler import MQTTHandler
 
+try:
+    import modules.logging_manager
+    import modules.network_manager
+    import modules.real_time_config
+    import modules.config_manager
+    import modules.mqtt_handler
+    print("Todos los módulos se importaron correctamente.")
+except ImportError as e:
+    print(f"Error de importación: {e}")
+
+
 def on_message_received(client, userdata, msg):
     """
     Callback para procesar mensajes recibidos.

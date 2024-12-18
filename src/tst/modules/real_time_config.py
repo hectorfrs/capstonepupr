@@ -9,20 +9,23 @@ import time
 from threading import Thread
 from modules.logging_manager import setup_logger
 from modules.config_manager import ConfigManager
+from modules.mqtt_handler import MQTTHandler
 
 class RealTimeConfigManager:
     """
     Clase para gestionar y monitorear cambios en el archivo de configuración.
     """
 
-    def __init__(self, config_manager, reload_interval=5):
+    def __init__(self, config_manager: ConfigManager, mqtt_handler: MQTTHandler = None, reload_interval=5):
         """
         Inicializa el gestor de configuración.
 
-        :param config_manager: Instancia de ConfigManager para manejar configuraciones.
+        :param config_manager: Instancia de ConfigManager para manejar configuraciones centralizadas.
+        :param mqtt_handler: Instancia opcional de MQTTHandler para publicar cambios.
         :param reload_interval: Intervalo en segundos para verificar cambios en el archivo.
         """
         self.config_manager = config_manager
+        self.mqtt_handler = mqtt_handler
         self.config_path = config_manager.config_path
         self.reload_interval = reload_interval
         self.last_modified_time = None
@@ -61,6 +64,13 @@ class RealTimeConfigManager:
                 yaml.safe_dump(self.config_data, file)
             self.last_modified_time = os.path.getmtime(self.config_path)
             self.logger.info("Configuración guardada con éxito.")
+
+            # Publicar cambios mediante MQTT si está habilitado
+            if self.mqtt_handler and self.mqtt_handler.is_connected():
+                self.mqtt_handler.publish("config/updates", {
+                    "message": "Configuración actualizada",
+                    "timestamp": time.time()
+                })
         except Exception as e:
             self.logger.error(f"Error guardando configuración: {e}")
 
