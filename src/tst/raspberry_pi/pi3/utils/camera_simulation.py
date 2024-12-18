@@ -9,7 +9,7 @@ import json
 import logging
 import uuid
 from datetime import datetime
-from utils.mqtt_handler import MQTTHandler
+from modules.mqtt_handler import MQTTHandler
 from utils.waste_type import WasteTypeDetector
 
 # Configuración del logging
