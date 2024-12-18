@@ -69,6 +69,7 @@ def main():
 
         # Configurar logger global
         global logger
+        logging_manager = LoggingManager(config_manager)
         logger = setup_logger("[MAIN PI2]", config_manager.get("logging", {}))
 
         logger.info("=" * 70)
