@@ -11,7 +11,7 @@ setup(
     description="Sistema modular para Raspberry Pi con soporte para AWS IoT y sensores espectroscópicos.",
     author="Héctor F. Rivera Santiago",
     author_email="hector.rivera@example.com",
-    url="https://github.com/tu_proyecto/smart_recycling_bin",
+    url="https://github.com/hectorfrs/smart_recycling_bin",
     packages=find_packages(),
     include_package_data=True,
     install_requires=[

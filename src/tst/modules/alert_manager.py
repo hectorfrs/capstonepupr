@@ -5,7 +5,7 @@ import os
 from datetime import datetime
 from dataclasses import dataclass, field
 from typing import Any, Dict
-from utils.mqtt_publisher import MQTTPublisher
+from mqtt_handler import MQTTHandler
 
 # Configurar el formato del logger
 logging.basicConfig(
