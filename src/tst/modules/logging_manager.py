@@ -6,19 +6,29 @@
 import logging
 from logging.handlers import RotatingFileHandler
 import os
+from modules.mqtt_handler import MQTTHandler
 
 class LoggingManager:
     """
     Clase para configurar loggers centralizados y rotativos para diferentes módulos del sistema.
     """
 
-    @staticmethod
-    def setup_logger(module_name, config):
+    def __init__(self, config_manager, mqtt_handler=None):
+        """
+        Inicializa el manejador de logging con configuraciones centralizadas.
+
+        :param config_manager: Instancia de ConfigManager para manejar configuraciones dinámicas.
+        :param mqtt_handler: Instancia opcional de MQTTHandler para transmitir logs.
+        """
+        self.config_manager = config_manager
+        self.mqtt_handler = mqtt_handler
+        self.logger = None
+
+    def setup_logger(self, module_name):
         """
         Configura y devuelve un logger para un módulo específico.
 
         :param module_name: Nombre del módulo (__name__).
-        :param config: Configuración para el logger global.
         :return: Instancia de logger configurado.
         """
         logger = logging.getLogger(module_name)
@@ -27,7 +37,7 @@ class LoggingManager:
         if logger.hasHandlers():
             return logger
 
-        enable_debug = config.get('enable_debug', False)
+        enable_debug = self.config_manager.get('logging.enable_debug', False)
         logger.setLevel(logging.DEBUG if enable_debug else logging.INFO)
 
         # Formato del log
@@ -36,12 +46,12 @@ class LoggingManager:
         formatter = logging.Formatter(fmt=log_format, datefmt=date_format)
 
         # Configurar archivo de log rotativo
-        log_file = os.path.expanduser(config.get('log_file', 'logs/app.log'))
+        log_file = os.path.expanduser(self.config_manager.get('logging.log_file', 'logs/app.log'))
         log_dir = os.path.dirname(log_file)
         os.makedirs(log_dir, exist_ok=True)
 
-        max_log_size = config.get('max_size_mb', 5) * 1024 * 1024
-        backup_count = config.get('backup_count', 3)
+        max_log_size = self.config_manager.get('logging.max_size_mb', 5) * 1024 * 1024
+        backup_count = self.config_manager.get('logging.backup_count', 3)
 
         file_handler = RotatingFileHandler(log_file, maxBytes=max_log_size, backupCount=backup_count)
         file_handler.setFormatter(formatter)
@@ -53,10 +63,24 @@ class LoggingManager:
         logger.addHandler(console_handler)
 
         # Configurar archivo para errores
-        error_log_file = os.path.expanduser(config.get('error_log_file', 'logs/error.log'))
+        error_log_file = os.path.expanduser(self.config_manager.get('logging.error_log_file', 'logs/error.log'))
         error_handler = logging.FileHandler(error_log_file)
         error_handler.setLevel(logging.ERROR)
         error_handler.setFormatter(formatter)
         logger.addHandler(error_handler)
 
+        self.logger = logger
         return logger
+
+    def publish_log(self, log_data):
+        """
+        Publica logs importantes a través de MQTT si está habilitado.
+
+        :param log_data: Diccionario con información del log.
+        """
+        if self.mqtt_handler and self.mqtt_handler.is_connected():
+            try:
+                self.mqtt_handler.publish("logs/important", log_data)
+                self.logger.info("Log importante transmitido vía MQTT.")
+            except Exception as e:
+                self.logger.error(f"Error transmitiendo log vía MQTT: {e}")
