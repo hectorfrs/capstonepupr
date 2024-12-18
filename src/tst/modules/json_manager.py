@@ -3,29 +3,29 @@
 # Copyright (c) 2024
 # Proyecto: Smart Recycling Bin
 
-import json
 import os
+import json
 from datetime import datetime
 import uuid
-from modules.logging_manager import LoggingManager
-from modules.config_manager import ConfigManager
-from modules.mqtt_handler import MQTTHandler
 
 class JSONManager:
     """
     Clase para manejar operaciones relacionadas con datos JSON.
     """
 
-    def __init__(self, config_manager: ConfigManager, mqtt_handler: MQTTHandler = None):
+    def __init__(self, config_manager, mqtt_handler=None):
         """
         Inicializa el JSONManager con configuraciones centralizadas.
 
         :param config_manager: Instancia de ConfigManager para manejar configuraciones.
         :param mqtt_handler: Instancia opcional de MQTTHandler para transmitir datos JSON.
         """
+        from modules.logging_manager import LoggingManager
+
         self.config_manager = config_manager
         self.mqtt_handler = mqtt_handler
-        self.logger = setup_logger("[JSON_MANAGER]", config_manager.get("logging", {}))
+        self.enable_logging = self.config_manager.get("system.enable_json_logging", True)
+        self.logger = LoggingManager(config_manager).setup_logger("[JSON_MANAGER]")
 
     def generate_json(self, sensor_id, channel, spectral_data, detected_material, confidence):
         """
@@ -38,6 +38,10 @@ class JSONManager:
         :param confidence: Nivel de confianza en la clasificación.
         :return: Diccionario JSON con un ID único.
         """
+        if not self.enable_logging:
+            self.logger.warning("El registro de datos JSON está deshabilitado.")
+            return None
+
         self.logger.info("Generando JSON con los datos de medición.")
         return {
             "id": str(uuid.uuid4()),
@@ -56,6 +60,10 @@ class JSONManager:
         :param data: Objeto JSON a guardar.
         :param file_path_key: Clave en la configuración para obtener la ruta del archivo.
         """
+        if not self.enable_logging:
+            self.logger.warning("El registro de datos JSON está deshabilitado. Guardado omitido.")
+            return
+
         try:
             file_path = self.config_manager.get(file_path_key, "logs/data.json")
             os.makedirs(os.path.dirname(file_path), exist_ok=True)  # Crear el directorio si no existe
@@ -78,6 +86,10 @@ class JSONManager:
         :param file_path_key: Clave en la configuración para obtener la ruta del archivo.
         :return: Lista de objetos JSON.
         """
+        if not self.enable_logging:
+            self.logger.warning("El registro de datos JSON está deshabilitado. Carga omitida.")
+            return []
+
         try:
             file_path = self.config_manager.get(file_path_key, "logs/data.json")
 
@@ -98,6 +110,10 @@ class JSONManager:
 
         :param file_path_key: Clave en la configuración para obtener la ruta del archivo.
         """
+        if not self.enable_logging:
+            self.logger.warning("El registro de datos JSON está deshabilitado. Limpieza omitida.")
+            return
+
         try:
             file_path = self.config_manager.get(file_path_key, "logs/data.json")
 
