@@ -35,20 +35,20 @@ def on_message_received(client, userdata, msg):
         logger.info(f"[MQTT] Mensaje recibido en '{msg.topic}': {raw_payload}")
 
         if not raw_payload.strip():
-            logger.warning("[MAIN] Mensaje recibido está vacío.")
+            logger.warning("[PI-1] Mensaje recibido está vacío.")
             return
 
         try:
             payload = json.loads(raw_payload)
-            logger.info(f"[MAIN] Mensaje recibido | Tópico: {msg.topic} | Payload: {payload}")
+            logger.info(f"[PI-1] Mensaje recibido | Tópico: {msg.topic} | Payload: {payload}")
         except json.JSONDecodeError as e:
-            logger.error(f"[MAIN] Error decodificando JSON: {e}")
+            logger.error(f"[PI-1] Error decodificando JSON: {e}")
             return
 
         detection_id = payload.get("id", "N/A")
         material = payload.get("material", "Unknown")
 
-        logger.info(f"[MAIN] Mensaje recibido | ID: {detection_id} | Material: {material}")
+        logger.info(f"[PI-1] Mensaje recibido | ID: {detection_id} | Material: {material}")
 
         if material in ["PET", "HDPE"]:
             action_time = round(random.uniform(1, 5), 2)
@@ -59,12 +59,12 @@ def on_message_received(client, userdata, msg):
             }
 
             mqtt_handler.publish("valvula/accion", json.dumps(action_payload))
-            logger.info(f"[MAIN] Acción enviada | ID: {detection_id} | Tipo: {material} | Tiempo: {action_time}s")
+            logger.info(f"[PI-1] Acción enviada | ID: {detection_id} | Tipo: {material} | Tiempo: {action_time}s")
         else:
-            logger.info(f"[MAIN] Material '{material}' ignorado | ID: {detection_id}")
+            logger.info(f"[PI-1] Material '{material}' ignorado | ID: {detection_id}")
 
     except Exception as e:
-        logger.error(f"[MAIN] Error procesando mensaje: {e}")
+        logger.error(f"[PI-1] Error procesando mensaje: {e}")
 
 def main():
     try:
@@ -76,14 +76,14 @@ def main():
             config_manager = ConfigManager(config_path)
             logging_manager = LoggingManager(config_manager)
         except Exception as e:
-            logger.error(f"[MAIN] Error inicializando ConfigManager: {e}")
+            logger.error(f"[PI-1] Error inicializando ConfigManager: {e}")
             raise
         
         # Inicializar logger básico para respaldo en caso de fallos
         #logger = LoggingManager.setup_logger("[MAIN PI1]", config_manager.get("logging", {}))
-        logger = logging_manager.setup_logger("[MAIN]", config_manager.get("logging", {}))
+        logger = logging_manager.setup_logger("[MAIN PI-1]")
         logger.info("=" * 70)
-        logger.info("[MAIN] Iniciando sistema de detección de materiales en Raspberry Pi 1")
+        logger.info("[PI-1] Iniciando sistema de detección de materiales en Raspberry Pi 1")
         logger.info("=" * 70)
 
         # Cargar configuración dinámica
@@ -92,12 +92,12 @@ def main():
         config = real_time_config.get_config()
 
         # Configuración de red
-        logger.info("[MAIN] [NET] Iniciando monitoreo de red...")
+        logger.info("[PI-1] [NET] Iniciando monitoreo de red...")
         network_manager = NetworkManager(config)
         network_manager.start_monitoring()
 
         # Configurar MQTT
-        logger.info("[MAIN] [MQTT] Configurando cliente MQTT...")
+        logger.info("[PI-1] [MQTT] Configurando cliente MQTT...")
         global mqtt_handler
         mqtt_config = config.get("mqtt", {})
         mqtt_handler = MQTTHandler(mqtt_config)
@@ -106,21 +106,21 @@ def main():
         mqtt_handler.connect()
         mqtt_handler.subscribe("material/entrada")
 
-        logger.info("[MAIN] Esperando señales MQTT de Raspberry-3...")
+        logger.info("[PI-1] Esperando señales MQTT de Raspberry-3...")
         mqtt_handler.forever_loop()
 
     except KeyboardInterrupt:
-        logger.info("[MAIN] Apagando Monitoreo del Network...")
+        logger.info("[PI-1] Apagando Monitoreo del Network...")
         network_manager.stop_monitoring()
-        logger.info("[MAIN] Sistema apagado correctamente.")
+        logger.info("[PI-1] Sistema apagado correctamente.")
     except Exception as e:
-        logger.error(f"[MAIN] Error crítico en la ejecución: {e}")
+        logger.error(f"[PI-1] Error crítico en la ejecución: {e}")
     finally:
-        logger.info("[MAIN] Finalizando ejecución del script.")
+        logger.info("[PI-1] Finalizando ejecución del script.")
         if 'mqtt_handler' in globals() and mqtt_handler.is_connected():
-            logger.info("[MAIN] Desconectando cliente MQTT...")
+            logger.info("[PI-1] Desconectando cliente MQTT...")
             mqtt_handler.disconnect()
-            logger.info("[MAIN] Cliente MQTT desconectado.")
+            logger.info("[PI-1] Cliente MQTT desconectado.")
 
 if __name__ == "__main__":
     main()

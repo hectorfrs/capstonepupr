@@ -6,7 +6,7 @@
 import time
 import json
 import random
-from modules.logging_manager import setup_logger
+from modules.logging_manager import LoggingManager
 from modules.network_manager import NetworkManager
 from modules.real_time_config import RealTimeConfigManager
 from modules.config_manager import ConfigManager
@@ -70,7 +70,7 @@ def main():
         # Configurar logger global
         global logger
         logging_manager = LoggingManager(config_manager)
-        logger = logging_manager.setup_logger("[MAIN PI2]", config_manager.get("logging", {}))
+        logger = logging_manager.setup_logger("[MAIN PI2]")
 
         logger.info("=" * 70)
         logger.info("[PI2] Iniciando sistema de control de Relay en Raspberry Pi 2")
