@@ -6,7 +6,6 @@
 import paho.mqtt.client as mqtt
 import uuid
 import boto3
-from modules.logging_manager import LoggingManager
 from modules.config_manager import ConfigManager
 
 class MQTTHandler:
@@ -21,14 +20,15 @@ class MQTTHandler:
 
         :param config_manager: Instancia de ConfigManager para manejar configuraciones centralizadas.
         """
+        from modules.logging_manager import LoggingManager
+        
         self.config_manager = config_manager
         self.config = self.config_manager.get("mqtt", {})
         self.enable_mqtt = self.config_manager.get("mqtt.enable_mqtt", True)
         self.enable_aws = self.config_manager.get("mqtt.enable_aws", False)
 
         # Configurar logger centralizado
-        self.logger = setup_logger("[MQTT_HANDLER]", self.config_manager.get("logging", {}))
-
+        self.logger = LoggingManager.setup_logger("[MQTT_HANDLER]", self.config_manager.get("logging", {}))
         # Configuración local MQTT
         if self.enable_mqtt:
             self.broker = self.config.get("broker_addresses", ["localhost"])[0]
