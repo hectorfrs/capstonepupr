@@ -1,4 +1,19 @@
+system:
+  enable_camera: false
+  enable_sensors: true
+  enable_logging: true
+  enable_greengrass: true
+  enable_aws: true
+  enable_mqtt: true
+  enable_network_monitoring: true
+  enable_relay_controller: true
+  enable_alert_manager: true
+  enable_debug: false
+  enable_json_logging: true
+
 network:
+  ping_host: "8.8.8.8"
+  check_interval: 10
   ethernet:
     interface: "eth0" 
     ip: "192.168.1.147"           # Dirección IP estática para Ethernet
@@ -11,6 +26,9 @@ network:
     gateway: "192.168.2.1"        # Puerta de enlace para Wi-Fi
 
 mqtt:
+  enable_mqtt: true
+  enable_aws: false
+  auto_reconnect: true
   broker_addresses: "localhost"
   port: 1883                                  # Puerto para el broker MQTT local
   client_id: "RaspberryPi-3"
@@ -20,6 +38,7 @@ mqtt:
     detection: "material/deteccion"
     action: "valvula/accion"
     status: "valvula/estado"
+    alertas: "raspberry-3/alertas"
 
 i2c:
   bus: 1
@@ -49,4 +68,11 @@ logging:
   log_file: "/home/raspberry-3/logs/pi3_logs.log"               # Archivo de logs para registrar las operaciones
   error_log_file: "/home/raspberry-3/logs/pi3_error_logs.log"   # Logs de errores
   max_size_mb: 5                                                # Tamaño máximo del archivo de logs en MB
-  backup_count: 5                                               # Número de archivos de logs de respaldo
+  backup_count: 5 
+  alert_log_file: "logs/alerts.json"
+  rotate_alert_logs: true
+  enable_debug: false       
+
+greengrass:
+  enable_greengrass: true
+  region: "us-east-1"                                       # Número de archivos de logs de respaldo

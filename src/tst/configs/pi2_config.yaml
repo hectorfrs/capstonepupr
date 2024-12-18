@@ -1,4 +1,36 @@
+system:
+  enable_camera: false
+  enable_sensors: true
+  enable_logging: true
+  enable_greengrass: true
+  enable_aws: true
+  enable_mqtt: true
+  enable_network_monitoring: true
+  enable_relay_controller: true
+  enable_alert_manager: true
+  enable_debug: false
+  enable_json_logging: true
+  conveyor_speed: 300  # Velocidad del conveyor en pulgadas/segundo
+
+# 16 pulgadas/seg (40 cm/seg) en ajustes más lentos.
+# 120 pulgadas/seg (300 cm/seg) en ajustes más rápidos.
+
+delays:
+  camera_to_sensor: 12  # Distancia entre la cámara y los sensores en pulgadas
+  sensor_to_valve_1: 21  # Distancia entre los sensores y la válvula 1 en pulgadas
+  sensor_to_valve_2: 27  # Distancia entre los sensores y la válvula 2 en pulgadas
+
+relays:
+  - mux_channel: 0       # Canal del MUX para el relé 1
+    i2c_address: 0x18    # Dirección I2C del relé 1
+    assigned_valve: "Valve 1 (PET)"
+  - mux_channel: 1       # Canal del MUX para el relé 2
+    i2c_address: 0x18    # Dirección I2C del relé 2
+    assigned_valve: "Valve 2 (HDPE)"
+  
 network:
+  ping_host: "8.8.8.8"
+  check_interval: 10
   ethernet:
     interface: "eth0"             # Interfaz de red Ethernet
     ip: "192.168.1.137"           # Dirección IP estática para Ethernet
@@ -11,6 +43,9 @@ network:
     gateway: "192.168.2.1"        # Puerta de enlace para Wi-Fi
 
 mqtt:
+  enable_mqtt: true
+  enable_aws: false
+  auto_reconnect: true
   broker_addresses:
     - "192.168.1.147"             # Dirección IP del broker MQTT (Ethernet, Raspberry Pi #3)
     - "192.168.2.147"             # Dirección IP del broker MQTT (Wi-Fi, Raspberry Pi #3)
@@ -20,6 +55,7 @@ mqtt:
   topics:
     action: "valvula/accion"
     status: "valvula/estado"
+    alertas: "raspberry-2/alertas"
 
 i2c:
   bus: 1
@@ -40,8 +76,15 @@ logging:
   error_log_file: "/home/raspberry-2/logs/pi2_error_logs.log"   # Logs de errores
   max_size_mb: 5                                                # Tamaño máximo del archivo de logs en MB
   backup_count: 5                                               # Número de archivos de logs de respaldo
+  alert_log_file: "logs/alerts.json"
+  rotate_alert_logs: true
+  enable_debug: false
 
 mux:
   relays:
     - {mux_channel: 0, i2c_address: 0x18}  # Relay 1 (PET)
     - {mux_channel: 1, i2c_address: 0x18}  # Relay 2 (HDPE)
+
+greengrass:
+  enable_greengrass: true
+  region: "us-east-1"
