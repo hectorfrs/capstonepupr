@@ -3,54 +3,55 @@
 # Copyright (c) 2024
 # Proyecto: Smart Recycling Bin
 
+import os
 import json
 from datetime import datetime
-import os
-from modules.logging_manager import LoggingManager
-from modules.config_manager import ConfigManager
 
 class JSONLogger:
     """
     Clase para manejar el registro de datos en formato JSON.
     """
-    def __init__(self, config_manager, enable_logging=True):
+
+    def __init__(self, config_manager):
         """
-        Inicializa el JSONLogger con la configuración proporcionada.
+        Inicializa el JSONLogger con configuraciones centralizadas.
 
         :param config_manager: Instancia de ConfigManager para manejar configuraciones.
-        :param enable_logging: Habilita o deshabilita el registro de datos.
         """
+        from modules.logging_manager import LoggingManager
+
         self.config_manager = config_manager
-        self.enable_logging = enable_logging
+        self.logger = LoggingManager(config_manager).setup_logger("[JSON_LOGGER]")
 
-        # Configurar logger centralizado
-        self.logger = setup_logger("[JSON_LOGGER]", self.config_manager.get("logging", {}))
-
-    def log_detection(self, data):
+    def log_data(self, data, file_key="logging.json_file"):
         """
-        Registra datos en un archivo JSON, agregando un timestamp y un ID único.
+        Registra datos en un archivo JSON con una estructura definida.
 
         :param data: Diccionario con los datos a registrar.
+        :param file_key: Clave en la configuración para determinar la ruta del archivo de log.
         """
-        if not self.enable_logging:
-            self.logger.warning("El registro de datos JSON está deshabilitado.")
-            return
-
         try:
-            # Obtener la ruta del archivo de log desde la configuración
-            file_path = self.config_manager.get("logging.log_file", "logs/default_log.json")
-
-            # Agregar timestamp e ID único al registro
-            data["timestamp"] = datetime.now().isoformat()
-            data["id"] = data.get("id", str(uuid.uuid4()))
-
-            # Crear el directorio si no existe
+            file_path = self.config_manager.get(file_key, "logs/data.json")
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
-            # Escribir datos en el archivo JSON
-            with open(file_path, "a") as f:
-                f.write(json.dumps(data) + "\n")
+            with open(file_path, "a") as json_file:
+                json.dump(data, json_file)
+                json_file.write("\n")
 
-            self.logger.info(f"Datos guardados en {file_path}: {data}")
+            self.logger.info(f"Datos registrados exitosamente en {file_path}.")
         except Exception as e:
             self.logger.error(f"Error registrando datos en JSON: {e}")
+
+    def log_event(self, event, metadata=None):
+        """
+        Registra un evento con metadatos en el archivo de log JSON.
+
+        :param event: Nombre o tipo de evento.
+        :param metadata: Diccionario con información adicional del evento.
+        """
+        log_entry = {
+            "timestamp": datetime.now().isoformat(),
+            "event": event,
+            "metadata": metadata or {}
+        }
+        self.log_data(log_entry)
