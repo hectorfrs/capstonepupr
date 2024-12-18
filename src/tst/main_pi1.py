@@ -11,10 +11,11 @@ import yaml
 import os
 import random  # Importar random
 import paho.mqtt.client as mqtt
-from utils.network_manager import NetworkManager
-from utils.real_time_config import RealTimeConfigManager
-from utils.config_manager import ConfigManager
-from utils.mqtt_handler import MQTTHandler
+from modules.network_manager import NetworkManager
+from modules.real_time_config import RealTimeConfigManager
+from modules.config_manager import ConfigManager
+from modules.mqtt_handler import MQTTHandler
+from modules.logging_manager import setup_logger
 
 # Función para manejar mensajes recibidos desde material/entrada
 def on_message(client, userdata, msg):
@@ -91,7 +92,14 @@ def on_message_received(client, userdata, msg):
 # Función principal
 def main():
     try:
-        logging.basicConfig(level=logging.DEBUG, format='[%(asctime)s] [%(levelname)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+        # Cargar configuración desde el archivo YAML
+        config_path = ConfigManager("/home/raspberry-1/capstonepupr/src/tst/config/p1_config.yaml").config
+        config_manager = RealTimeConfigManager(config_path)
+        config_manager.start_monitoring()
+        config = config_manager.get_config()
+
+        # Inicializar el logger global
+        logger = setup_logger(["MAIN PI1"], config.get("logging", {}))
 
         # Configuración
         logging.info("=" * 70)
@@ -99,7 +107,7 @@ def main():
         logging.info("=" * 70)
 
         # Cargar configuración
-        config_path = "/home/raspberry-1/capstonepupr/src/tst/pi1/config/config.yaml"
+        
         config_manager = RealTimeConfigManager(config_path)
         config_manager.start_monitoring()
         config = config_manager.get_config()
