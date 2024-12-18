@@ -18,7 +18,7 @@ from .network_manager import NetworkManager
 from .config_manager import ConfigManager
 from .real_time_config import RealTimeConfigManager
 from .alert_manager import AlertManager
-from .logging_manager import setup_logger
+from .logging_manager import LoggingManager
 from .greengrass import GreengrassManager
 from .json_manager import generate_json, save_json, load_json, clean_json
 
