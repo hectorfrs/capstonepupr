@@ -21,7 +21,7 @@ class ConfigManager:
         """
         self.config_path = config_path
         self.config = {}
-
+        enable_debug = self.config_manager.get('logging.enable_debug', False)
         # Configurar logger centralizado
         self.logger = LoggingManager.setup_logger("[CONFIG_MANAGER]", {})
 
