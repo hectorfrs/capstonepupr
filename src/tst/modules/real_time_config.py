@@ -1,4 +1,4 @@
-#real_time_config.py - Clase para gestionar y monitorear cambios en el archivo de configuración.
+# real_time_config.py - Clase para gestionar y monitorear cambios en el archivo de configuración.
 # Desarrollado por Héctor F. Rivera Santiago
 # Copyright (c) 2024
 # Proyecto: Smart Recycling Bin
@@ -6,26 +6,33 @@
 import yaml
 import os
 import time
-import logging
 from threading import Thread
-
+from modules.logging_manager import setup_logger  # Importa el logger centralizado
 
 class RealTimeConfigManager:
     """
     Clase para gestionar y monitorear cambios en el archivo de configuración.
     """
-    def __init__(self, config_path, reload_interval=5):
+
+    def __init__(self, config_path, reload_interval=5, logger_config=None):
         """
         Inicializa el gestor de configuración.
 
         :param config_path: Ruta al archivo de configuración YAML.
         :param reload_interval: Intervalo en segundos para verificar cambios en el archivo.
+        :param logger_config: Configuración del logger.
         """
+        if not isinstance(config_path, str):
+            raise ValueError("config_path debe ser una cadena con la ruta del archivo de configuración.")
+
         self.config_path = config_path
         self.reload_interval = reload_interval
         self.last_modified_time = None
         self.config_data = {}
         self._stop_monitoring = False
+
+        # Configurar logger específico para RealTimeConfig
+        self.logger = setup_logger("[REALTIME]", logger_config or {})
 
         # Cargar configuración inicial
         self.load_config()
@@ -39,14 +46,13 @@ class RealTimeConfigManager:
                 with open(self.config_path, "r") as file:
                     self.config_data = yaml.safe_load(file)
                     self.last_modified_time = os.path.getmtime(self.config_path)
-                    logging.info("[REALTIME] [CONFIG] Configuración cargada con éxito.")
-                    if "log_file" not in self.config_data.get("logging", {}):
-                        logging.warning("[REALTIME] [CONFIG] Clave 'log_file' no encontrada. Usando valor predeterminado.")
-                        self.config_data["logging"]["log_file"] = "/home/raspberry-1/logs/default.log"
+                    self.logger.info("Configuración cargada con éxito.")
             else:
-                logging.error(f"[REALTIME] [CONFIG] El archivo de configuración no existe: {self.config_path}")
+                self.logger.error(f"El archivo de configuración no existe: {self.config_path}")
+        except yaml.YAMLError as e:
+            self.logger.error(f"Error al leer el archivo YAML: {e}")
         except Exception as e:
-            logging.error(f"[REALTIME] [CONFIG] Error cargando configuración: {e}")
+            self.logger.error(f"Error cargando configuración: {e}")
 
     def save_config(self):
         """
@@ -56,9 +62,9 @@ class RealTimeConfigManager:
             with open(self.config_path, 'w') as file:
                 yaml.safe_dump(self.config_data, file)
             self.last_modified_time = os.path.getmtime(self.config_path)
-            logging.info("[REALTIME] [CONFIG] Configuración guardada con éxito.")
+            self.logger.info("Configuración guardada con éxito.")
         except Exception as e:
-            logging.error(f"[REALTIME] [CONFIG] Error guardando configuración: {e}")
+            self.logger.error(f"Error guardando configuración: {e}")
 
     def delete_key(self, section, key):
         """
@@ -70,23 +76,26 @@ class RealTimeConfigManager:
         if section in self.config_data and key in self.config_data[section]:
             del self.config_data[section][key]
             self.save_config()
-            logging.info(f"[REALTIME] [CONFIG] Clave {key} eliminada de la sección {section}.")
+            self.logger.info(f"Clave {key} eliminada de la sección {section}.")
         else:
-            logging.warning(f"[REALTIME] [CONFIG] No se encontró la clave {key} en la sección {section}.")
+            self.logger.warning(f"No se encontró la clave {key} en la sección {section}.")
 
     def monitor_config(self):
         """
         Monitorea el archivo de configuración y recarga cambios si es necesario.
         """
-        logging.info("[REALTIME] [CONFIG] Iniciando monitoreo del archivo de configuración.")
+        self.logger.info("Iniciando monitoreo del archivo de configuración.")
         while not self._stop_monitoring:
             try:
-                current_modified_time = os.path.getmtime(self.config_path)
-                if current_modified_time != self.last_modified_time:
-                    logging.info("[REALTIME] [CONFIG] Cambio detectado en el archivo de configuración. Recargando...")
-                    self.load_config()
+                if os.path.exists(self.config_path):
+                    current_modified_time = os.path.getmtime(self.config_path)
+                    if current_modified_time != self.last_modified_time:
+                        self.logger.info("Cambio detectado en el archivo de configuración. Recargando...")
+                        self.load_config()
+                else:
+                    self.logger.error(f"El archivo de configuración no existe: {self.config_path}")
             except Exception as e:
-                logging.error(f"[REALTIME] [CONFIG] Error monitoreando configuración: {e}")
+                self.logger.error(f"Error monitoreando configuración: {e}")
             time.sleep(self.reload_interval)
 
     def get_config(self):
@@ -108,10 +117,10 @@ class RealTimeConfigManager:
         Detiene el monitoreo del archivo de configuración.
         """
         self._stop_monitoring = True
-        if self.monitor_thread.is_alive():
+        if hasattr(self, 'monitor_thread') and self.monitor_thread.is_alive():
             self.monitor_thread.join()
-        logging.info("[REALTIME] [CONFIG] Monitoreo del archivo de configuración detenido.")
-    
+        self.logger.info("Monitoreo del archivo de configuración detenido.")
+
     def set_value(self, section, key, value):
         """
         Actualiza un valor en la configuración y guarda el archivo YAML.
@@ -124,7 +133,3 @@ class RealTimeConfigManager:
             self.config_data[section] = {}
         self.config_data[section][key] = value
         self.save_config()
-
-    
-
-
