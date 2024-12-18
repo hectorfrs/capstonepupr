@@ -74,14 +74,14 @@ def main():
         try:
             #enable_debug = self.config_manager.get('logging.enable_debug', False)
             config_manager = ConfigManager(config_path)
-            config = config_manager.get_config()
+            logging_manager = LoggingManager(config_manager)
         except Exception as e:
             logger.error(f"[MAIN] Error inicializando ConfigManager: {e}")
             raise
         
         # Inicializar logger básico para respaldo en caso de fallos
         #logger = LoggingManager.setup_logger("[MAIN PI1]", config_manager.get("logging", {}))
-        logger = setup_logger("[MAIN]", config={})
+        logger = logging_manager.setup_logger("[MAIN]", config={})
         logger.info("=" * 70)
         logger.info("[MAIN] Iniciando sistema de detección de materiales en Raspberry Pi 1")
         logger.info("=" * 70)

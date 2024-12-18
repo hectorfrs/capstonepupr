@@ -6,7 +6,7 @@
 import time
 import json
 import random
-from modules.logging_manager import setup_logger
+from modules.logging_manager import LoggingManager
 from modules.network_manager import NetworkManager
 from modules.real_time_config import RealTimeConfigManager
 from modules.config_manager import ConfigManager
@@ -49,7 +49,7 @@ def main():
 
         # Configurar logger global
         global logger
-        logger = setup_logger("[MAIN PI3]", config_manager.get("logging", {}))
+        logger = logging_manager.setup_logger("[MAIN PI3]", config_manager.get("logging", {}))
 
         logger.info("=" * 70)
         logger.info("[MAIN] Iniciando sistema de simulación en Raspberry Pi 3")

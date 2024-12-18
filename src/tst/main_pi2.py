@@ -70,7 +70,7 @@ def main():
         # Configurar logger global
         global logger
         logging_manager = LoggingManager(config_manager)
-        logger = setup_logger("[MAIN PI2]", config_manager.get("logging", {}))
+        logger = logging_manager.setup_logger("[MAIN PI2]", config_manager.get("logging", {}))
 
         logger.info("=" * 70)
         logger.info("[PI2] Iniciando sistema de control de Relay en Raspberry Pi 2")
