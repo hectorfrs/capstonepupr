@@ -11,7 +11,7 @@ from modules.network_manager import NetworkManager
 from modules.real_time_config import RealTimeConfigManager
 from modules.config_manager import ConfigManager
 from modules.mqtt_handler import MQTTHandler
-from modules.weight_sensor import WeightSensor
+#from modules.weight_sensor import WeightSensor
 from modules.simulation import simulate_camera_detection
 
 def on_message_received(client, userdata, msg):
