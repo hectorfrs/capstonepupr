@@ -72,7 +72,7 @@ def main():
     try:
         # Cargar configuración
         logging.basicConfig(level=logging.INFO, format='[%(asctime)s] [%(levelname)s] %(message)s' , datefmt='%Y-%m-%d %H:%M:%S')
-        config_path = "/home/raspberry-2/capstonepupr/src/pi2/config/config.yaml"
+        config_path = "/home/raspberry-2/capstonepupr/src/tst/pi2/config/config.yaml"
 
         # Configuración de BucketLogger
         bucket_logger = logging.getLogger("BucketLogger")

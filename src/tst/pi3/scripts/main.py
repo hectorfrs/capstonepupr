@@ -26,7 +26,7 @@ def main():
         logging.info("=" * 70)
 
         # Cargar configuración
-        config_path = "/home/raspberry-3/capstonepupr/src/pi3/config/config.yaml"
+        config_path = "/home/raspberry-3/capstonepupr/src/tst/pi3/config/config.yaml"
         config_manager = RealTimeConfigManager(config_path)
         config_manager.start_monitoring()
         config = config_manager.get_config()
