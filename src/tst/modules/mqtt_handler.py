@@ -4,6 +4,7 @@
 # Proyecto: Smart Recycling Bin
 
 import paho.mqtt.client as mqtt
+import uuid
 from modules.logging_manager import setup_logger
 
 class MQTTHandler:
@@ -77,19 +78,23 @@ class MQTTHandler:
 
     def publish(self, topic, message):
         """
-        Publica un mensaje en un tópico MQTT.
+        Publica un mensaje en un tópico MQTT, agregando un ID único para trazabilidad.
 
         :param topic: Tópico al que se publicará el mensaje.
-        :param message: Mensaje a publicar.
+        :param message: Mensaje a publicar (en formato JSON).
         """
         if not self.enable_mqtt:
             self.logger.warning("MQTT está deshabilitado. Publicación omitida.")
             return
 
         try:
-            result = self.client.publish(topic, message)
+            # Agregar ID único al mensaje
+            message_with_id = message.copy() if isinstance(message, dict) else {"message": message}
+            message_with_id["id"] = str(uuid.uuid4())
+
+            result = self.client.publish(topic, str(message_with_id))
             if result.rc == mqtt.MQTT_ERR_SUCCESS:
-                self.logger.info(f"[MQTT] Mensaje publicado en {topic}: {message}")
+                self.logger.info(f"[MQTT] Mensaje publicado en {topic}: {message_with_id}")
             else:
                 self.logger.error(f"[MQTT] Error al publicar mensaje en {topic}: Código {result.rc}")
         except Exception as e:
