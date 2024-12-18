@@ -3,6 +3,9 @@
 # Copyright (c) 2024
 # Proyecto: Smart Recycling Bin
 
+import sys
+import logging
+import os
 import time
 import json
 import random
