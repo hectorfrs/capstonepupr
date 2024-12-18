@@ -1,3 +1,6 @@
+#mqtt_handler.py es un módulo que proporciona una clase centralizada para manejar conexiones MQTT y la publicación de mensajes.
+#Se utiliza la biblioteca paho-mqtt para la comunicación MQTT y el módulo logging para registrar eventos.
+
 import paho.mqtt.client as mqtt
 import logging
 
