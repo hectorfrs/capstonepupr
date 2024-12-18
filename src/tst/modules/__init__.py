@@ -30,8 +30,6 @@ __all__ = [
     "AlertManager",
     "FunctionMonitor",
     "GreengrassManager",
-    "generate_json",
-    "save_json",
-    "load_json",
-    "clean_json"
+    "JSONManager",
+    "LoggingManager"
 ]
