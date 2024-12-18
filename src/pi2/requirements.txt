@@ -1,7 +1,0 @@
-sparkfun-qwiic
-smbus2
-paho-mqtt
-PyYAML
-sparkfun-qwiic-relay
-sparkfun-qwiic-i2c
-boto3

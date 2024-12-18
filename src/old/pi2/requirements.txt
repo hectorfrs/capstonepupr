@@ -1,0 +1,12 @@
+sparkfun-qwiic               # Librería base para sensores Qwiic
+sparkfun-qwiic-relay         # Control de relés Qwiic
+sparkfun-qwiic-i2c           # Utilidades I2C para dispositivos Qwiic
+smbus2                       # Comunicación I2C para Raspberry Pi
+paho-mqtt                    # Cliente MQTT compatible con MQTT 5.0/3.1.1
+PyYAML                         # Manejo de archivos YAML
+boto3                      # Interacción con AWS (Rekognition, IoT Core, etc.)
+watchdog                     # Monitoreo de cambios en archivos (real-time config)
+RPi.GPIO                     # Control de GPIO para Raspberry Pi
+numpy                       # Operaciones matemáticas y manejo de matrices
+matplotlib                   # Gráficos y visualización de datos
+flask                        # Servidor web para control de la aplicación

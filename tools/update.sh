@@ -1,11 +1,14 @@
 #!/bin/bash
 
 # Variables
+PI="1"
+RASPBERRY="raspberry-$PI"
+CAPSTONE="/home/$RASPBERRY/capstonepupr/src/pi$PI"
 REPO_URL="git@github.com:hectorfrs/capstonepupr.git"
-REPO_DIR="/home/raspberry-2/capstonepupr"
+REPO_DIR="/home/$RASPBERRY/capstonepupr"
 BRANCH="main"  # Cambia si necesitas un branch diferente
 LOG_FILE="/var/log/update_code.log"
-SERVICE_NAME="capstone_pi2.service"  # Nombre del servicio systemd asociado
+SERVICE_NAME="capstone_pi$PI.service"  # Nombre del servicio systemd asociado
 
 # Redirigir salida a un archivo log
 exec > >(tee -a "$LOG_FILE") 2>&1
