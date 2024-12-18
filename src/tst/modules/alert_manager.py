@@ -32,52 +32,31 @@ class AlertManager:
     """
     ALLOWED_LEVELS = {"INFO", "WARNING", "CRITICAL"}
 
-    def __init__(self, mqtt_config=None, alert_topic=None, local_log_path="~/logs/alerts.json", rotate_logs=True, logger_config=None, enable_mqtt_alerts=True, enable_local_logging=True):
+    def __init__(self, config_manager, mqtt_handler=None, local_log_path="~/logs/alerts.json", rotate_logs=True):
         """
         Inicializa el manejador de alertas.
 
-        :param mqtt_config: Configuración MQTT (broker, port, topic, etc.).
-        :param alert_topic: Tópico MQTT para enviar alertas. Si es None, se genera dinámicamente.
+        :param config_manager: Instancia de ConfigManager para manejar configuraciones dinámicas.
+        :param mqtt_handler: Instancia opcional de MQTTHandler para transmitir alertas.
         :param local_log_path: Ruta para almacenar alertas localmente.
         :param rotate_logs: Habilitar o deshabilitar la rotación de logs.
-        :param logger_config: Configuración para el logger.
-        :param enable_mqtt_alerts: Habilita o deshabilita el envío de alertas por MQTT.
-        :param enable_local_logging: Habilita o deshabilita el registro de alertas en el log local.
         """
+        self.config_manager = config_manager
+        self.mqtt_handler = mqtt_handler
+
         # Configurar logger centralizado
-        self.logger = setup_logger("[ALERT_MANAGER]", logger_config or {})
+        self.logger = LoggingManager(config_manager).setup_logger("[ALERT_MANAGER]")
 
         # Generar el tópico dinámicamente si no se proporciona
-        if alert_topic is None:
-            hostname = os.getenv("HOSTNAME", "raspberry")  # Usar variable de entorno o valor predeterminado
-            alert_topic = f"{hostname}/alerts"
-
-        self.alert_topic = alert_topic
+        self.alert_topic = self.config_manager.get("mqtt.alert_topic", "alerts/default")
         self.local_log_path = os.path.expanduser(local_log_path)
         self.rotate_logs = rotate_logs
-        self.enable_mqtt_alerts = enable_mqtt_alerts
-        self.enable_local_logging = enable_local_logging
-
-        # Configurar MQTTHandler
-        self.mqtt_handler = None
-        if mqtt_config:
-            self.mqtt_handler = MQTTHandler(mqtt_config)
-            self.mqtt_handler.connect()
 
         # Crear directorio de logs si no existe
         log_dir = os.path.dirname(self.local_log_path)
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
             self.logger.info(f"Directorio creado para logs locales de alertas: {log_dir}")
-
-        # Validar configuración inicial
-        self._validate_initial_config()
-
-    def _validate_initial_config(self):
-        if not self.alert_topic:
-            raise ValueError("El tópico MQTT para alertas no está configurado.")
-        if not self.local_log_path:
-            raise ValueError("La ruta del log local no está configurada.")
 
     def send_alert(self, level, message, metadata=None):
         """
@@ -98,11 +77,10 @@ class AlertManager:
         alert = Alert(level=level, message=message, metadata=metadata or {})
 
         # Registrar alerta en el log
-        if self.enable_local_logging:
-            self._log_alert(alert)
+        self._log_alert(alert)
 
         # Enviar alerta por MQTT si está habilitado
-        if self.enable_mqtt_alerts and self.mqtt_handler:
+        if self.mqtt_handler and self.mqtt_handler.is_connected():
             self._send_mqtt_alert(alert)
 
     def _send_mqtt_alert(self, alert):

@@ -3,10 +3,8 @@
 # Copyright (c) 2024
 # Proyecto: Smart Recycling Bin
 
-import paho.mqtt.client as mqtt
 import uuid
 import boto3
-from modules.config_manager import ConfigManager
 
 class MQTTHandler:
     """
@@ -14,21 +12,23 @@ class MQTTHandler:
     Soporta funcionalidades locales y opcionales para AWS IoT.
     """
 
-    def __init__(self, config_manager: ConfigManager):
+    def __init__(self, config_manager):
         """
         Inicializa la clase MQTTHandler con la configuración proporcionada.
 
         :param config_manager: Instancia de ConfigManager para manejar configuraciones centralizadas.
         """
         from modules.logging_manager import LoggingManager
-        
+        import paho.mqtt.client as mqtt
+
         self.config_manager = config_manager
         self.config = self.config_manager.get("mqtt", {})
         self.enable_mqtt = self.config_manager.get("mqtt.enable_mqtt", True)
         self.enable_aws = self.config_manager.get("mqtt.enable_aws", False)
 
         # Configurar logger centralizado
-        self.logger = LoggingManager.setup_logger("[MQTT_HANDLER]", self.config_manager.get("logging", {}))
+        self.logger = LoggingManager(config_manager).setup_logger("[MQTT_HANDLER]")
+
         # Configuración local MQTT
         if self.enable_mqtt:
             self.broker = self.config.get("broker_addresses", ["localhost"])[0]
@@ -74,89 +74,3 @@ class MQTTHandler:
         # Si ninguna conexión tuvo éxito
         self.logger.critical("[MQTT] No se pudo conectar a ninguno de los brokers disponibles.")
         raise ConnectionError("No se pudo conectar a ningún broker MQTT.")
-
-    def disconnect(self):
-        """
-        Desconecta del broker MQTT.
-        """
-        if not self.enable_mqtt:
-            self.logger.warning("MQTT está deshabilitado. Desconexión omitida.")
-            return
-
-        try:
-            self.client.loop_stop()
-            self.client.disconnect()
-            self.logger.info("[MQTT] Desconectado del broker exitosamente.")
-        except Exception as e:
-            self.logger.error(f"[MQTT] Error al desconectar del broker: {e}")
-
-    def is_connected(self):
-        """
-        Verifica si el cliente MQTT está conectado al broker.
-
-        :return: True si está conectado, False en caso contrario.
-        """
-        if not self.enable_mqtt:
-            self.logger.warning("MQTT está deshabilitado. Estado de conexión omitido.")
-            return False
-
-        try:
-            return self.client.is_connected()
-        except Exception as e:
-            self.logger.error(f"[MQTT] Error verificando conexión al broker: {e}")
-            return False
-
-    def forever_loop(self):
-        """
-        Ejecuta el loop MQTT para mantener la conexión y procesar mensajes de forma continua.
-        """
-        if not self.enable_mqtt:
-            self.logger.warning("MQTT está deshabilitado. Loop omitido.")
-            return
-
-        try:
-            self.logger.info("[MQTT] Iniciando loop continuo...")
-            self.client.loop_forever()
-        except Exception as e:
-            self.logger.error(f"[MQTT] Error en loop continuo: {e}")
-
-    def reconnect(self):
-        """
-        Reintenta la conexión automáticamente en caso de desconexión si `auto_reconnect` está habilitado.
-        """
-        if not self.enable_mqtt or not self.auto_reconnect:
-            self.logger.warning("Reconexión automática está deshabilitada.")
-            return
-
-        try:
-            while not self.is_connected():
-                self.logger.info("[MQTT] Intentando reconectar al broker...")
-                self.connect()
-                time.sleep(5)
-        except Exception as e:
-            self.logger.error(f"[MQTT] Error durante la reconexión automática: {e}")
-
-    def publish(self, topic, message, qos=0):
-        """
-        Publica un mensaje en un tópico MQTT, agregando un ID único para trazabilidad.
-
-        :param topic: Tópico al que se publicará el mensaje.
-        :param message: Mensaje a publicar (en formato JSON).
-        :param qos: Nivel de calidad del servicio (QoS) para el mensaje.
-        """
-        if not self.enable_mqtt:
-            self.logger.warning("MQTT está deshabilitado. Publicación omitida.")
-            return
-
-        try:
-            # Agregar ID único al mensaje
-            message_with_id = message.copy() if isinstance(message, dict) else {"message": message}
-            message_with_id["id"] = str(uuid.uuid4())
-
-            result = self.client.publish(topic, str(message_with_id), qos=qos)
-            if result.rc == mqtt.MQTT_ERR_SUCCESS:
-                self.logger.info(f"[MQTT] Mensaje publicado en {topic}: {message_with_id}")
-            else:
-                self.logger.error(f"[MQTT] Error al publicar mensaje en {topic}: Código {result.rc}")
-        except Exception as e:
-            self.logger.error(f"[MQTT] Error publicando mensaje en {topic}: {e}")
