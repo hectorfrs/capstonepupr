@@ -11,7 +11,7 @@ network:
     gateway: "192.168.2.1"        # Puerta de enlace para Wi-Fi
 
 mqtt:
-  broker_address: "localhost"
+  broker_addresses: "localhost"
   port: 1883                                  # Puerto para el broker MQTT local
   client_id: "RaspberryPi-3"
   keepalive: 60 
