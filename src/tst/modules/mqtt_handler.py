@@ -27,7 +27,7 @@ class MQTTHandler:
         self.enable_aws = self.config_manager.get("mqtt.enable_aws", False)
 
         # Configurar logger centralizado
-        self.logger = setup_logger("[MQTT_HANDLER]", self.config_manager.get("logging", {}))
+        self.logger = LoggingManager(self.config_manager).setup_logger("[MQTT_HANDLER]")
 
         # Configuración local MQTT
         if self.enable_mqtt:
@@ -129,6 +129,8 @@ class MQTTHandler:
             return
 
         for broker in self.config.get("broker_addresses", []):
+            if not self.config.get("broker_addresses"):
+                raise ValueError("[MQTT] La lista de brokers no está configurada en config.yaml.")
             try:
                 self.logger.info(f"[MQTT] Intentando conectar al broker {broker}:{self.port}...")
                 self.client.connect(broker, self.port, self.keepalive)
