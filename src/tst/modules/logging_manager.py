@@ -21,6 +21,7 @@ class LoggingManager:
         :param config_manager: Instancia de ConfigManager para manejar configuraciones dinámicas.
         :param mqtt_handler: Instancia opcional de MQTTHandler para transmitir logs.
         """
+        enable_debug = config.get('logging.enable_debug', False) if isinstance(config, dict) else False
         self.config_manager = config_manager
         self.mqtt_handler = mqtt_handler
         self.logger = None
