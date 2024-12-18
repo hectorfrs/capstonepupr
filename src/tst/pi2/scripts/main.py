@@ -5,11 +5,12 @@
 
 import json
 import logging
-from utils.mqtt_client import create_mqtt_client, subscribe_to_topic, publish_message, Client, MQTTv311
+
 from lib.relay_controller import RelayController
 from utils.network_manager import NetworkManager
 from utils.real_time_config import RealTimeConfigManager
 from utils.config_manager import ConfigManager
+from utils.mqtt_handler import MQTTHandler
 
 # def on_message(client, userdata, msg):
 #     """
