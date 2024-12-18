@@ -66,7 +66,6 @@ def main():
         # Configuración
         config_path = "/home/raspberry-2/capstonepupr/src/tst/configs/pi2_config.yaml"
         config_manager = ConfigManager(config_path)
-        config = config_manager.config
 
         # Configurar logger global
         logging_manager = LoggingManager(config_manager)
