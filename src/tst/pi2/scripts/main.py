@@ -81,10 +81,6 @@ def main():
         file_handler.setFormatter(logging.Formatter('[%(asctime)s] %(message)s'))
         bucket_logger.addHandler(file_handler)
 
-        # Registro en BucketLogger
-        bucket_logger.info(f"[BUCKET] {material_type} | ID: {detection_id} | Peso total actual: {current_weight}g")
-
-
         # Configuración
         logging.info("=" * 80)
         logging.info("        [MAIN] Iniciando sistema de control de Relay")
@@ -101,15 +97,42 @@ def main():
         network_manager = NetworkManager(config)
         network_manager.start_monitoring()
 
+         # Inicializar el manejador MQTT
+        logging.info("[MAIN] [MQTT] Configurando cliente MQTT...")
+        mqtt_config = config["mqtt"]
+        mqtt_handler = MQTTHandler(mqtt_config)
+        mqtt_handler.client.on_message = on_message_received  # Asignar el callback
+
+        # Registro en BucketLogger
+        bucket_logger.info(f"[BUCKET] {material_type} | ID: {detection_id} | Peso total actual: {current_weight}g")
+
         # Inicializar el controlador de relés con la configuración desde config.yaml
         logging.info("[MAIN] Inicializando controlador de relés...")
         relay_controller = RelayController(config['mux']['relays'])
 
-        logging.info("[MAIN] Inicializando cliente MQTT...")
-        mqtt_client = create_mqtt_client(client_id, broker_address, config["mqtt"]["port"], config["mqtt"]["keepalive"])
-        mqtt_client.on_message = on_message
+        # Conectar al broker
+        try:
+            mqtt_handler.connect()
+        except ConnectionError as e:
+            logging.critical(f"[MAIN] No se pudo conectar a ningún broker MQTT: {e}")
+            exit(1)
+        logging.info("[MAIN] [MQTT] Conectado al broker MQTT.")
+
+        # Crear cliente MQTT
+        mqtt_client = create_mqtt_client(client_id, broker_address, port, keepalive)
+        mqtt_client.on_message = on_message_received  # Asignar el callback
+
+        mqtt_handler.subscribe("material/entrada")
+        mqtt_handler.subscribe_multiple({
+            "material/entrada": on_message_received
+        })
+
+        # Suscribirse al tópico de acción
+        logging.info(f"[MAIN] Suscribiéndose al tópico '{topic_action}'...")
         mqtt_client.subscribe(topic_action)
-        logging.info(f"[MAIN] Suscrito al tema '{topic_action}'")
+        logging.info(f"[MAIN] Suscribiéndose al tópico '{topic_status}'...")
+        mqtt_client.subscribe(topic_status)
+        client.message_callback_add(topic_action, topic_status, on_message)
 
         # Función para manejar el control de los relés según el tipo de material
         def handle_relay_control(material_type, duration):
@@ -133,30 +156,9 @@ def main():
                     # Publicar estado del relé
                     client.publish(topic_status, json.dumps({'bucket_info': f'Bucket para {material_type}'}))
 
-        # Configurar cliente MQTT
-        logging.info("[MAIN] Inicializando cliente MQTT...")
-        mqtt_config = config["mqtt"]
-        client_id = mqtt_config["client_id"]
-        broker_address = mqtt_config["broker_address"]
-        port = mqtt_config["port"]
-        keepalive = mqtt_config["keepalive"]
-        topic_action = mqtt_config["topics"]["action"]
-        topic_status = mqtt_config["topics"]["status"]
-
-        # Crear cliente MQTT
-        mqtt_client = create_mqtt_client(client_id, broker_address, port, keepalive)
-        mqtt_client.on_message = on_message_received  # Asignar el callback
-
-        # Suscribirse al tópico de acción
-        logging.info(f"[MAIN] Suscribiéndose al tópico '{topic_action}'...")
-        mqtt_client.subscribe(topic_action)
-        logging.info(f"[MAIN] Suscribiéndose al tópico '{topic_status}'...")
-        mqtt_client.subscribe(topic_status)
-        client.message_callback_add(topic_action, topic_status, on_message)
-
-        # Iniciar bucle MQTT
-        logging.info("[MAIN] Esperando señales desde Raspberry Pi 1...")
-        mqtt_client.loop_forever()
+        # Iniciar bucle infinito
+        logging.info("[MAIN] Esperando señales MQTT de Raspberry-1...")
+        mqtt_handler.forever_loop()
 
     except KeyboardInterrupt:
         logging.info("[MAIN] Apagando Monitoreo del Network...")
