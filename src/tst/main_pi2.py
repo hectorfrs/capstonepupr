@@ -60,10 +60,12 @@ def on_message_received(client, userdata, msg):
         logger.error(f"[PI2] Error procesando mensaje: {e}")
 
 def main():
+    global relay_controller
     try:
         # Configuración
         config_path = "/home/raspberry-2/capstonepupr/src/tst/configs/pi2_config.yaml"
         config_manager = ConfigManager(config_path)
+        config = config_manager.config
 
         # Configurar logger global
         global logger
@@ -73,22 +75,26 @@ def main():
         logger.info("[PI2] Iniciando sistema de control de Relay en Raspberry Pi 2")
         logger.info("=" * 70)
 
+        # Configuración de red
+        logger.info("[PI2] [NET] Iniciando monitoreo de red...")
+        network_manager = NetworkManager(config)
+        network_manager.start_monitoring()
+
         # Cargar configuración dinámica
         real_time_config = RealTimeConfigManager(config_path)
         real_time_config.start_monitoring()
         config = real_time_config.get_config()
 
-         # Calcular delays
+        # Obtener velocidad del conveyor y distancias configuradas
+        conveyor_speed = config["system"].get("conveyor_speed", 100)
+        distances = config.get("delays", {})
+
+        # Calcular delays
         delay_sensor_to_valve_1 = calculate_delay(distances["sensor_to_valve_1"], conveyor_speed)
         delay_sensor_to_valve_2 = calculate_delay(distances["sensor_to_valve_2"], conveyor_speed)
 
         logging.info(f"[PI2] Delay sensor a válvula 1: {delay_sensor_to_valve_1} segundos")
         logging.info(f"[PI2] Delay sensor a válvula 2: {delay_sensor_to_valve_2} segundos")
-
-        # Configuración de red
-        logger.info("[PI2] [NET] Iniciando monitoreo de red...")
-        network_manager = NetworkManager(config)
-        network_manager.start_monitoring()
 
         # Configurar MQTT
         logger.info("[PI2] [MQTT] Configurando cliente MQTT...")
@@ -98,12 +104,12 @@ def main():
         mqtt_handler.client.on_message = on_message_received
 
         mqtt_handler.connect()
-        mqtt_handler.subscribe("material/entrada")
+        #mqtt_handler.subscribe("material/entrada")
+        mqtt_client.subscribe(mqtt_config["topics"]["entry"])
 
         # Configuración de relay
         logger.info("[PI2] Configurando controlador de relay...")
         relay_config = config.get("mux", {}).get("relays", [])
-        global relay_controller
         relay_controller = RelayController(relay_config)
 
         logger.info("[PI2] Esperando señales MQTT para control de relay...")
