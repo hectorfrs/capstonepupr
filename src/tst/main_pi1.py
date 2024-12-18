@@ -67,9 +67,9 @@ def on_message_received(client, userdata, msg):
         logger.error(f"[PI-1] Error procesando mensaje: {e}")
 
 def main():
+    global logger
     try:
         # Configuración
-        global logger
         config_path = "/home/raspberry-1/capstonepupr/src/tst/configs/pi1_config.yaml"
         try:
             #enable_debug = self.config_manager.get('logging.enable_debug', False)

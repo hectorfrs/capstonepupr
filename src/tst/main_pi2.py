@@ -61,14 +61,14 @@ def on_message_received(client, userdata, msg):
 
 def main():
     global relay_controller
+    global logger
     try:
         # Configuración
-        config_path = "/home/raspberry-2/capstonepupr/src/tst/configs/pi2_config.yaml"
+        config_path = "/home/raspberry-1/capstonepupr/src/tst/configs/pi2_config.yaml"
         config_manager = ConfigManager(config_path)
         config = config_manager.config
 
         # Configurar logger global
-        global logger
         logging_manager = LoggingManager(config_manager)
         logger = logging_manager.setup_logger("[MAIN PI2]")
 
@@ -82,7 +82,7 @@ def main():
         network_manager.start_monitoring()
 
         # Cargar configuración dinámica
-        real_time_config = RealTimeConfigManager(config_path)
+        real_time_config = RealTimeConfigManager(config_manager)
         real_time_config.start_monitoring()
         config = real_time_config.get_config()
 

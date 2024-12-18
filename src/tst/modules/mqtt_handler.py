@@ -248,3 +248,13 @@ class MQTTHandler:
                 self.logger.error(f"[MQTT] Error al publicar mensaje en {topic}: Código {result.rc}")
         except Exception as e:
             self.logger.error(f"[MQTT] Error publicando mensaje en {topic}: {e}")
+    
+    def on_publish(self, client, userdata, mid):
+        """
+        Callback ejecutado cuando se completa la publicación de un mensaje.
+        :param client: Instancia del cliente MQTT.
+        :param userdata: Datos adicionales definidos por el usuario.
+        :param mid: ID del mensaje publicado.
+        """
+        if self.logger:
+            self.logger.info(f"[MQTT] Mensaje publicado exitosamente. MID: {mid}")

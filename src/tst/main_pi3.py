@@ -42,14 +42,14 @@ def on_message_received(client, userdata, msg):
         logger.error(f"[PI-3] Error procesando mensaje: {e}")
 
 def main():
+    global logger
     try:
         # Configuración
-        config_path = "/home/raspberry-3/capstonepupr/src/tst/configs/pi3_config.yaml"
+        config_path = "/home/raspberry-1/capstonepupr/src/tst/configs/pi3_config.yaml"
         config_manager = ConfigManager(config_path)
         logging_manager = LoggingManager(config_manager)
 
         # Configurar logger global
-        global logger
         logger = logging_manager.setup_logger("[MAIN PI-3]" )
 
         logger.info("=" * 70)
