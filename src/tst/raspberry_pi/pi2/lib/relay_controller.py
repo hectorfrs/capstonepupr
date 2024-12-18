@@ -6,7 +6,7 @@
 import qwiic_tca9548a
 import qwiic_relay
 import time
-from modules.logging_manager import setup_logger
+from modules.logging_manager import LoggingManager
 from modules.config_manager import ConfigManager
 
 class RelayController:
