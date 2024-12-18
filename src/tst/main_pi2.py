@@ -72,7 +72,7 @@ def main():
     mqtt_client = None  # Preasignar mqtt_client
     try:
        # Cargar configuración desde el archivo YAML
-        config_path = ConfigManager("/home/raspberry-1/capstonepupr/src/tst/configs/p2_config.yaml").config
+        config_path = ConfigManager("/home/raspberry-1/capstonepupr/src/tst/configs/pi2_config.yaml").config
         config_manager = RealTimeConfigManager(config_path)
         config_manager.start_monitoring()
         config = config_manager.get_config()

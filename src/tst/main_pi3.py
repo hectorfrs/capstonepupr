@@ -22,7 +22,7 @@ def main():
     """
     try:
         # Cargar configuración desde el archivo YAML
-        config_path = ConfigManager("/home/raspberry-1/capstonepupr/src/tst/configs/p3_config.yaml").config
+        config_path = ConfigManager("/home/raspberry-1/capstonepupr/src/tst/configs/pi3_config.yaml").config
         config_manager = RealTimeConfigManager(config_path)
         config_manager.start_monitoring()
         config = config_manager.get_config()
