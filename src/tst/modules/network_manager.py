@@ -7,34 +7,36 @@ import os
 import time
 import subprocess
 from threading import Thread
-from modules.logging_manager import LoggingManager
-from modules.mqtt_handler import MQTTHandler
 
 class NetworkManager:
     """
     Maneja la conexión de red para conmutar entre Ethernet y Wi-Fi automáticamente.
     """
 
-    def __init__(self, config_manager, mqtt_handler=None, enable_network_monitoring=True):
+    def __init__(self, config_manager, mqtt_handler=None):
         """
         Inicializa el NetworkManager con la configuración proporcionada.
 
         :param config_manager: Instancia de ConfigManager para manejar configuraciones centralizadas.
         :param mqtt_handler: Instancia opcional de MQTTHandler para reportar eventos de red.
-        :param enable_network_monitoring: Habilita o deshabilita el monitoreo de red.
         """
+        from modules.logging_manager import LoggingManager
+
         self.config_manager = config_manager
         self.mqtt_handler = mqtt_handler
-        self.enable_network_monitoring = enable_network_monitoring
+        self.enable_network_monitoring = self.config_manager.get("system.enable_network_monitoring", True)
         self.current_interface = "ethernet"  # Ethernet por defecto
-        self.ping_host = self.config_manager.get("network.ping_host", "192.168.1.147")  # Host para pruebas de conectividad
-        self.check_interval = self.config_manager.get("network.check_interval", 10)  # Intervalo en segundos para verificar conectividad
+        self.ping_host = self.config_manager.get("network.ping_host", "192.168.1.147")
+        self.check_interval = self.config_manager.get("network.check_interval", 10)
         self.network_status = {"ethernet": False, "wifi": False}
         self.monitoring_thread = None
         self.keep_monitoring = False
 
         # Configurar logger centralizado
         self.logger = LoggingManager(config_manager).setup_logger("[NETWORK_MANAGER]")
+
+        if not self.enable_network_monitoring:
+            self.logger.warning("El monitoreo de red está deshabilitado en la configuración.")
 
     def is_connected(self, host=None):
         """
@@ -100,6 +102,10 @@ class NetworkManager:
         """
         Inicia el monitoreo en un hilo independiente.
         """
+        if not self.enable_network_monitoring:
+            self.logger.warning("El monitoreo de red está deshabilitado en la configuración. Operación omitida.")
+            return
+
         if not self.monitoring_thread:
             self.monitoring_thread = Thread(target=self.monitor_network, daemon=True)
             self.monitoring_thread.start()

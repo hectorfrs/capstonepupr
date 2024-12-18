@@ -23,7 +23,7 @@ class ConfigManager:
         self.config = {}
 
         # Configurar logger centralizado
-        self.logger = setup_logger("[CONFIG_MANAGER]", {})
+        self.logger = LoggingManager.setup_logger("[CONFIG_MANAGER]", {})
 
         self.default_config = {
             "system": {
