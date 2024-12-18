@@ -58,6 +58,7 @@ def on_message_received(client, userdata, msg):
 
         try:
             payload = json.loads(raw_payload)
+            logging.info(f"[MAIN] Mensaje recibido | Tópico: {msg.topic} | Payload: {payload}")
         except json.JSONDecodeError as e:
             logging.error(f"[MAIN] Error decodificando JSON: {e}")
             return
@@ -108,7 +109,7 @@ def main():
         network_manager = NetworkManager(config)
         network_manager.start_monitoring()
 
-       # Inicializar el manejador MQTT
+        # Inicializar el manejador MQTT
         logging.info("[MAIN] [MQTT] Configurando cliente MQTT...")
         mqtt_config = config["mqtt"]
         mqtt_handler = MQTTHandler(mqtt_config)
@@ -124,8 +125,14 @@ def main():
         logging.info("[MAIN] [MQTT] Conectado al broker MQTT.")
 
         # Suscribirse a los tópicos
-        topics = [mqtt_config["topics"]["entry"], mqtt_config["topics"]["detection"]]
-        mqtt_handler.subscribe(topics)
+        #topics = [mqtt_config["topics"]["entry"], mqtt_config["topics"]["detection"]]
+        #mqtt_handler.subscribe(topics)
+
+        mqtt_handler.subscribe("material/entrada")
+        mqtt_handler.subscribe_multiple({
+            "material/entrada": on_message_received
+        })
+
 
 
         # Iniciar bucle infinito
