@@ -4,9 +4,7 @@
 # Proyecto: Smart Recycling Bin
 
 import yaml
-import logging
 import os
-from modules.logging_manager import LoggingManager
 
 class ConfigManager:
     """
@@ -19,42 +17,15 @@ class ConfigManager:
 
         :param config_path: Ruta al archivo YAML.
         """
+        from modules.logging_manager import LoggingManager
+
         self.config_path = config_path
         self.config = {}
-        enable_debug = self.config_manager.get('logging.enable_debug', False)
-        # Configurar logger centralizado
-        self.logger = LoggingManager.setup_logger("[CONFIG_MANAGER]", {})
+        self.logger = LoggingManager(self).setup_logger("[CONFIG_MANAGER]")
 
-        self.default_config = {
-            "system": {
-                "enable_sensors": True,
-                "enable_logging": True,
-            },
-            "network": {},
-            "mux": {
-                "i2c_address": 0x70
-            },
-            "sensors": {},
-            "logging": {
-                "log_file": "/home/raspberry-1/logs/pi1_logs.log",
-                "error_log_file": "/home/raspberry-1/logs/pi1_error.log",
-                "max_size_mb": 5,
-                "backup_count": 3
-            },
-            "mqtt": {
-                "broker": "localhost",
-                "port": 1883,
-                "topics": {
-                    "sensor_data": "raspberry-1/sensor_data",
-                    "alerts": "raspberry-1/alerts"
-                }
-            },
-            "aws": {
-                "region": "us-east-1",
-                "iot_core_endpoint": "your_aws_iot_core_endpoint"
-            }
-        }
+        # Cargar configuración inicial
         self.load_config()
+        self.validate_config()
 
     def load_config(self):
         """
@@ -66,14 +37,14 @@ class ConfigManager:
                     self.config = yaml.safe_load(file)
                     self.logger.info(f"Configuración cargada desde {self.config_path}")
             else:
-                self.logger.warning(f"El archivo de configuración no existe: {self.config_path}. Usando configuración predeterminada.")
-                self.config = self.default_config
+                self.logger.warning(f"El archivo de configuración no existe: {self.config_path}. Usando valores predeterminados.")
+                self.config = {}
         except yaml.YAMLError as e:
             self.logger.error(f"Error al leer el archivo YAML: {e}. Usando configuración predeterminada.")
-            self.config = self.default_config
+            self.config = {}
         except Exception as e:
             self.logger.error(f"Error cargando configuración: {e}")
-            self.config = self.default_config
+            self.config = {}
 
     def save_config(self):
         """
@@ -85,21 +56,6 @@ class ConfigManager:
                 self.logger.info(f"Configuración guardada en {self.config_path}")
         except Exception as e:
             self.logger.error(f"Error al guardar la configuración: {e}")
-
-    def validate_config(self):
-        """
-        Valida las claves requeridas en la configuración y establece valores predeterminados si faltan.
-        """
-        for section, defaults in self.default_config.items():
-            if section not in self.config:
-                self.logger.warning(f"Sección {section} no encontrada en la configuración. Usando valores predeterminados.")
-                self.config[section] = defaults
-            else:
-                for key, value in defaults.items():
-                    if key not in self.config[section]:
-                        self.logger.warning(f"Clave {key} no encontrada en {section}. Estableciendo valor predeterminado: {value}.")
-                        self.config[section][key] = value
-        self.save_config()
 
     def get(self, key_path, default=None):
         """
@@ -132,3 +88,21 @@ class ConfigManager:
         config_section[keys[-1]] = value
         self.save_config()
         self.logger.info(f"Configuración actualizada: {key_path} = {value}")
+
+    def validate_config(self):
+        """
+        Valida la configuración actual para asegurarse de que contenga todas las claves requeridas.
+        Si faltan claves, establece valores predeterminados.
+        """
+        required_keys = {
+            "system.enable_sensors": True,
+            "system.enable_logging": True,
+            "logging.log_file": "logs/app.log",
+            "mqtt.enable_mqtt": False,
+            "mqtt.broker_addresses": ["localhost"],
+        }
+
+        for key, default_value in required_keys.items():
+            if self.get(key) is None:
+                self.set(key, default_value)
+                self.logger.warning(f"Clave faltante en la configuración: {key}. Valor predeterminado establecido: {default_value}")
