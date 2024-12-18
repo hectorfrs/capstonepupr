@@ -20,7 +20,7 @@ from .real_time_config import RealTimeConfigManager
 from .alert_manager import AlertManager
 from .logging_manager import LoggingManager
 from .greengrass import GreengrassManager
-from .json_manager import JSONManage
+from .json_manager import JSONManager
 
 __all__ = [
     "MQTTHandler",
