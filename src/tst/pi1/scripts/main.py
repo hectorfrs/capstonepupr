@@ -99,7 +99,7 @@ def main():
         logging.info("=" * 70)
 
         # Cargar configuración
-        config_path = "/home/raspberry-1/capstonepupr/src/pi1/config/config.yaml"
+        config_path = "/home/raspberry-1/capstonepupr/src/tst/pi1/config/config.yaml"
         config_manager = RealTimeConfigManager(config_path)
         config_manager.start_monitoring()
         config = config_manager.get_config()
@@ -132,8 +132,6 @@ def main():
         mqtt_handler.subscribe_multiple({
             "material/entrada": on_message_received
         })
-
-
 
         # Iniciar bucle infinito
         logging.info("[MAIN] Esperando señales MQTT de Raspberry-3...")

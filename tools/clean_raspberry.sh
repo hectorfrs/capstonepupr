@@ -28,7 +28,8 @@ else
 fi
 
 # Variables
-CAPSTONE="/home/$RASPBERRY/capstonepupr/src/pi$PI"
+ENV="tst"
+CAPSTONE="/home/$RASPBERRY/capstonepupr/src/"
 VENV_DIR="/home/$RASPBERRY/venv"
 PYTHON_GLOBAL="/usr/bin/python3"
 LOG_FILE="/home/$RASPBERRY/clean_raspberry.log"
@@ -126,7 +127,8 @@ cat <<EOL >> "$BASHRC_FILE"
 source $VENV_DIR/bin/activate
 
 # Configurar PYTHONPATH para el proyecto Capstone
-export PYTHONPATH=$CAPSTONE:\$PYTHONPATH
+PYTHONPATH=$CAPSTONE:$CAPSTONE\tst\pi$PI:$CAPSTONE\dev\pi$PI:$CAPSTONE\prd\pi$PI:$PYTHONPATH
+export PYTHONPATH
 
 # Priorizar entorno virtual en PATH
 export PATH=$VENV_DIR/bin:\$PATH
