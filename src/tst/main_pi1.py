@@ -72,7 +72,9 @@ def main():
         global logger
         config_path = "/home/raspberry-1/capstonepupr/src/tst/configs/pi1_config.yaml"
         try:
+            enable_debug = self.config_manager.get('logging.enable_debug', False)
             config_manager = ConfigManager(config_path)
+            config = config_manager.get_config()
         except Exception as e:
             logger.error(f"[MAIN] Error inicializando ConfigManager: {e}")
             raise
