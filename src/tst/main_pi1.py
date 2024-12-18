@@ -66,16 +66,17 @@ def on_message_received(client, userdata, msg):
 def main():
     try:
         # Configuración
+        global logger
         config_path = "/home/raspberry-1/capstonepupr/src/tst/configs/pi1_config.yaml"
         try:
             config_manager = ConfigManager(config_path)
         except Exception as e:
             logger.error(f"[MAIN] Error inicializando ConfigManager: {e}")
             raise
-
-        # Configurar logger global
-        global logger
-        logger = LoggingManager.setup_logger("[MAIN PI1]", config_manager.get("logging", {}))
+        
+        # Inicializar logger básico para respaldo en caso de fallos
+        #logger = LoggingManager.setup_logger("[MAIN PI1]", config_manager.get("logging", {}))
+        logger = setup_logger("[MAIN]", config={})
         logger.info("=" * 70)
         logger.info("[MAIN] Iniciando sistema de detección de materiales en Raspberry Pi 1")
         logger.info("=" * 70)
