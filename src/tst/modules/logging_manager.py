@@ -6,7 +6,7 @@
 import logging
 from logging.handlers import RotatingFileHandler
 import os
-from modules.mqtt_handler import MQTTHandler
+
 
 class LoggingManager:
     """
@@ -14,6 +14,7 @@ class LoggingManager:
     """
 
     def __init__(self, config_manager, mqtt_handler=None):
+        from modules.mqtt_handler import MQTTHandler
         """
         Inicializa el manejador de logging con configuraciones centralizadas.
 

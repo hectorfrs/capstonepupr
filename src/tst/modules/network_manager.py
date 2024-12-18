@@ -8,30 +8,33 @@ import time
 import subprocess
 from threading import Thread
 from modules.logging_manager import LoggingManager
+from modules.mqtt_handler import MQTTHandler
 
 class NetworkManager:
     """
     Maneja la conexión de red para conmutar entre Ethernet y Wi-Fi automáticamente.
     """
 
-    def __init__(self, config, enable_network_monitoring=True):
+    def __init__(self, config_manager, mqtt_handler=None, enable_network_monitoring=True):
         """
         Inicializa el NetworkManager con la configuración proporcionada.
 
-        :param config: Configuración de red.
+        :param config_manager: Instancia de ConfigManager para manejar configuraciones centralizadas.
+        :param mqtt_handler: Instancia opcional de MQTTHandler para reportar eventos de red.
         :param enable_network_monitoring: Habilita o deshabilita el monitoreo de red.
         """
-        self.config = config
+        self.config_manager = config_manager
+        self.mqtt_handler = mqtt_handler
         self.enable_network_monitoring = enable_network_monitoring
         self.current_interface = "ethernet"  # Ethernet por defecto
-        self.ping_host = "192.168.1.147"  # Host para pruebas de conectividad
-        self.check_interval = 10  # Intervalo en segundos para verificar conectividad
+        self.ping_host = self.config_manager.get("network.ping_host", "192.168.1.147")  # Host para pruebas de conectividad
+        self.check_interval = self.config_manager.get("network.check_interval", 10)  # Intervalo en segundos para verificar conectividad
         self.network_status = {"ethernet": False, "wifi": False}
         self.monitoring_thread = None
         self.keep_monitoring = False
 
         # Configurar logger centralizado
-        self.logger = setup_logger("[NETWORK_MANAGER]", config.get("logging", {}))
+        self.logger = LoggingManager(config_manager).setup_logger("[NETWORK_MANAGER]")
 
     def is_connected(self, host=None):
         """
@@ -54,8 +57,12 @@ class NetworkManager:
         """
         self.logger.warning("Conmutando a red Wi-Fi...")
         self.current_interface = "wifi"
-        self._configure_network(self.config["network"]["wifi"])
         self.network_status["wifi"] = True
+        if self.mqtt_handler and self.mqtt_handler.is_connected():
+            self.mqtt_handler.publish("network/events", {
+                "event": "switched_to_wifi",
+                "timestamp": time.time()
+            })
 
     def switch_to_ethernet(self):
         """
@@ -63,30 +70,12 @@ class NetworkManager:
         """
         self.logger.warning("Conmutando a red Ethernet...")
         self.current_interface = "ethernet"
-        self._configure_network(self.config["network"]["ethernet"])
         self.network_status["ethernet"] = True
-
-    def _configure_network(self, network_config):
-        """
-        Configura los parámetros de red (IP estática, puerta de enlace).
-        """
-        try:
-            self.logger.info(f"Configurando red para la interfaz {self.current_interface}...")
-            ip = network_config["ip"]
-            gateway = network_config["gateway"]
-
-            # Asignar IP estática
-            subprocess.run(
-                ["sudo", "ifconfig", self.current_interface, ip, "netmask", "255.255.255.0"],
-                check=True
-            )
-            subprocess.run(
-                ["sudo", "route", "add", "default", "gw", gateway, self.current_interface],
-                check=True
-            )
-            self.logger.info(f"Red configurada con IP: {ip}, Gateway: {gateway}.")
-        except subprocess.CalledProcessError as e:
-            self.logger.error(f"Error configurando red: {e}")
+        if self.mqtt_handler and self.mqtt_handler.is_connected():
+            self.mqtt_handler.publish("network/events", {
+                "event": "switched_to_ethernet",
+                "timestamp": time.time()
+            })
 
     def monitor_network(self):
         """
