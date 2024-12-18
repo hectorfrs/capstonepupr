@@ -3,15 +3,12 @@
 # Copyright (c) 2024
 # Proyecto: Smart Recycling Bin
 
-import logging
 import json
 import os
 import uuid
 from datetime import datetime
 from dataclasses import dataclass, field
 from typing import Any, Dict
-from modules.logging_manager import LoggingManager
-from modules.mqtt_handler import MQTTHandler
 
 @dataclass
 class Alert:
@@ -25,32 +22,30 @@ class Alert:
         if self.level not in valid_levels:
             raise ValueError(f"Nivel de alerta inválido: {self.level}")
 
-
 class AlertManager:
     """
     Clase para manejar alertas críticas del sistema.
     """
     ALLOWED_LEVELS = {"INFO", "WARNING", "CRITICAL"}
 
-    def __init__(self, config_manager, mqtt_handler=None, local_log_path="~/logs/alerts.json", rotate_logs=True):
+    def __init__(self, config_manager, mqtt_handler=None):
         """
         Inicializa el manejador de alertas.
 
         :param config_manager: Instancia de ConfigManager para manejar configuraciones dinámicas.
         :param mqtt_handler: Instancia opcional de MQTTHandler para transmitir alertas.
-        :param local_log_path: Ruta para almacenar alertas localmente.
-        :param rotate_logs: Habilitar o deshabilitar la rotación de logs.
         """
+        from modules.logging_manager import LoggingManager
+
         self.config_manager = config_manager
         self.mqtt_handler = mqtt_handler
-
-        # Configurar logger centralizado
+        self.enable_alerts = self.config_manager.get("system.enable_alert_manager", True)
         self.logger = LoggingManager(config_manager).setup_logger("[ALERT_MANAGER]")
 
         # Generar el tópico dinámicamente si no se proporciona
         self.alert_topic = self.config_manager.get("mqtt.alert_topic", "alerts/default")
-        self.local_log_path = os.path.expanduser(local_log_path)
-        self.rotate_logs = rotate_logs
+        self.local_log_path = os.path.expanduser(self.config_manager.get("logging.alert_log_file", "~/logs/alerts.json"))
+        self.rotate_logs = self.config_manager.get("logging.rotate_alert_logs", True)
 
         # Crear directorio de logs si no existe
         log_dir = os.path.dirname(self.local_log_path)
@@ -66,6 +61,10 @@ class AlertManager:
         :param message: Mensaje descriptivo de la alerta.
         :param metadata: Datos adicionales (opcional).
         """
+        if not self.enable_alerts:
+            self.logger.warning("El manejo de alertas está deshabilitado en la configuración.")
+            return
+
         if level not in self.ALLOWED_LEVELS:
             self.logger.error(f"Nivel de alerta inválido: {level}. Debe ser uno de {self.ALLOWED_LEVELS}.")
             return
