@@ -37,15 +37,10 @@ def main():
         network_manager.start_monitoring()
 
         # Configuración de MQTT
+        logging.info("[MAIN] [MQTT] Configurando cliente MQTT...")
         mqtt_config = config["mqtt"]
-        mqtt_handler = MQTTHandler(
-            client_id=mqtt_config["client_id"],
-            broker_address=mqtt_config["broker_address"],
-            port=mqtt_config["port"],
-            keepalive=mqtt_config["keepalive"],
-            topics=[mqtt_config["topics"]["entry"], mqtt_config["topics"]["detection"], mqtt_config["topics"]["action"]]
-        )
-        mqtt_handler.connect()
+        mqtt_handler = MQTTHandler(mqtt_config)
+        mqtt_handler.client.on_message = on_message_received
 
         # Configuración de simulación
         simulation_duration = config["simulation"]["duration"]
