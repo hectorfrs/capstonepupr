@@ -57,14 +57,8 @@ def on_message_received(client, userdata, msg, relay_controller):
         logger.error(f"[PI2] Error procesando mensaje: {e}")
 
 def main():
+    global config
     network_manager = None  # Inicialización para evitar errores de referencia
-    mqtt_handler = None      # Inicialización para evitar errores de referencia
-    logging_manager = None   # Inicialización para evitar errores de referencia
-    real_time_config = None  # Inicialización para evitar errores de referencia
-    config = None            # Inicialización para evitar errores de referencia
-    mqtt_config = None       # Inicialización para evitar errores de referencia
-    logger = None            # Inicialización para evitar errores de referencia
-    relay_controller = None  # Inicialización para evitar errores de referencia
     try:
         logger.info("=" * 70)
         logger.info("Iniciando sistema de control de Relay en Raspberry Pi 2")
@@ -81,7 +75,7 @@ def main():
 
         real_time_config = RealTimeConfigManager(config_manager)
         real_time_config.start_monitoring()
-        #global config
+        
         config = real_time_config.get_config()
 
         # Configuración de red
