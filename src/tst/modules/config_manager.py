@@ -71,7 +71,9 @@ class ConfigManager:
             if isinstance(value, dict) and key in value:
                 value = value[key]
             else:
+                self.logger.warning(f"Clave no encontrada: {key_path}. Usando valor predeterminado: {default}")
                 return default
+        self.logger.debug(f"Valor encontrado para {key_path}: {value}")
         return value
 
     def set(self, key_path, value):
