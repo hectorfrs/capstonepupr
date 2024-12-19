@@ -99,7 +99,6 @@ def detect_material(mqtt_handler, material):
 
 def main():
 
-    global logger
     # Configuración
     config_path = "/home/raspberry-3/capstonepupr/src/tst/configs/pi3_config.yaml"
     config_manager = ConfigManager(config_path)
@@ -126,6 +125,7 @@ def main():
 
         # Limpieza de caché
         clear_cache()
+        global logger
 
         # Configuración de red
         logger.info("Iniciando monitoreo de red...")

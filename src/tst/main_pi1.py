@@ -73,7 +73,6 @@ def on_message_received(client, userdata, msg):
 
 def main():
     
-    global logger
     # Configuración
     config_path = "/home/raspberry-1/capstonepupr/src/tst/configs/pi1_config.yaml"
     config_manager = ConfigManager(config_path)
@@ -101,6 +100,7 @@ def main():
 
         # Limpieza de caché
         clear_cache()
+        global logger
 
         # Configuración de red
         logger.info("Iniciando monitoreo de red...")
