@@ -51,11 +51,8 @@ def on_message_received(client, userdata, msg):
 def main():
     # Inicialización de variables
     network_manager = None  # Inicialización para evitar errores de referencia
-    
-    # Configuración
-    config_path = "/home/raspberry-1/capstonepupr/src/tst/configs/pi1_config.yaml"
     try:
-        config_manager = ConfigManager(config_path)
+        config_manager = ConfigManager("/home/raspberry-1/capstonepupr/src/tst/configs/pi1_config.yaml")
         logging_manager = LoggingManager(config_manager)
         time.sleep(0.5)
     except Exception as e:

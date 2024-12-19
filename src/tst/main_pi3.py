@@ -76,11 +76,8 @@ def detect_material(mqtt_handler, material):
 def main():
     # Inicialización de variables
     network_manager = None  # Inicialización para evitar errores de referencia
-
-    # Configuración
-    config_path = "/home/raspberry-3/capstonepupr/src/tst/configs/pi3_config.yaml"
     try:
-        config_manager = ConfigManager(config_path)
+        config_manager = ConfigManager("/home/raspberry-3/capstonepupr/src/tst/configs/pi3_config.yaml")
         logging_manager = LoggingManager(config_manager)
         time.sleep(0.5)
     except Exception as e:
