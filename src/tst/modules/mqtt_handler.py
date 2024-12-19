@@ -34,6 +34,13 @@ class MQTTHandler:
         logging_manager = LoggingManager(self.config_manager)
         self.logger = logging_manager.setup_logger("[MQTT_HANDLER]")
 
+        # Configuración local MQTT
+        if self.enable_mqtt:
+            self.broker = self.config.get("broker_addresses", ["localhost"])[0]
+            self.port = self.config.get("port", 1883)
+            self.keepalive = self.config.get("keepalive", 60)
+            self.client_id = self.config.get("client_id", "MQTTClient")
+
         # Log de depuración para validar la configuración
         if self.logger:
             self.logger.debug(f"[MQTT] Configuración cargada: {self.config}")
@@ -41,13 +48,6 @@ class MQTTHandler:
             self.logger.debug(f"[MQTT] enable_aws: {self.enable_aws}")
             self.logger.debug(f"[MQTT] auto_reconnect: {self.auto_reconnect}")
             self.logger.debug(f"[MQTT] Brokers disponibles: {self.config.get('broker_addresses', [])}")
-
-        # Configuración local MQTT
-        if self.enable_mqtt:
-            self.broker = self.config.get("broker_addresses", ["localhost"])[0]
-            self.port = self.config.get("port", 1883)
-            self.keepalive = self.config.get("keepalive", 60)
-            self.client_id = self.config.get("client_id", "MQTTClient")
 
             # Inicializar cliente MQTT
             self.client = mqtt.Client(client_id=self.client_id)
@@ -99,7 +99,7 @@ class MQTTHandler:
         """
         if self.logger:
             self.logger.warning(f"Desconectado del broker MQTT. Código: {rc}")
-        if self.auto_reconnect:
+        if self.config_manager.get("mqtt.auto_reconnect", True):
             self.reconnect()
 
     def disconnect(self):
