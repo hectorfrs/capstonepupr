@@ -1,0 +1,64 @@
+TST/
+│
+├── main_pi1.py                    # Punto de entrada para Raspberry Pi #1
+├── main_pi2.py                    # Punto de entrada para Raspberry Pi #2
+├── main_pi3.py                    # Punto de entrada para Raspberry Pi #3
+│
+├── modules/                       # Módulos compartidos y específicos
+│   ├── __init__.py                # Hace de "modules" un paquete
+│   ├── mqtt_handler.py            # Manejo de MQTT (local y AWS IoT)
+│   ├── network_management.py      # Redundancia en manejo de red
+│   ├── config_manager.py          # Configuración centralizada
+│   ├── greengrass_manager.py      # AWS IoT Greengrass (local y nube)
+│   ├── json_manager.py            # Manejo de datos JSON
+│   ├── logging_manager.py         # Sistema de logging centralizado
+│   ├── alert_manager.py           # Manejo de alertas
+│   └── utils/                     # Funciones auxiliares
+│       ├── __init__.py            # Hace de "utils" un subpaquete
+│       ├── file_utils.py          # Manejo de archivos
+│       └── string_utils.py        # Manejo de cadenas
+│
+├── raspberry_pi/                  # Subcarpetas específicas para cada Raspberry Pi
+│   ├── pi1/
+│   │   ├── __init__.py
+│   │   └── functions_pi1.py       # Funciones específicas para Raspberry Pi #1
+│   ├── pi2/
+│   │   ├── __init__.py
+│   │   └── functions_pi2.py       # Funciones específicas para Raspberry Pi #2
+│   └── pi3/
+│       ├── __init__.py
+│       └── functions_pi3.py       # Funciones específicas para Raspberry Pi #3
+│
+├── configs/                       # Configuraciones específicas para cada Raspberry Pi
+│   ├── pi1_config.yaml            # Configuración YAML para Raspberry Pi #1
+│   ├── pi2_config.yaml            # Configuración YAML para Raspberry Pi #2
+│   └── pi3_config.yaml            # Configuración YAML para Raspberry Pi #3
+│
+├── logs/                          # Carpeta para almacenar logs
+│   ├── pi1/
+│   │   ├── app.log
+│   │   └── error.log
+│   ├── pi2/
+│   │   ├── app.log
+│   │   └── error.log
+│   └── pi3/
+│       ├── app.log
+│       └── error.log
+│
+├── tests/                         # Pruebas unitarias
+│   ├── test_mqtt_handler.py
+│   ├── test_network_management.py
+│   ├── test_greengrass_manager.py
+│   └── test_config_manager.py
+│
+└── requirements.txt               # Dependencias del proyecto
+
+
+Medidas en el Converyor para determinar el delay:
+
+Inicio del Conveyo la camara estara a 24 pulgadas.
+
+Desde Camara hasta sensor NIR - 12 pulgadas
+
+Sensor NIR hacia Valvula 1 - 21 pulgadas
+Sensor NIR hacia Valvula 2 - 27 pulgadas

@@ -36,7 +36,8 @@ class ConfigManager:
         self.config_data = self.load_config()
         self.validate_config()
 
-    def load_config(self):
+    def load_config(self, config_path=None):
+        config_path = config_path or self.config_path
         """
         Carga el archivo YAML de configuración.
 
