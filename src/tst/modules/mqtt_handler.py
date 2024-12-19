@@ -22,7 +22,10 @@ class MQTTHandler:
         :param config_manager: Instancia de ConfigManager para manejar configuraciones centralizadas.
         """
         
-
+        # Configurar logger centralizado
+        logging_manager = LoggingManager(self.config_manager)
+        self.logger = logging_manager.setup_logger("[MQTT_HANDLER]")
+        
         # Atributos de configuración
         self.config_manager = config_manager
         self.config = self.config_manager.get("mqtt", {})
@@ -61,9 +64,7 @@ class MQTTHandler:
         # Atributo para reconexión automática
         self.auto_reconnect = self.config_manager.get("mqtt.auto_reconnect", True)
 
-        # Configurar logger centralizado
-        logging_manager = LoggingManager(self.config_manager)
-        self.logger = logging_manager.setup_logger("[MQTT_HANDLER]")
+        
 
     def setup_logger(self, logger):
         """
