@@ -60,8 +60,6 @@ def on_message_received(client, userdata, msg, relay_controller):
     except Exception as e:
         logger.error(f"[RPI2] Error procesando mensaje: {e}")
 
-
-
 def main():
     global relay_controller
     global logger

@@ -23,6 +23,9 @@ relays:
   - mux_channel: 1       # Canal del MUX para el relé 2
     i2c_address: 0x18    # Dirección I2C del relé 2
     assigned_valve: "Valve 2 (HDPE)"
+    
+  activation_time_min: 0.5  # Tiempo mínimo de activación en segundos
+  activation_time_max: 3    # Tiempo máximo de activación en segundos
   
 network:
   ping_host: "8.8.8.8"
