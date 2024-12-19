@@ -27,6 +27,7 @@ class RelayController:
         if not isinstance(self.relay_config, list):
             self.logger.error("[MUX] La configuración de relés debe ser una lista.")
             raise ValueError("[MUX] La configuración de relés debe ser una lista.")
+        self.relay_config = relay_config
 
         # Configurar logger centralizado
         self.logger = LoggingManager(config_manager).setup_logger("[RELAY_CONTROLLER]")

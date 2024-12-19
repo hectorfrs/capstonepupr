@@ -89,7 +89,9 @@ class MQTTHandler:
                 message = {"message": message, "id": str(uuid.uuid4())}
 
             # Publicar el mensaje
-            self.client.publish(topic, str(message), qos=qos)
+            if not isinstance(message, str):
+                message = json.dumps(message)  # Convertir a JSON válido
+            self.client.publish(topic, message, qos=qos)
             self.logger.info(f"[MQTT] Mensaje publicado en {topic}: {message}")
         except Exception as e:
             self.logger.error(f"[MQTT] Error al publicar mensaje en {topic}: {e}")
