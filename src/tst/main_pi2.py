@@ -41,11 +41,16 @@ def on_message_received(client, userdata, msg, relay_controller):
         # Log del evento recibido
         logger.info(f"[RPI2] Evento recibido | ID: {event_id} | Material: {material} | Timestamp: {timestamp}")
 
+        # Obtener tiempo de activación dinámico
+        activation_time_min = config["relays"].get("activation_time_min", 0.5)
+        activation_time_max = config["relays"].get("activation_time_max", 3)
+        activation_time = round(random.uniform(activation_time_min, activation_time_max), 2)
+
         # Activar el relé según el tipo de material
         if material in ["PET", "HDPE"]:
             relay_index = 0 if material == "PET" else 1
-            relay_controller.activate_relay(relay_index, 5)  # Ejemplo: activa por 5 segundos
-            logger.info(f"[RPI2] Relay {relay_index} activado para {material}. ID Evento: {event_id}")
+            relay_controller.activate_relay(relay_index, activation_time)
+            logger.info(f"[RPI2] Relay {relay_index} activado para {material} por {activation_time} segundos. ID Evento: {event_id}")
         else:
             logger.warning(f"[RPI2] Material desconocido: {material}. ID Evento: {event_id}")
 
@@ -53,6 +58,7 @@ def on_message_received(client, userdata, msg, relay_controller):
         logger.error(f"[RPI2] Error decodificando JSON: {e}")
     except Exception as e:
         logger.error(f"[RPI2] Error procesando mensaje: {e}")
+
 
 
 def main():
@@ -122,10 +128,6 @@ def main():
         logger.info("Esperando mensajes MQTT de Raspberry 1...")
         mqtt_handler.client.loop_forever()
 
-        
-
-        logger.info("[PI2] Esperando señales MQTT para control de relay...")
-        mqtt_handler.forever_loop()
 
     except KeyboardInterrupt:
         logger.info("[PI2] Apagando Monitoreo del Network...")
