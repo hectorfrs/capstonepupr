@@ -120,3 +120,9 @@ class NetworkManager:
             self.monitoring_thread.join()
             self.monitoring_thread = None
             self.logger.info("Monitoreo de red detenido.")
+            
+    def is_monitoring(self):
+        """
+        Verifica si el monitoreo de red está en ejecución.
+        """
+        return self.monitoring_thread and self.monitoring_thread.is_alive()

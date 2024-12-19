@@ -39,6 +39,48 @@ mqtt:
     status: "valvula/estado"
     alertas: "raspberry-1/alertas" 
 
+# Configuración compartida entre Raspberrys
+mqtt:
+  enable_mqtt: true
+  client_id: "RaspberryPi-1" 
+  enable_mqtt: true
+  broker_addresses:
+    - "192.168.1.147"
+    - "192.168.2.147"
+  port: 1883
+  topics:
+    detection: "material/deteccion"
+    status: "valvula/estado"
+    action: "valvula/accion"
+    processed: "material/procesado"
+    weighing: "material/pesaje"
+    alertas: "raspberry-1/alertas"
+  auto_reconnect: true
+  keepalive: 60
+
+# Configuración dinámica de ejecución
+execution:
+  material_detection_interval: 2.0  # Intervalo de detección en segundos
+  valve_activation_time: 1.5        # Tiempo predeterminado de activación de válvulas
+
+# Configuración de clasificación en Raspberry-1
+classification:
+  PET: "Bucket 1"
+  HDPE: "Bucket 2"
+  UNKNOWN: "Bucket 3"
+
+# Configuración para relays en Raspberry-2
+mux:
+  relays:
+    - { mux_channel: 0, i2c_address: 0x18, category: "PET" }
+    - { mux_channel: 1, i2c_address: 0x18, category: "HDPE" }
+  activation_time_min: 0.5
+  activation_time_max: 3.0
+
+# Configuración para pesaje en Raspberry-3
+weighing:
+  bucket_capacity_kg: 10.0
+
 i2c:
   bus: 1
 

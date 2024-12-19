@@ -25,6 +25,10 @@ class MQTTHandler:
         self.auto_reconnect = self.config.get("auto_reconnect", True)  
         self.logger = LoggingManager(self.config_manager).setup_logger("[MQTT_HANDLER]")
 
+        if not self.broker_addresses:
+            self.logger.critical("[MQTT] No se configuraron brokers en el archivo de configuración.")
+            raise ValueError("No se configuraron brokers en el archivo de configuración.")
+
         # Inicializa el cliente MQTT
         self.client = mqtt.Client(client_id=self.client_id)
         self.client.on_connect = self.on_connect
@@ -33,19 +37,17 @@ class MQTTHandler:
 
         self.logger.info(f"Brokers configurados: {self.broker_addresses}")
         self.logger.info(f"Tópicos configurados: {self.topics}")
-
-    
-
+        
+        
     def _normalize_brokers(self):
         """
         Convierte broker_addresses en una lista si es un string único.
         """
-        self.broker_addresses = self.config_manager.get("mqtt.broker_addresses", [])
         brokers = self.config.get("broker_addresses", [])
         if isinstance(brokers, str):
             brokers = [brokers]
-        if not all(isinstance(broker, str) for broker in brokers):
-            raise ValueError("[MQTT] broker_addresses debe contener solo strings.")
+        if not brokers:
+            raise ValueError("[MQTT] broker_addresses no configurados en mqtt.")
         return brokers
 
     def connect_and_subscribe(self):

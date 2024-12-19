@@ -6,15 +6,15 @@ system:
   enable_relay_controller: true
   enable_alert_manager: true
   enable_json_logging: true
-  conveyor_speed: 300  # Velocidad del conveyor en pulgadas/segundo
+  conveyor_speed: 0.5  # Velocidad en metros por segundo, [300]  # Velocidad del conveyor en pulgadas/segundo
 
 # 16 pulgadas/seg (40 cm/seg) en ajustes más lentos.
 # 120 pulgadas/seg (300 cm/seg) en ajustes más rápidos.
 
 delays:
   camera_to_sensor: 12  # Distancia entre la cámara y los sensores en pulgadas
-  sensor_to_valve_1: 21  # Distancia entre los sensores y la válvula 1 en pulgadas
-  sensor_to_valve_2: 27  # Distancia entre los sensores y la válvula 2 en pulgadas
+  sensor_to_valve_1: 0.75  # Distancia en metros al relay 1, [21]  # Distancia entre los sensores y la válvula 1 en pulgadas
+  sensor_to_valve_2: 1.25  # Distancia en metros al relay 2, [27]  # Distancia entre los sensores y la válvula 2 en pulgadas
 
 relays:
   - mux_channel: 0       # Canal del MUX para el relé 1
@@ -40,20 +40,47 @@ network:
     ip: "192.168.2.11"            # Dirección IP estática para Wi-Fi
     gateway: "192.168.2.1"        # Puerta de enlace para Wi-Fi
 
+# Configuración compartida entre Raspberrys
 mqtt:
   enable_mqtt: true
-  auto_reconnect: true
-  enable_aws: false
+  client_id: "RaspberryPi-1" 
+  enable_mqtt: true
   broker_addresses:
     - "192.168.1.147"
     - "192.168.2.147"
   port: 1883
-  keepalive: 60
-  client_id: "Raspberry-2"
   topics:
-    action: "valvula/accion"
+    detection: "material/deteccion"
     status: "valvula/estado"
-    alertas: "raspberry-2/alertas"
+    action: "valvula/accion"
+    processed: "material/procesado"
+    weighing: "material/pesaje"
+    alertas: "raspberry-1/alertas"
+  auto_reconnect: true
+  keep_alive: 60
+
+# Configuración dinámica de ejecución
+execution:
+  material_detection_interval: 2.0  # Intervalo de detección en segundos
+  valve_activation_time: 1.5        # Tiempo predeterminado de activación de válvulas
+
+# Configuración de clasificación en Raspberry-1
+classification:
+  PET: "Bucket 1"
+  HDPE: "Bucket 2"
+  UNKNOWN: "Bucket 3"
+
+# Configuración para relays en Raspberry-2
+mux:
+  relays:
+    - { mux_channel: 0, i2c_address: 0x18, category: "PET" }
+    - { mux_channel: 1, i2c_address: 0x18, category: "HDPE" }
+  activation_time_min: 0.5
+  activation_time_max: 3.0
+
+# Configuración para pesaje en Raspberry-3
+weighing:
+  bucket_capacity_kg: 10.0
 
 i2c:
   bus: 1
