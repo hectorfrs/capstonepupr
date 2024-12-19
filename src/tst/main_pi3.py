@@ -105,7 +105,7 @@ def main():
         mqtt_handler = MQTTHandler(config_manager)
 
         # Publicar un mensaje inicial
-        mqtt_handler.publish("material/entrada", {"message": "Sistema iniciado en Raspberry Pi 3"})
+        #mqtt_handler.publish("material/entrada", {"message": "Sistema iniciado en Raspberry Pi 3"})
 
         # Simular detección de materiales
         materials = ["PET", "HDPE", "UNKNOWN"]

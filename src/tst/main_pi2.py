@@ -121,7 +121,7 @@ def main():
         mqtt_handler.connect_and_subscribe()
 
         # Publicación de prueba
-        mqtt_handler.publish("valvula/estado", "Iniciando monitoreo")
+        #mqtt_handler.publish("valvula/estado", "Iniciando monitoreo")
 
         # Loop continuo para mensajes
         logger.info("Esperando mensajes MQTT de Raspberry 1...")
