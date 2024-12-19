@@ -131,7 +131,7 @@ def main():
     finally:
         if network_manager:
             network_manager.stop_monitoring()
-        if mqtt_handler.is_connected():
+        if mqtt_handler():
             logger.info("Desconectando cliente MQTT...")
             mqtt_handler.disconnect()
             logger.info("Cliente MQTT desconectado.")

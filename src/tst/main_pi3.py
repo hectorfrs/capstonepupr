@@ -9,16 +9,18 @@ import random
 import uuid
 import logging
 from datetime import datetime
-from modules.logging_manager import LoggingManager
 from modules.network_manager import NetworkManager
 from modules.real_time_config import RealTimeConfigManager
 from modules.config_manager import ConfigManager
 from modules.mqtt_handler import MQTTHandler
 from raspberry_pi.pi3.utils.camera_simulation import simulate_camera_detection
 
-# Configuración inicial del logger
-# logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-# logger = logging.getLogger("MAIN PI-3")
+def setup_logger():
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - [%(levelname)s] - %(message)s",
+    )
+    return logging.getLogger("MAIN PI-3")
 
 def on_message_received(client, userdata, msg):
     """
@@ -48,6 +50,9 @@ def on_message_received(client, userdata, msg):
         logger.error(f"[PI-3] Error procesando mensaje: {e}")
 
 def detect_and_publish(mqtt_handler, material):
+    """
+    Detecta el material, genera un evento ID y publica el mensaje en el tópico correspondiente.
+    """
     event_id = str(uuid.uuid4())
     timestamp = datetime.now().isoformat()
 
@@ -62,13 +67,15 @@ def detect_and_publish(mqtt_handler, material):
     logger.info(f"[RPI3] Evento publicado en MQTT: {payload}")
 
 def handle_processed_material(client, userdata, msg):
+    """
+    Maneja el material procesado por los otros Raspberry Pis y registra el pesaje del material.
+    """
     payload = json.loads(msg.payload.decode())
     event_id = payload.get("id", "Sin ID")
     material = payload.get("material", "Desconocido")
     logger.info(f"[RPI3] Material procesado recibido | ID Evento: {event_id} | Material: {material}")
 
-    # Simular el pesaje del material
-    weight = random.uniform(1, 5)
+    weight = random.uniform(1, 5)  # Simular el pesaje
     weighing_payload = {
         "id": event_id,
         "material": material,
@@ -79,38 +86,23 @@ def handle_processed_material(client, userdata, msg):
     logger.info(f"[RPI3] Pesaje registrado: {weighing_payload}")
 
 def main():
-    # Inicialización de variables
+    logger = setup_logger()
+    network_manager = None
+    mqtt_handler = None
     network_manager = None  # Inicialización para evitar errores de referencia
-    try:
-        config_manager = ConfigManager("/home/raspberry-3/capstonepupr/src/tst/configs/pi3_config.yaml")
-        logging_manager = LoggingManager(config_manager)
-        time.sleep(0.5)
-    except Exception as e:
-        logger.error(f"Error inicializando ConfigManager: {e}")
-        raise
-
-    # Inicializar logger básico para respaldo en caso de fallos
-    logger = logging_manager.setup_logger("[MAIN PI-3]")
-
-    # Limpiar caché antes de iniciar
-    logger.info("Limpiando caché de configuraciones...")
-    config_manager.clear_cache()
-    time.sleep(0.5)
     try:
         logger.info("=" * 70)
         logger.info("Iniciando sistema de simulación en Raspberry Pi 3")
         logger.info("=" * 70)
 
-        # Cargar configuración dinámica
-        logger.info("Iniciando monitoreo de configuración en tiempo real...")
+        # Configuración del sistema
+        config_path = "/home/raspberry-3/capstonepupr/src/tst/configs/pi3_config.yaml"
+        config_manager = ConfigManager(config_path)
+        config_manager.clear_cache()
+
         real_time_config = RealTimeConfigManager(config_manager)
         real_time_config.start_monitoring()
         config = real_time_config.get_config()
-        time.sleep(0.5)
-
-        # Limpieza de caché
-        #clear_cache()
-        
 
         # Configuración de red
         logger.info("Iniciando monitoreo de red...")
