@@ -100,7 +100,6 @@ def main():
 
         # Limpieza de caché
         clear_cache()
-        #global logger
 
         # Configuración de red
         logger.info("Iniciando monitoreo de red...")
@@ -138,3 +137,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    global logger
