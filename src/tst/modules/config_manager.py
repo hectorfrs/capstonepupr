@@ -21,7 +21,7 @@ class ConfigManager:
         """
         
         self.config_path = config_path
-        self.config = {}
+        self.config_data = self.load_config(self.config_path)
 
         # Logger temporal antes de inicializar LoggingManager
         self.temp_logger = logging.getLogger("[CONFIG_MANAGER]")
@@ -33,6 +33,7 @@ class ConfigManager:
         # Inicializar logger principal
         try:
             self.logging_manager = LoggingManager(self)
+            self.logger = None
         
         except Exception as e:
             # Logger de fallback si falla el setup
@@ -50,18 +51,23 @@ class ConfigManager:
         exit(1) 
         self.validate_config()
 
-    def load_config(self):
+    def load_config(self, config_path):
+        """
+        Carga el archivo YAML de configuración.
+
+        :param config_path: Ruta al archivo de configuración YAML.
+        :return: Diccionario con los datos de configuración.
+        """
         try:
-            with open(self.config_path, "r") as file:
-                self.config = yaml.safe_load(file)
-                self.logger.info(f"Configuración cargada desde {self.config_path}")
-                self.logger.debug(f"Contenido de la configuración: {self.config}")
+            with open(config_path, 'r') as file:
+                config_data = yaml.safe_load(file)
+                if not config_data:
+                    raise ValueError("El archivo de configuración está vacío.")
+                return config_data
         except FileNotFoundError:
-            self.logger.warning(f"El archivo de configuración no existe: {self.config_path}. Usando valores predeterminados.")
-            self.config = {}
-        except Exception as e:
-            self.logger.error(f"Error cargando configuración: {e}")
-            self.config = {}
+            raise FileNotFoundError(f"No se pudo encontrar el archivo de configuración: {config_path}")
+        except yaml.YAMLError as e:
+            raise ValueError(f"Error al parsear el archivo YAML: {e}")
 
     def save_config(self):
         """
@@ -76,21 +82,24 @@ class ConfigManager:
 
     def get(self, key_path, default=None):
         """
-        Obtiene un valor de configuración dado un key_path, manejando valores nulos.
+        Obtiene un valor de configuración utilizando una clave jerárquica.
+
+        :param key_path: Ruta de la clave (e.g., 'logging.enable_debug').
+        :param default: Valor predeterminado si la clave no existe.
+        :return: Valor encontrado o el predeterminado.
         """
+        keys = key_path.split('.')
+        value = self.config_data
         try:
-            keys = key_path.split('.')
-            value = self.config
             for key in keys:
-                if value is None or key not in value:
-                    self.logger.warning(f"Clave faltante: {key_path}. Usando valor predeterminado: {default}")
-                    return default
                 value = value[key]
             return value
-        except Exception as e:
-            self.logger.error(f"Error al obtener clave {key_path}: {e}")
+        except KeyError:
+            self.logger.warning(f"Clave faltante: {key_path}. Usando valor predeterminado: {default}")
             return default
-
+        except Exception as e:
+            self.logger.error(f"Error accediendo a la configuración: {e}")
+            return default
 
     def set(self, key_path, value):
         keys = key_path.split(".")
