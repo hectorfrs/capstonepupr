@@ -99,6 +99,7 @@ class ConfigManager:
         Valida la configuración actual para asegurarse de que contenga todas las claves requeridas.
         Si faltan claves, establece valores predeterminados.
         """
+        logger.info("Validando configuración...")
         required_keys = {
             "system.enable_sensors": True,
             "system.enable_logging": True,
