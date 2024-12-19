@@ -7,8 +7,6 @@ import logging
 from logging.handlers import RotatingFileHandler
 import os
 
-from modules.mqtt_handler import MQTTHandler
-
 class LoggingManager:
     """
     Clase para configurar loggers centralizados y rotativos para diferentes módulos del sistema.
@@ -76,6 +74,7 @@ class LoggingManager:
         return logger
 
     def publish_log(self, log_data):
+        from modules.mqtt_handler import MQTTHandler
         """
         Publica logs importantes a través de MQTT si está habilitado.
 
