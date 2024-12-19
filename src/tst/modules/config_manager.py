@@ -35,6 +35,7 @@ class ConfigManager:
             with open(self.config_path, "r") as file:
                 self.config = yaml.safe_load(file)
                 self.logger.info(f"Configuración cargada desde {self.config_path}")
+                self.logger.debug(f"Contenido de la configuración: {self.config}")
         except FileNotFoundError:
             self.logger.warning(f"El archivo de configuración no existe: {self.config_path}. Usando valores predeterminados.")
             self.config = {}
