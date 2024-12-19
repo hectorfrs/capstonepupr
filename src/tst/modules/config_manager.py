@@ -35,7 +35,7 @@ class ConfigManager:
         self.logger = LoggingManager(self).setup_logger("[CONFIG_MANAGER]")
 
         # Cargar y validar configuración
-        self.config_data = self._load_config()
+        self.config_data = self.load_config()
         self.validate_config()
 
     def load_config(self):
