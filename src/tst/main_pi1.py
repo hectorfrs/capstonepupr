@@ -91,7 +91,8 @@ def main():
 
         # Configurar MQTT
         logger.info("[PI-1] [MQTT] Configurando cliente MQTT...")
-        global mqtt_handler
+        brokers = config_manager.get("mqtt.broker_addresses", [])
+        logger.info(f"Brokers configurados: {brokers}")
         mqtt_config = config.get("mqtt", {})
         mqtt_handler = MQTTHandler(mqtt_config)
         mqtt_handler.client.on_message = on_message_received

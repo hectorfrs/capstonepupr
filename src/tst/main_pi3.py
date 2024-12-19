@@ -75,8 +75,9 @@ def main():
 
         # Configurar MQTT
         logger.info("[PI-3] [MQTT] Configurando cliente MQTT...")
+        brokers = config_manager.get("mqtt.broker_addresses", [])
+        logger.info(f"Brokers configurados: {brokers}")
         mqtt_config = config.get("mqtt", {})
-        global mqtt_handler
         mqtt_handler = MQTTHandler(mqtt_config)
         mqtt_handler.client.on_message = on_message_received
         time.sleep(1)
