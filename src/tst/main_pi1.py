@@ -4,7 +4,6 @@
 # Proyecto: Smart Recycling Bin
 
 import sys
-import logging
 import os
 import time
 import json
@@ -14,17 +13,6 @@ from modules.network_manager import NetworkManager
 from modules.real_time_config import RealTimeConfigManager
 from modules.config_manager import ConfigManager
 from modules.mqtt_handler import MQTTHandler
-
-try:
-    import modules.logging_manager
-    import modules.network_manager
-    import modules.real_time_config
-    import modules.config_manager
-    import modules.mqtt_handler
-    print("Todos los módulos se importaron correctamente.")
-except ImportError as e:
-    print(f"Error de importación: {e}")
-
 
 def on_message_received(client, userdata, msg):
     """
@@ -72,7 +60,6 @@ def main():
         # Configuración
         config_path = "/home/raspberry-1/capstonepupr/src/tst/configs/pi1_config.yaml"
         try:
-            #enable_debug = self.config_manager.get('logging.enable_debug', False)
             config_manager = ConfigManager(config_path)
             logging_manager = LoggingManager(config_manager)
         except Exception as e:
@@ -81,12 +68,13 @@ def main():
         
         # Inicializar logger básico para respaldo en caso de fallos
         logger = logging_manager.setup_logger("[MAIN PI-1]")
+
         logger.info("=" * 70)
         logger.info("Iniciando sistema de detección de materiales en Raspberry Pi 1")
         logger.info("=" * 70)
 
         # Cargar configuración dinámica
-        logging.info("Iniciando monitoreo de configuración en tiempo real...")
+        logger.info("Iniciando monitoreo de configuración en tiempo real...")
         real_time_config = RealTimeConfigManager(config_manager)
         real_time_config.start_monitoring()
         config = real_time_config.get_config()

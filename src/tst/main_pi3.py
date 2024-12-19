@@ -47,7 +47,6 @@ def main():
         # Configuración
         config_path = "/home/raspberry-3/capstonepupr/src/tst/configs/pi3_config.yaml"
         try:
-            #enable_debug = self.config_manager.get('logging.enable_debug', False)
             config_manager = ConfigManager(config_path)
             logging_manager = LoggingManager(config_manager)
         except Exception as e:
@@ -62,7 +61,7 @@ def main():
         logger.info("=" * 70)
 
         # Cargar configuración dinámica
-        logging.info("Iniciando monitoreo de configuración en tiempo real...")
+        logger.info("Iniciando monitoreo de configuración en tiempo real...")
         real_time_config = RealTimeConfigManager(config_manager)
         real_time_config.start_monitoring()
         config = real_time_config.get_config()
