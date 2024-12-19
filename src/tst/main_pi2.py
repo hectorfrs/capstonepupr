@@ -80,7 +80,7 @@ def main():
 
         real_time_config = RealTimeConfigManager(config_manager)
         real_time_config.start_monitoring()
-        global config
+        #global config
         config = real_time_config.get_config()
 
         # Configuración de red
