@@ -31,11 +31,23 @@ class ConfigManager:
         self.temp_logger.addHandler(console_handler)
 
         # Inicializar logger principal
-        logging_manager = LoggingManager(self)
-        self.logger = LoggingManager(self).setup_logger("[CONFIG_MANAGER]")
+        try:
+            self.logging_manager = LoggingManager(self)
+        
+        except Exception as e:
+            # Logger de fallback si falla el setup
+            self.logger = logging.getLogger("[CONFIG_MANAGER]")
+            console_handler = logging.StreamHandler()
+            formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+            console_handler.setFormatter(formatter)
+            self.logger.addHandler(console_handler)
+            self.logger.warning("Usando logger de fallback debido a errores en LoggingManager.")
 
         # Cargar y validar configuración
-        self.config_data = self.load_config()
+        self.config_data = self.load_config(config_path)
+        if not os.path.exists(config_path):
+            self.logger.error(f"El archivo de configuración no existe: {config_path}")
+        exit(1) 
         self.validate_config()
 
     def load_config(self):
@@ -64,20 +76,21 @@ class ConfigManager:
 
     def get(self, key_path, default=None):
         """
-        Obtiene un valor de configuración basado en una ruta clave jerárquica.
-        :param key_path: Ruta de la clave, separada por puntos (e.g., "mux.activation_time_min").
-        :param default: Valor predeterminado si la clave no existe.
-        :return: Valor asociado a la clave o el valor predeterminado.
+        Obtiene un valor de configuración dado un key_path, manejando valores nulos.
         """
         try:
             keys = key_path.split('.')
-            value = self.config_data
+            value = self.config
             for key in keys:
+                if value is None or key not in value:
+                    self.logger.warning(f"Clave faltante: {key_path}. Usando valor predeterminado: {default}")
+                    return default
                 value = value[key]
             return value
-        except KeyError:
-            self.logger.warning(f"Clave faltante: {key_path}. Usando valor predeterminado: {default}")
+        except Exception as e:
+            self.logger.error(f"Error al obtener clave {key_path}: {e}")
             return default
+
 
     def set(self, key_path, value):
         keys = key_path.split(".")
