@@ -84,7 +84,6 @@ def main():
     logger = setup_logger()
     network_manager = None
     mqtt_handler = None
-    network_manager = None  # Inicialización para evitar errores de referencia
     try:
         logger.info("=" * 70)
         logger.info("Iniciando script principal para Raspberry Pi 3...")
