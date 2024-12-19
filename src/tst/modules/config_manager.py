@@ -21,7 +21,10 @@ class ConfigManager:
 
         self.config_path = config_path
         self.config = {}
-        self.logger = LoggingManager(self).setup_logger("[CONFIG_MANAGER]")
+
+        # Inicializa el logger antes de usarlo
+        logging_manager = LoggingManager(self)
+        self.logger = logging_manager.setup_logger("[CONFIG_MANAGER]")
 
         # Cargar configuración inicial
         self.load_config()
@@ -100,8 +103,7 @@ class ConfigManager:
             "system.enable_sensors": True,
             "system.enable_logging": True,
             "logging.log_file": "logs/app.log",
-            "mqtt.enable_mqtt": False,
-            "mqtt.broker_addresses": ["localhost"],
+            "mqtt.enable_mqtt": True,
         }
 
         for key, default_value in required_keys.items():
