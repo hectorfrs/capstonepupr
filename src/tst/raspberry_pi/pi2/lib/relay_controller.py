@@ -23,8 +23,13 @@ class RelayController:
         self.relay_config = config_manager.get("mux.relays", [])
         self.enable_relays = enable_relays
 
+        # Validar que relay_config sea una lista
+        if not isinstance(self.relay_config, list):
+            self.logger.error("[MUX] La configuración de relés debe ser una lista.")
+            raise ValueError("[MUX] La configuración de relés debe ser una lista.")
+
         # Configurar logger centralizado
-        self.logger = setup_logger("[RELAY_CONTROLLER]", config_manager.get("logging", {}))
+        self.logger = LoggingManager(config_manager).setup_logger("[RELAY_CONTROLLER]")
 
         if not self.enable_relays:
             self.logger.warning("La funcionalidad de los relés está deshabilitada.")
@@ -42,6 +47,11 @@ class RelayController:
         for index, config in enumerate(self.relay_config):
             mux_channel = config["mux_channel"]
             i2c_address = config["i2c_address"]
+
+            # Validar configuración del relé
+            if mux_channel is None or i2c_address is None:
+                self.logger.error(f"[RELAY] Configuración incompleta para el relay {index}: {config}")
+                continue
 
             self._select_mux_channel(mux_channel)
             relay = qwiic_relay.QwiicRelay(address=i2c_address)
