@@ -87,21 +87,21 @@ def main():
         network_manager = NetworkManager(config)
         network_manager.start_monitoring()
 
-
-        # Configurar MQTT
-        logger.info("[PI-1] [MQTT] Configurando cliente MQTT...")
-        brokers = config_manager.get("mqtt.broker_addresses", [])
-        logger.info(f"Brokers configurados: {brokers}")
-        mqtt_config = config.get("mqtt", {})
+        # Inicializa MQTTHandler
         mqtt_handler = MQTTHandler(config_manager)
+
+        # Asigna el callback personalizado
         mqtt_handler.client.on_message = on_message_received
 
-        mqtt_handler.connect()
-        
-        mqtt_handler.subscribe("material/entrada")
+        # Conecta al broker MQTT y suscribe a tópicos
+        mqtt_handler.connect_and_subscribe()
 
-        logger.info("[PI-1] Esperando señales MQTT de Raspberry-3...")
-        mqtt_handler.forever_loop()
+        # Publicación de prueba
+        mqtt_handler.publish("material/entrada", "Iniciando monitoreo")
+
+        # Loop continuo para mensajes
+        logger.info("Esperando mensajes MQTT de Raspberry 3...")
+        mqtt_handler.client.loop_forever()
 
     except KeyboardInterrupt:
         logger.info("[PI-1] Apagando Monitoreo del Network...")

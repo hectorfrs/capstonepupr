@@ -73,17 +73,21 @@ def main():
         network_manager.start_monitoring()
         time.sleep(1)
 
-        # Configurar MQTT
-        logger.info("[PI-3] [MQTT] Configurando cliente MQTT...")
-        brokers = config_manager.get("mqtt.broker_addresses", [])
-        logger.info(f"Brokers configurados: {brokers}")
-        mqtt_config = config.get("mqtt", {})
+        # Inicializa MQTTHandler
         mqtt_handler = MQTTHandler(config_manager)
-        mqtt_handler.client.on_message = on_message_received
-        time.sleep(1)
 
-        mqtt_handler.connect()
-        mqtt_handler.subscribe("raspberry-3/simulation")
+        # Asigna el callback personalizado
+        mqtt_handler.client.on_message = on_message_received
+
+        # Conecta al broker MQTT y suscribe a tópicos
+        mqtt_handler.connect_and_subscribe()
+
+        # Publicación de prueba
+        mqtt_handler.publish("valvula/estado", "Iniciando monitoreo")
+
+        # Loop continuo para mensajes
+        logger.info("Esperando mensajes MQTT...")
+        mqtt_handler.client.loop_forever()
 
         # Configuración de simulación
         simulation_duration = config.get("simulation", {}).get("duration", 60)

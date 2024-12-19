@@ -102,22 +102,28 @@ def main():
         logger.info(f"[PI2] Delay sensor a válvula 1: {delay_sensor_to_valve_1} segundos")
         logger.info(f"[PI2] Delay sensor a válvula 2: {delay_sensor_to_valve_2} segundos")
 
-        # Configurar MQTT
-        logger.info("[PI2] [MQTT] Configurando cliente MQTT...")
-        brokers = config_manager.get("mqtt.broker_addresses", [])
-        logger.info(f"Brokers configurados: {brokers}")
-        mqtt_config = config.get("mqtt", {})
-        mqtt_handler = MQTTHandler(config_manager)
-        mqtt_handler.client.on_message = on_message_received
-
-        mqtt_handler.connect()
-        #mqtt_handler.subscribe("material/entrada")
-        mqtt_handler.subscribe(mqtt_config["topics"]["entry"])
-
         # Configuración de relay
         logger.info("[PI2] Configurando controlador de relay...")
         relay_config = config.get("mux", {}).get("relays", [])
         relay_controller = RelayController(relay_config)
+
+        # Inicializa MQTTHandler
+        mqtt_handler = MQTTHandler(config_manager)
+
+        # Asigna el callback personalizado
+        mqtt_handler.client.on_message = on_message_received
+
+        # Conecta al broker MQTT y suscribe a tópicos
+        mqtt_handler.connect_and_subscribe()
+
+        # Publicación de prueba
+        mqtt_handler.publish("valvula/estado", "Iniciando monitoreo")
+
+        # Loop continuo para mensajes
+        logger.info("Esperando mensajes MQTT de Raspberry 1...")
+        mqtt_handler.client.loop_forever()
+
+        
 
         logger.info("[PI2] Esperando señales MQTT para control de relay...")
         mqtt_handler.forever_loop()

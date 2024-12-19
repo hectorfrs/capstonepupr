@@ -9,129 +9,115 @@ import boto3
 import time
 from modules.logging_manager import LoggingManager
 from modules.config_manager import ConfigManager
-
 class MQTTHandler:
     def __init__(self, config_manager):
         self.config_manager = config_manager
         self.config = self.config_manager.get("mqtt", {})
-        self.enable_mqtt = self.config.get("enable_mqtt", True)
-        self.auto_reconnect = self.config.get("auto_reconnect", True)
-        self.broker_addresses = self.config.get("broker_addresses", [])
-        self.topics = self.config.get("topics", {})
+        self.broker_addresses = self._normalize_brokers()
         self.client_id = self.config.get("client_id", "DefaultClient")
         self.port = self.config.get("port", 1883)
         self.keepalive = self.config.get("keepalive", 60)
+        self.topics = self.config.get("topics", {})
+        self.logger = LoggingManager(self.config_manager).setup_logger("[MQTT_HANDLER]")
 
-        # Validar y normalizar broker_addresses
-        if isinstance(self.broker_addresses, str):
-            self.broker_addresses = [self.broker_addresses]
-        if not all(isinstance(broker, str) for broker in self.broker_addresses):
-            raise ValueError("[MQTT] broker_addresses debe contener solo strings.")
-
-        # Inicializar cliente MQTT
+        # Inicializa el cliente MQTT
         self.client = mqtt.Client(client_id=self.client_id)
         self.client.on_connect = self.on_connect
         self.client.on_disconnect = self.on_disconnect
         self.client.on_message = self.on_message
 
-        # Configurar logger
-        logging_manager = LoggingManager(self.config_manager)
-        self.logger = logging_manager.setup_logger("[MQTT_HANDLER]")
+        self.logger.info(f"Brokers configurados: {self.broker_addresses}")
+        self.logger.info(f"Tópicos configurados: {self.topics}")
 
-        self.logger.info(f"[MQTT] Brokers configurados: {self.broker_addresses}")
-        self.logger.info(f"[MQTT] Tópicos configurados: {self.topics}")
-
-    def connect(self):
+    def _normalize_brokers(self):
         """
-        Intenta conectar al primer broker disponible.
+        Convierte broker_addresses en una lista si es un string único.
+        """
+        brokers = self.config.get("broker_addresses", [])
+        if isinstance(brokers, str):
+            brokers = [brokers]
+        if not all(isinstance(broker, str) for broker in brokers):
+            raise ValueError("[MQTT] broker_addresses debe contener solo strings.")
+        return brokers
+
+    def connect_and_subscribe(self):
+        """
+        Conecta al primer broker disponible y suscribe a los tópicos configurados.
         """
         for broker in self.broker_addresses:
             try:
-                self.logger.info(f"[MQTT] Intentando conectar al broker {broker}:{self.port}...")
+                self.logger.info(f"Intentando conectar al broker {broker}:{self.port}...")
                 self.client.connect(broker, self.port, self.keepalive)
                 self.client.loop_start()
-                self.subscribe_to_topics()
-                self.logger.info(f"[MQTT] Conexión exitosa al broker {broker}:{self.port}.")
+                self._subscribe_to_topics()
+                self.logger.info(f"Conexión exitosa al broker {broker}.")
                 return
             except Exception as e:
-                self.logger.warning(f"[MQTT] No se pudo conectar al broker {broker}:{self.port}. Error: {e}")
+                self.logger.warning(f"No se pudo conectar al broker {broker}:{self.port}. Error: {e}")
 
-        self.logger.critical("[MQTT] No se pudo conectar a ninguno de los brokers disponibles.")
-        raise ConnectionError("[MQTT] No se pudo conectar a ningún broker MQTT.")
+        self.logger.critical("No se pudo conectar a ninguno de los brokers disponibles.")
+        raise ConnectionError("No se pudo conectar a ningún broker MQTT.")
 
-    def subscribe_to_topics(self):
+    def _subscribe_to_topics(self):
         """
         Suscribe al cliente MQTT a los tópicos configurados.
         """
         if not self.topics:
-            self.logger.warning("[MQTT] No se encontraron tópicos para suscripción.")
+            self.logger.warning("No hay tópicos configurados para suscripción.")
             return
 
         for topic_name, topic_path in self.topics.items():
             try:
                 self.client.subscribe(topic_path)
-                self.logger.info(f"[MQTT] Suscrito al tópico: {topic_path}")
+                self.logger.info(f"Suscrito al tópico: {topic_path}")
             except Exception as e:
-                self.logger.error(f"[MQTT] Error al suscribirse al tópico {topic_path}: {e}")
-
-    def unsubscribe(self, topics):
-        """
-        Se desuscribe de uno o varios tópicos.
-        """
-        for topic in topics:
-            try:
-                self.client.unsubscribe(topic)
-                self.logger.info(f"[MQTT] Desuscrito del tópico: {topic}")
-            except Exception as e:
-                self.logger.error(f"[MQTT] Error al desuscribirse del tópico {topic}: {e}")
+                self.logger.error(f"Error al suscribirse al tópico {topic_path}: {e}")
 
     def publish(self, topic, message, qos=0):
         """
-        Publica un mensaje en un tópico MQTT.
+        Publica un mensaje en un tópico MQTT con un ID único para rastreo.
         """
         try:
-            self.client.publish(topic, message, qos=qos)
+            # Agregar un ID único al mensaje
+            if isinstance(message, dict):
+                message["id"] = str(uuid.uuid4())
+            else:
+                message = {"message": message, "id": str(uuid.uuid4())}
+
+            # Publicar el mensaje
+            self.client.publish(topic, str(message), qos=qos)
             self.logger.info(f"[MQTT] Mensaje publicado en {topic}: {message}")
         except Exception as e:
             self.logger.error(f"[MQTT] Error al publicar mensaje en {topic}: {e}")
 
-    def is_connected(self):
-        """
-        Verifica si el cliente MQTT está conectado.
-        """
-        return self.client.is_connected()
-
-    def reconnect(self):
-        """
-        Intenta reconectar al broker MQTT.
-        """
-        try:
-            self.logger.info("[MQTT] Intentando reconexión...")
-            self.client.reconnect()
-        except Exception as e:
-            self.logger.error(f"[MQTT] Error al intentar reconexión: {e}")
-
     def on_connect(self, client, userdata, flags, rc):
         if rc == 0:
-            self.logger.info("[MQTT] Conexión exitosa al broker MQTT.")
+            self.logger.info("Conexión exitosa al broker MQTT.")
         else:
-            self.logger.error(f"[MQTT] Error al conectar al broker MQTT. Código: {rc}")
+            self.logger.error(f"Fallo al conectar al broker. Código: {rc}")
 
     def on_disconnect(self, client, userdata, rc):
-        self.logger.warning("[MQTT] Desconectado del broker MQTT.")
-        if self.auto_reconnect:
-            self.logger.info("[MQTT] Intentando reconexión automática...")
-            self.reconnect()
+        self.logger.warning("Desconectado del broker MQTT.")
 
     def on_message(self, client, userdata, msg):
-        self.logger.info(f"[MQTT] Mensaje recibido en {msg.topic}: {msg.payload.decode()}")
-
-    def loop_forever(self):
         """
-        Mantiene activo el bucle de recepción de mensajes.
+        Maneja mensajes recibidos en los tópicos suscritos.
+        Si existe un callback personalizado, lo invoca con el mensaje completo.
         """
         try:
-            self.logger.info("[MQTT] Iniciando loop continuo...")
-            self.client.loop_forever()
+            payload = msg.payload.decode()
+            message = eval(payload)  # Convertir el mensaje a diccionario (asegúrate de que sea seguro)
+
+            # Extraer el ID si está presente
+            message_id = message.get("id", "Sin ID")
+
+            # Log del mensaje recibido
+            self.logger.info(f"[MQTT] Mensaje recibido en {msg.topic}: {message}. ID: {message_id}")
+
+            # Invocar callback personalizado si está definido
+            if userdata and hasattr(userdata, "on_message_received"):
+                userdata.on_message_received(message_id, msg.topic, message)
+
         except Exception as e:
-            self.logger.error(f"[MQTT] Error en loop continuo: {e}")
+            self.logger.error(f"[MQTT] Error procesando mensaje en {msg.topic}: {e}")
+
