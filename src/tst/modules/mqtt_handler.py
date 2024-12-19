@@ -21,6 +21,7 @@ class MQTTHandler:
         self.port = self.config.get("port", 1883)
         self.keepalive = self.config.get("keepalive", 60)
         self.topics = self.config.get("topics", {})
+        self.auto_reconnect = self.config.get("auto_reconnect", True)  
         self.logger = LoggingManager(self.config_manager).setup_logger("[MQTT_HANDLER]")
 
         # Inicializa el cliente MQTT
