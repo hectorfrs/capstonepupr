@@ -2,13 +2,9 @@ system:
   enable_camera: false
   enable_sensors: true
   enable_logging: true
-  enable_greengrass: true
-  enable_aws: true
-  enable_mqtt: true
   enable_network_monitoring: true
   enable_relay_controller: true
   enable_alert_manager: true
-  enable_debug: false
   enable_json_logging: true
   conveyor_speed: 300  # Velocidad del conveyor en pulgadas/segundo
 
@@ -78,7 +74,7 @@ logging:
   backup_count: 5                                               # Número de archivos de logs de respaldo
   alert_log_file: "logs/alerts.json"
   rotate_alert_logs: true
-  enable_debug: false
+  enable_debug: true
 
 mux:
   relays:
