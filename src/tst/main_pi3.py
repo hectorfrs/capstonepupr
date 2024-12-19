@@ -125,7 +125,7 @@ def main():
 
         # Limpieza de caché
         clear_cache()
-        global logger
+        #global logger
 
         # Configuración de red
         logger.info("Iniciando monitoreo de red...")
