@@ -17,8 +17,8 @@ from modules.config_manager import ConfigManager
 from modules.mqtt_handler import MQTTHandler
 
 # Configuración inicial del logger
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-logger = logging.getLogger("MAIN PI-1")
+#logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+#logger = logging.getLogger("MAIN PI-1")
 
 def on_message_received(client, userdata, msg):
     """
