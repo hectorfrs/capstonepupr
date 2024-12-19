@@ -28,7 +28,7 @@ def calculate_delay(distance, speed):
         raise ValueError("La velocidad debe ser mayor que cero.")
     return round(distance / speed, 2)
 
-def on_message_received(client, userdata, msg, relay_controller, config_manager):
+def on_message_received(client, userdata, msg, relay_controller, config):
     """
     Procesa mensajes MQTT en Raspberry 2.
     """
@@ -40,26 +40,29 @@ def on_message_received(client, userdata, msg, relay_controller, config_manager)
         timestamp = payload.get("timestamp", "Sin Timestamp")
         material = payload.get("material", "Desconocido")
 
-        # Log del evento recibido
         logger.info(f"[RPI2] Evento recibido | ID: {event_id} | Material: {material} | Timestamp: {timestamp}")
 
-        # Obtener tiempos de activación dinámicos desde ConfigManager
-        activation_time_min = config_manager.get("mux.activation_time_min", 0.5)
-        activation_time_max = config_manager.get("mux.activation_time_max", 3)
-        activation_time = round(random.uniform(activation_time_min, activation_time_max), 2)
+        # Buscar relé asignado al material
+        relays = config["mux"]["relays"]
+        relay_data = next((relay for relay in relays if relay.get("assigned_material") == material), None)
 
-        # Activar el relé según el tipo de material
-        if material in ["PET", "HDPE"]:
-            relay_index = 0 if material == "PET" else 1
-            relay_controller.activate_relay(relay_index, activation_time, event_id)
+        if relay_data:
+            activation_time_min = relay_data.get("activation_time_min", 0.5)
+            activation_time_max = relay_data.get("activation_time_max", 3.0)
+            activation_time = round(random.uniform(activation_time_min, activation_time_max), 2)
+
+            # Activar el relé
+            relay_index = relay_data["mux_channel"]
+            relay_controller.activate_relay(relay_index, activation_time)
             logger.info(f"[RPI2] Relay {relay_index} activado para {material} por {activation_time} segundos. ID Evento: {event_id}")
         else:
-            logger.warning(f"[RPI2] Material desconocido: {material}. ID Evento: {event_id}")
+            logger.warning(f"[RPI2] Material desconocido o no asignado: {material}. ID Evento: {event_id}")
 
     except json.JSONDecodeError as e:
         logger.error(f"[RPI2] Error decodificando JSON: {e}")
     except Exception as e:
         logger.error(f"[RPI2] Error procesando mensaje: {e}")
+
 
 def main():
     global relay_controller

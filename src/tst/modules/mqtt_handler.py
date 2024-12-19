@@ -32,7 +32,7 @@ class MQTTHandler:
         self.client.on_message = self.on_message
 
         self.logger.info(f"Brokers configurados: {self.broker_addresses}")
-        self.logger.info(f"Tópicos configurados: {self.topics}")
+        #self.logger.info(f"Tópicos configurados: {self.topics}")
 
     
 
