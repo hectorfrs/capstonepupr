@@ -39,7 +39,7 @@ class MQTTHandler:
             self.logger.error("[MQTT] La lista de brokers no está configurada correctamente en config.yaml.")
             raise ValueError("[MQTT] La lista de brokers no está configurada correctamente en config.yaml.")
 
-        self.logger.info(f"[MQTT] Brokers configurados: {self.broker_addresses}")
+        print(f"[MQTT] Brokers configurados: {self.broker_addresses}")
 
         # Configurar logger centralizado
         logging_manager = LoggingManager(self.config_manager)
