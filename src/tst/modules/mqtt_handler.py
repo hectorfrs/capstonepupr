@@ -41,6 +41,9 @@ class MQTTHandler:
         Convierte broker_addresses en una lista si es un string único.
         """
         self.broker_addresses = self.config_manager.get("mqtt.broker_addresses", [])
+        brokers = self.config.get("broker_addresses", [])
+        if isinstance(brokers, str):
+            brokers = [brokers]
         if not all(isinstance(broker, str) for broker in brokers):
             raise ValueError("[MQTT] broker_addresses debe contener solo strings.")
         return brokers
