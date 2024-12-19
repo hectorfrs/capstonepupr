@@ -120,17 +120,46 @@ class MQTTHandler:
         if self.logger:
             self.logger.info("Desuscripción exitosa.")
 
+    # def connect(self):
+    #     """
+    #     Intenta conectarse a cada dirección de broker hasta que tenga éxito.
+    #     """
+    #     if not self.enable_mqtt:
+    #         self.logger.warning("MQTT está deshabilitado. Conexión omitida.")
+    #         return
+
+    #     for broker in self.config.get("broker_addresses", []):
+    #         if not self.config.get("broker_addresses"):
+    #             raise ValueError("[MQTT] La lista de brokers no está configurada en config.yaml.")
+    #         try:
+    #             self.logger.info(f"[MQTT] Intentando conectar al broker {broker}:{self.port}...")
+    #             self.client.connect(broker, self.port, self.keepalive)
+    #             self.client.loop_start()  # Inicia el loop de la biblioteca MQTT
+    #             self.logger.info(f"[MQTT] Conexión exitosa al broker {broker}:{self.port}.")
+    #             return  # Sale del método si la conexión tiene éxito
+    #         except Exception as e:
+    #             self.logger.warning(f"[MQTT] No se pudo conectar al broker {broker}:{self.port}. Error: {e}")
+
+    #     # Si ninguna conexión tuvo éxito
+    #     self.logger.critical("[MQTT] No se pudo conectar a ninguno de los brokers disponibles.")
+    #     raise ConnectionError("No se pudo conectar a ningún broker MQTT.")
+
     def connect(self):
         """
         Intenta conectarse a cada dirección de broker hasta que tenga éxito.
         """
         if not self.enable_mqtt:
-            self.logger.warning("MQTT está deshabilitado. Conexión omitida.")
+            self.logger.warning("[MQTT] MQTT está deshabilitado. Conexión omitida.")
             return
 
-        for broker in self.config.get("broker_addresses", []):
-            if not self.config.get("broker_addresses"):
-                raise ValueError("[MQTT] La lista de brokers no está configurada en config.yaml.")
+        broker_list = self.config.get("broker_addresses", [])
+        if not broker_list:
+            self.logger.error("[MQTT] La lista de brokers no está configurada en config.yaml.")
+            raise ValueError("[MQTT] La lista de brokers no está configurada en config.yaml.")
+
+        self.logger.info(f"[MQTT] {len(broker_list)} broker(s) disponible(s) para conexión.")
+
+        for broker in broker_list:
             try:
                 self.logger.info(f"[MQTT] Intentando conectar al broker {broker}:{self.port}...")
                 self.client.connect(broker, self.port, self.keepalive)
@@ -139,10 +168,12 @@ class MQTTHandler:
                 return  # Sale del método si la conexión tiene éxito
             except Exception as e:
                 self.logger.warning(f"[MQTT] No se pudo conectar al broker {broker}:{self.port}. Error: {e}")
+                self.client.loop_stop()  # Detiene el loop antes de intentar el siguiente broker
 
         # Si ninguna conexión tuvo éxito
         self.logger.critical("[MQTT] No se pudo conectar a ninguno de los brokers disponibles.")
-        raise ConnectionError("No se pudo conectar a ningún broker MQTT.")
+        raise ConnectionError("[MQTT] No se pudo conectar a ningún broker MQTT.")
+
 
     def reconnect(self):
         """
