@@ -101,7 +101,7 @@ def main():
         network_manager.start_monitoring()
         time.sleep(1)
 
-         # Inicializar MQTTHandler
+        # Inicializar MQTTHandler
         mqtt_handler = MQTTHandler(config_manager)
 
         # Publicar un mensaje inicial

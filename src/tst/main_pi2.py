@@ -13,7 +13,8 @@ from modules.network_manager import NetworkManager
 from modules.real_time_config import RealTimeConfigManager
 from modules.config_manager import ConfigManager
 from modules.mqtt_handler import MQTTHandler
-from raspberry_pi.pi2.lib.relay_controller import RelayController
+from raspberry_pi.pi2.sim.relay_controller import RelayController # Cambiar a la línea de abajo para usar el controlador real
+#from raspberry_pi.pi2.lib.relay_controller import RelayController # Cambiar a la línea de arriba para usar el controlador simulado
 
 # Función para calcular el delay basado en distancia y velocidad del conveyor
 def calculate_delay(distance, speed):
