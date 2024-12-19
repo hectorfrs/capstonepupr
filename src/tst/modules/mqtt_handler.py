@@ -118,7 +118,6 @@ class MQTTHandler:
             except Exception as e:
                 self.logger.error(f"[MQTT] Error en reconexión automática: {e}")
 
-
     def on_message(self, client, userdata, msg):
         """
         Maneja mensajes recibidos en los tópicos suscritos.
@@ -138,4 +137,20 @@ class MQTTHandler:
             self.logger.error(f"[MQTT] Error decodificando JSON: {e}")
         except Exception as e:
             self.logger.error(f"[MQTT] Error procesando mensaje en {msg.topic}: {e}")
+
+    def is_connected(self):
+        """
+        Verifica si el cliente MQTT está conectado.
+        """
+        return self.client.is_connected()
+
+    def reconnect(self):
+        """
+        Intenta reconectar al broker MQTT.
+        """
+        try:
+            self.logger.info("[MQTT] Intentando reconexión...")
+            self.client.reconnect()
+        except Exception as e:
+            self.logger.error(f"[MQTT] Error al intentar reconexión: {e}")
 
