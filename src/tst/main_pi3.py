@@ -47,31 +47,36 @@ def on_message_received(client, userdata, msg):
     except Exception as e:
         logger.error(f"[PI-3] Error procesando mensaje: {e}")
 
-def detect_material(mqtt_handler, material):
-    """
-    Simula la detección de un material y publica el evento con un ID único.
-    """
-    try:
-        # Generar un ID único para el evento
-        event_id = str(uuid.uuid4())
-        timestamp = datetime.now().isoformat()
+def detect_and_publish(mqtt_handler, material):
+    event_id = str(uuid.uuid4())
+    timestamp = datetime.now().isoformat()
 
-        # Log del evento detectado
-        logger.info(f"[RPI3] Material detectado: {material} | ID Evento: {event_id} | Timestamp: {timestamp}")
+    payload = {
+        "id": event_id,
+        "timestamp": timestamp,
+        "material": material
+    }
 
-        # Crear payload del evento
-        payload = {
-            "id": event_id,
-            "timestamp": timestamp,
-            "material": material
-        }
+    logger.info(f"[RPI3] Material detectado: {material} | ID Evento: {event_id}")
+    mqtt_handler.publish("material/deteccion", payload)
+    logger.info(f"[RPI3] Evento publicado en MQTT: {payload}")
 
-        # Publicar el evento en MQTT
-        mqtt_handler.publish("material/entrada", payload)
-        logger.info(f"[RPI3] Evento publicado en MQTT: {payload}")
+def handle_processed_material(client, userdata, msg):
+    payload = json.loads(msg.payload.decode())
+    event_id = payload.get("id", "Sin ID")
+    material = payload.get("material", "Desconocido")
+    logger.info(f"[RPI3] Material procesado recibido | ID Evento: {event_id} | Material: {material}")
 
-    except Exception as e:
-        logger.error(f"[RPI3] Error detectando material: {e}")
+    # Simular el pesaje del material
+    weight = random.uniform(1, 5)
+    weighing_payload = {
+        "id": event_id,
+        "material": material,
+        "weight": round(weight, 2)
+    }
+
+    mqtt_handler.publish("material/pesaje", weighing_payload)
+    logger.info(f"[RPI3] Pesaje registrado: {weighing_payload}")
 
 def main():
     # Inicialización de variables

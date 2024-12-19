@@ -10,15 +10,17 @@ import json
 import random
 import logging
 from datetime import datetime
-from modules.logging_manager import LoggingManager
 from modules.network_manager import NetworkManager
 from modules.real_time_config import RealTimeConfigManager
 from modules.config_manager import ConfigManager
 from modules.mqtt_handler import MQTTHandler
 
-# Configuración inicial del logger
-#logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-#logger = logging.getLogger("MAIN PI-1")
+def setup_logger():
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - [%(levelname)s] - %(message)s",
+    )
+    return logging.getLogger("MAIN PI-1")
 
 def on_message_received(client, userdata, msg):
     """
@@ -49,38 +51,29 @@ def on_message_received(client, userdata, msg):
 
 
 def main():
-    # Inicialización de variables
+    logger = setup_logger()
     network_manager = None  # Inicialización para evitar errores de referencia
-    try:
-        config_manager = ConfigManager("/home/raspberry-1/capstonepupr/src/tst/configs/pi1_config.yaml")
-        logging_manager = LoggingManager(config_manager)
-        time.sleep(0.5)
-    except Exception as e:
-        logger.error(f"Error inicializando ConfigManager: {e}")
-        raise
-    
-    # Inicializar logger básico para respaldo en caso de fallos
-    logger = logging_manager.setup_logger("[MAIN PI-1]")
-    time.sleep(0.5)
+    mqtt_handler = None     # Inicialización para evitar errores de referencia
 
-    # Limpiar caché antes de iniciar
-    logger.info("Limpiando caché de configuraciones...")
-    config_manager.clear_cache()
-    time.sleep(0.5)
     try:
         logger.info("=" * 70)
         logger.info("Iniciando sistema de detección de materiales en Raspberry Pi 1")
         logger.info("=" * 70)
 
-        # Cargar configuración dinámica
-        logger.info("Iniciando monitoreo de configuración en tiempo real...")
-        real_time_config = RealTimeConfigManager(config_manager)
-        real_time_config.start_monitoring()
-        config = real_time_config.get_config()
+        # Configuración del sistema
+        config_path = "/home/raspberry-1/capstonepupr/src/tst/configs/pi1_config.yaml"
+        config_manager = ConfigManager(config_path)
+        
+        # Limpiar caché antes de iniciar
+        logger.info("Limpiando caché de configuraciones...")
+        config_manager.clear_cache()
         time.sleep(0.5)
 
-        # Limpieza de caché
-        #clear_cache()
+        real_time_config = RealTimeConfigManager(config_manager)
+        real_time_config.start_monitoring()
+
+        # Obtener configuración
+        config = real_time_config.get_config()
 
         # Configuración de red
         logger.info("Iniciando monitoreo de red...")
@@ -89,49 +82,38 @@ def main():
 
         # Inicializa MQTTHandler
         mqtt_handler = MQTTHandler(config_manager)
-
-        # Asigna el callback personalizado
         mqtt_handler.client.on_message = on_message_received
-
-        # Conecta al broker MQTT y suscribe a tópicos
         mqtt_handler.connect_and_subscribe()
-
-        # Publicación de prueba
-        #mqtt_handler.publish("material/entrada", "Iniciando monitoreo")
-
-        # Loop continuo para mensajes
         logger.info("Esperando mensajes MQTT de Raspberry 3...")
         mqtt_handler.client.loop_forever()
 
+        # Simulación de mensajes recibidos en loop
+        # while True:
+        #     time.sleep(1)  # Simular tiempo de operación
+
     except KeyboardInterrupt:
-        logger.info("[PI-1] Apagando Monitoreo del Network...")
-        network_manager.stop_monitoring()
-        logger.info("[PI-1] Sistema apagado correctamente.")
-    except Exception as e:
-        logger.error(f"[PI-1] Error crítico en la ejecución: {e}")
-    finally:
-        logger.info("[PI-1] Finalizando ejecución del script.")
-        if 'mqtt_handler' in globals() and mqtt_handler.is_connected():
-            logger.info("[PI-1] Desconectando cliente MQTT...")
-            mqtt_handler.disconnect()
-            logger.info("[PI-1] Cliente MQTT desconectado.")
-        if 'network_manager' in globals():
-            logger.info("[PI-1] Apagando Monitoreo del Network...")
+        logger.info("Interrupción detectada. Apagando sistema...")
+        if network_manager:
+            logger.info("Apagando Monitoreo del Network...")
             network_manager.stop_monitoring()
-            logger.info("[PI-1] Monitoreo de red apagado.")
-        if 'real_time_config' in globals():
-            logger.info("[PI-1] Deteniendo monitoreo de configuración...")
+            logger.info("Sistema apagado correctamente.")        
+        
+    except Exception as e:
+        logger.error(f"Error crítico en la ejecución: {e}")
+    finally:
+        if network_manager:
+            network_manager.stop_monitoring()
+        if mqtt_handler.is_connected():
+            logger.info("Desconectando cliente MQTT...")
+            mqtt_handler.disconnect()
+            logger.info("Cliente MQTT desconectado.")
+        if real_time_config():
+            logger.info("Deteniendo monitoreo de configuración...")
             real_time_config.stop_monitoring()
-            logger.info("[PI-1] Monitoreo de configuración detenido.")
-        if 'logging_manager' in globals():
-            logger.info("[PI-1] Finalizando logging...")
-            logging_manager.stop_logging()
-            logger.info("[PI-1] Logging finalizado.")
-        if 'logger' in globals():
-            logger.info("[PI-1] Cerrando logger principal...")
-            logger.info("[PI-1] Logger principal cerrado.")
-        logger.info("[PI-1] Proceso finalizado.")
+            logger.info("Monitoreo de configuración detenido.")
+        logger.info("Proceso finalizado.")
         sys.exit(0)
 
 if __name__ == "__main__":
     main()
+
