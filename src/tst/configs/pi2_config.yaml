@@ -44,13 +44,13 @@ network:
 
 mqtt:
   enable_mqtt: true
-  enable_aws: false
   auto_reconnect: true
+  enable_aws: false
   broker_addresses:
-    - "192.168.1.147"             # Dirección IP del broker MQTT (Ethernet, Raspberry Pi #3)
-    - "192.168.2.147"             # Dirección IP del broker MQTT (Wi-Fi, Raspberry Pi #3)
+    - "192.168.1.147"
+    - "192.168.2.147"
   port: 1883
-  keepalive: 60 
+  keepalive: 60
   client_id: "Raspberry-2"
   topics:
     action: "valvula/accion"

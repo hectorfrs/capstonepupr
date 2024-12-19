@@ -27,13 +27,13 @@ network:
 
 mqtt:
   enable_mqtt: true
-  enable_aws: false
   auto_reconnect: true
-  broker_addresses: 
-    - "192.168.1.147"                                             # Dirección IP del broker MQTT local (Ethernet Raspberry Pi #3)
-    - "192.168.2.147"                                             # Dirección IP del broker MQTT local (Wi-Fi Raspberry Pi #3)
-  port: 1883                                                      # Puerto del broker MQTT
-  keepalive: 60 
+  enable_aws: false
+  broker_addresses:
+    - "192.168.1.147"
+    - "192.168.2.147"
+  port: 1883
+  keepalive: 60
   client_id: "RaspberryPi-1"
   topics:
     entry: "material/entrada"

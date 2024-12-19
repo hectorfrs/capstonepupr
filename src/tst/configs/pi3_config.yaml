@@ -27,12 +27,12 @@ network:
 
 mqtt:
   enable_mqtt: true
-  enable_aws: false
   auto_reconnect: true
+  enable_aws: false
   broker_addresses: "localhost"
-  port: 1883                                  # Puerto para el broker MQTT local
-  client_id: "RaspberryPi-3"
-  keepalive: 60 
+  port: 1883
+  keepalive: 60
+  client_id: "Raspberry-3"
   topics:
     entry: "material/entrada"
     detection: "material/deteccion"
