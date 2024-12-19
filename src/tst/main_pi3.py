@@ -7,6 +7,7 @@ import time
 import json
 import random
 import uuid
+import logging
 from datetime import datetime
 from modules.logging_manager import LoggingManager
 from modules.network_manager import NetworkManager
@@ -15,34 +16,9 @@ from modules.config_manager import ConfigManager
 from modules.mqtt_handler import MQTTHandler
 from raspberry_pi.pi3.utils.camera_simulation import simulate_camera_detection
 
-def clear_cache():
-    """
-    Limpia la caché del sistema antes de iniciar el script.
-    """
-    try:
-        # Elimina variables residuales del entorno (si aplica)
-        logging.debug("[CACHE] Limpiando variables globales...")
-        globals().clear()
-
-        # Reinicia el bus I²C (si aplica)
-        logging.debug("[CACHE] Reiniciando bus I²C...")
-        os.system("i2cdetect -y 1 > /dev/null 2>&1")
-
-        # Libera caché de Python (si es necesario)
-        logging.debug("[CACHE] Forzando recolección de basura...")
-        import gc
-        gc.collect()
-
-        # Opcional: Elimina posibles cachés de bibliotecas
-        logging.debug("[CACHE] Eliminando archivos .pyc...")
-        pycache_path = os.path.join(os.path.dirname(__file__), "__pycache__")
-        if os.path.exists(pycache_path):
-            import shutil
-            shutil.rmtree(pycache_path)
-        logging.info("[CACHE] Limpieza completada.")
-    except Exception as e:
-        logging.error(f"[CACHE] Error durante la limpieza de caché: {e}")
-
+# Configuración inicial del logger
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logger = logging.getLogger("MAIN PI-3")
 
 def on_message_received(client, userdata, msg):
     """
