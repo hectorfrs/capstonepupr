@@ -112,7 +112,7 @@ def main():
 
         mqtt_handler.connect()
         #mqtt_handler.subscribe("material/entrada")
-        mqtt_client.subscribe(mqtt_config["topics"]["entry"])
+        mqtt_handler.subscribe(mqtt_config["topics"]["entry"])
 
         # Configuración de relay
         logger.info("[PI2] Configurando controlador de relay...")
