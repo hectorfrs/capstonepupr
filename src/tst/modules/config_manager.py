@@ -28,7 +28,7 @@ class ConfigManager:
 
         # Cargar configuración inicial
         self.load_config()
-        self.validate_config()
+        #self.validate_config()
 
     def load_config(self):
         """
