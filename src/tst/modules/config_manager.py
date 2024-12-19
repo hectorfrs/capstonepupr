@@ -32,10 +32,10 @@ class ConfigManager:
 
         # Inicializar logger principal
         logging_manager = LoggingManager(self)
-        self.logger = logging_manager.setup_logger("[CONFIG_MANAGER]")
+        self.logger = LoggingManager(self).setup_logger("[CONFIG_MANAGER]")
 
         # Cargar y validar configuración
-        self.load_config()
+        self.config_data = self._load_config()
         self.validate_config()
 
     def load_config(self):
@@ -69,16 +69,14 @@ class ConfigManager:
         :param default: Valor predeterminado si la clave no existe.
         :return: Valor asociado a la clave o el valor predeterminado.
         """
-        keys = key_path.split(".")
-        value = self.config
         try:
+            keys = key_path.split('.')
+            value = self.config_data
             for key in keys:
                 value = value[key]
             return value
         except KeyError:
-            (self.logger if hasattr(self, "logger") else self.temp_logger).warning(
-                f"Clave faltante: {key_path}. Usando valor predeterminado: {default}"
-            )
+            self.logger.warning(f"Clave faltante: {key_path}. Usando valor predeterminado: {default}")
             return default
 
     def set(self, key_path, value):

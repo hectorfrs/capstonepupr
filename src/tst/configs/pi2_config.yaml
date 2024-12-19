@@ -82,13 +82,14 @@ mux:
   relays:
     - mux_channel: 0
       i2c_address: 0x18             # Relay 1 (PET)
-      activation_time_min: 0.5      # Tiempo mínimo de activación del relay en segundos
-      activation_time_max: 3        # Tiempo máximo de activación del relay en segundos
+      #activation_time_min: 0.5      # Tiempo mínimo de activación del relay en segundos
+      #activation_time_max: 3        # Tiempo máximo de activación del relay en segundos
     - mux_channel: 1
       i2c_address: 0x18             # Relay 2 (HDPE)
-      activation_time_min: 0.5      # Tiempo mínimo de activación del relay en segundos
-      activation_time_max: 5        # Tiempo máximo de activación del relay en segundos
-
+      #activation_time_min: 0.5      # Tiempo mínimo de activación del relay en segundos
+      #activation_time_max: 5        # Tiempo máximo de activación del relay en segundos
+  activation_time_min: 0.5
+  activation_time_max: 3
 
 greengrass:
   enable_greengrass: true

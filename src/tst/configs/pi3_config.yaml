@@ -25,7 +25,7 @@ mqtt:
   enable_mqtt: true
   auto_reconnect: true
   enable_aws: false
-  broker_addresses: "localhost"
+  broker_addresses: ["localhost"]
   port: 1883
   keepalive: 60
   client_id: "Raspberry-3"
