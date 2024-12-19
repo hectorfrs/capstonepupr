@@ -6,6 +6,7 @@
 import time
 import json
 import random
+import uuid
 from modules.logging_manager import LoggingManager
 from modules.network_manager import NetworkManager
 from modules.real_time_config import RealTimeConfigManager

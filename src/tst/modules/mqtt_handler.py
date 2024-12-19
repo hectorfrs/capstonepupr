@@ -7,6 +7,9 @@ import paho.mqtt.client as mqtt
 import uuid
 import boto3
 import time
+import json
+import os
+import sys
 from modules.logging_manager import LoggingManager
 from modules.config_manager import ConfigManager
 class MQTTHandler:
@@ -102,22 +105,20 @@ class MQTTHandler:
     def on_message(self, client, userdata, msg):
         """
         Maneja mensajes recibidos en los tópicos suscritos.
-        Si existe un callback personalizado, lo invoca con el mensaje completo.
         """
         try:
             payload = msg.payload.decode()
-            message = eval(payload)  # Convertir el mensaje a diccionario (asegúrate de que sea seguro)
+            message = json.loads(payload)  # Usar json.loads en lugar de eval
 
-            # Extraer el ID si está presente
+            # Extraer ID único
             message_id = message.get("id", "Sin ID")
-
-            # Log del mensaje recibido
             self.logger.info(f"[MQTT] Mensaje recibido en {msg.topic}: {message}. ID: {message_id}")
 
-            # Invocar callback personalizado si está definido
+            # Invocar callback personalizado
             if userdata and hasattr(userdata, "on_message_received"):
                 userdata.on_message_received(message_id, msg.topic, message)
-
+        except json.JSONDecodeError as e:
+            self.logger.error(f"[MQTT] Error decodificando JSON: {e}")
         except Exception as e:
             self.logger.error(f"[MQTT] Error procesando mensaje en {msg.topic}: {e}")
 
