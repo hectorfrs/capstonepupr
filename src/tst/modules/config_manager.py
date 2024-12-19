@@ -5,6 +5,7 @@
 
 import yaml
 import os
+import logging
 from modules.logging_manager import LoggingManager
 
 class ConfigManager:
@@ -22,7 +23,14 @@ class ConfigManager:
         self.config_path = config_path
         self.config = {}
 
-        # Inicializar logger
+        # Logger temporal antes de inicializar LoggingManager
+        self.temp_logger = logging.getLogger("[CONFIG_MANAGER]")
+        self.temp_logger.setLevel(logging.INFO)
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+        self.temp_logger.addHandler(console_handler)
+
+        # Inicializar logger principal
         logging_manager = LoggingManager(self)
         self.logger = logging_manager.setup_logger("[CONFIG_MANAGER]")
 
@@ -68,7 +76,9 @@ class ConfigManager:
                 value = value[key]
             return value
         except KeyError:
-            logger.warning(f"Clave faltante: {key_path}. Usando valor predeterminado: {default}")
+            (self.logger if hasattr(self, "logger") else self.temp_logger).warning(
+                f"Clave faltante: {key_path}. Usando valor predeterminado: {default}"
+            )
             return default
 
     def set(self, key_path, value):
@@ -84,9 +94,11 @@ class ConfigManager:
             "mqtt.enable_mqtt": True,
             "mqtt.broker_addresses": ["localhost"],
             "logging.enable_debug": False,
+            "log_file": "~/logs/app.log",
+            "error_log_file": "~/logs/error.log",
         }
 
         for key, default in required_keys.items():
             if self.get(key, None) is None:
                 self.set(key, default)
-                self.logger.warning(f"Clave faltante: {key}. Valor predeterminado establecido: {default}")
+                print(f"Clave faltante: {key}. Valor predeterminado establecido: {default}")

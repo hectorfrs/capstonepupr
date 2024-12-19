@@ -10,6 +10,7 @@ import time
 import json
 import os
 import sys
+import logging
 from modules.logging_manager import LoggingManager
 from modules.config_manager import ConfigManager
 class MQTTHandler:
@@ -32,6 +33,8 @@ class MQTTHandler:
 
         self.logger.info(f"Brokers configurados: {self.broker_addresses}")
         self.logger.info(f"Tópicos configurados: {self.topics}")
+
+    
 
     def _normalize_brokers(self):
         """
