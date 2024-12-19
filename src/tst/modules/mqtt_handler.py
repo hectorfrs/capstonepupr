@@ -28,18 +28,18 @@ class MQTTHandler:
         self.enable_mqtt = self.config_manager.get("mqtt.enable_mqtt", True)
         self.enable_aws = self.config_manager.get("mqtt.enable_aws", False)
         self.broker_addresses = self.config.get("broker_addresses", [])
+
+        # Depuración adicional
+        print(f"[DEBUG] Configuración MQTT: {self.config}")
+        print(f"[DEBUG] broker_addresses: {self.broker_addresses}")
         
-        # Normalizar valor único (string) en una lista
         if isinstance(self.broker_addresses, str):
             print("[MQTT] broker_addresses era un string. Se convirtió a una lista.")
             self.broker_addresses = [self.broker_addresses]
 
-        # Validar broker_addresses
         if not isinstance(self.broker_addresses, list) or len(self.broker_addresses) == 0:
             print("[MQTT] La lista de brokers no está configurada correctamente en config.yaml.")
             raise ValueError("[MQTT] La lista de brokers no está configurada correctamente en config.yaml.")
-
-        print(f"[MQTT] Brokers configurados: {self.broker_addresses}")
 
         # Configurar logger centralizado
         logging_manager = LoggingManager(self.config_manager)
