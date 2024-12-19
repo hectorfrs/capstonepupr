@@ -94,8 +94,7 @@ def on_message_received(client, userdata, msg, relay_controller, config):
 
 
 def main():
-    # Limpieza de caché
-    clear_cache()
+
     global relay_controller
     global logger
     # Configuración
@@ -115,6 +114,9 @@ def main():
         logger.info("Iniciando sistema de control de Relay en Raspberry Pi 2")
         logger.info("=" * 70)
 
+        # Limpieza de caché
+        clear_cache()
+        
         # Cargar configuración dinámica
         logger.info("Iniciando monitoreo de configuración en tiempo real...")
         real_time_config = RealTimeConfigManager(config_manager)

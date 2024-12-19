@@ -98,8 +98,7 @@ def detect_material(mqtt_handler, material):
         logger.error(f"[RPI3] Error detectando material: {e}")
 
 def main():
-    # Limpieza de caché
-    clear_cache()
+
     global logger
     # Configuración
     config_path = "/home/raspberry-3/capstonepupr/src/tst/configs/pi3_config.yaml"
@@ -118,6 +117,9 @@ def main():
         logger.info("Iniciando sistema de simulación en Raspberry Pi 3")
         logger.info("=" * 70)
 
+        # Limpieza de caché
+        clear_cache()
+        
         # Cargar configuración dinámica
         logger.info("Iniciando monitoreo de configuración en tiempo real...")
         real_time_config = RealTimeConfigManager(config_manager)
