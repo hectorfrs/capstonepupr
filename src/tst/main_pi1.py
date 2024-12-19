@@ -96,7 +96,6 @@ def main():
         mqtt_config = config.get("mqtt", {})
         mqtt_handler = MQTTHandler(config_manager)
         mqtt_handler.client.on_message = on_message_received
-        time.sleep(1)
 
         mqtt_handler.connect()
         mqtt_handler.subscribe("material/entrada")
