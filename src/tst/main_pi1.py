@@ -99,7 +99,7 @@ def main():
         time.sleep(0.5)
 
         # Limpieza de caché
-        clear_cache()
+        #clear_cache()
 
         # Configuración de red
         logger.info("Iniciando monitoreo de red...")
