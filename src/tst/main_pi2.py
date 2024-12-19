@@ -26,39 +26,34 @@ def calculate_delay(distance, speed):
         raise ValueError("La velocidad debe ser mayor que cero.")
     return round(distance / speed, 2)
 
-def on_message_received(client, userdata, msg):
+def on_message_received(client, userdata, msg, relay_controller):
     """
-    Callback para procesar mensajes MQTT y activar relay.
+    Procesa mensajes MQTT en Raspberry 2.
     """
     try:
-        raw_payload = msg.payload.decode()
-        logger.info(f"[MQTT] Mensaje recibido en '{msg.topic}': {raw_payload}")
+        payload = json.loads(msg.payload.decode())
 
-        if not raw_payload.strip():
-            logger.warning("[PI2] Mensaje recibido está vacío.")
-            return
+        # Extraer datos del mensaje
+        event_id = payload.get("id", "Sin ID")
+        timestamp = payload.get("timestamp", "Sin Timestamp")
+        material = payload.get("material", "Desconocido")
 
-        try:
-            payload = json.loads(raw_payload)
-            logger.info(f"[PI2] Mensaje recibido | Tópico: {msg.topic} | Payload: {payload}")
-        except json.JSONDecodeError as e:
-            logger.error(f"[PI2] Error decodificando JSON: {e}")
-            return
+        # Log del evento recibido
+        logger.info(f"[RPI2] Evento recibido | ID: {event_id} | Material: {material} | Timestamp: {timestamp}")
 
-        material_type = payload.get("tipo", "Unknown")
-        action_time = payload.get("tiempo", 0)
-
-        logger.info(f"[PI2] Material: {material_type} | Tiempo: {action_time}s")
-
-        if material_type in ["PET", "HDPE"]:
-            relay_index = 0 if material_type == "PET" else 1
-            relay_controller.activate_relay(relay_index, action_time)
-            logger.info(f"[PI2] Activado Relay {relay_index} por {action_time}s para {material_type}.")
+        # Activar el relé según el tipo de material
+        if material in ["PET", "HDPE"]:
+            relay_index = 0 if material == "PET" else 1
+            relay_controller.activate_relay(relay_index, 5)  # Ejemplo: activa por 5 segundos
+            logger.info(f"[RPI2] Relay {relay_index} activado para {material}. ID Evento: {event_id}")
         else:
-            logger.warning(f"[PI2] Material desconocido: {material_type}")
+            logger.warning(f"[RPI2] Material desconocido: {material}. ID Evento: {event_id}")
 
+    except json.JSONDecodeError as e:
+        logger.error(f"[RPI2] Error decodificando JSON: {e}")
     except Exception as e:
-        logger.error(f"[PI2] Error procesando mensaje: {e}")
+        logger.error(f"[RPI2] Error procesando mensaje: {e}")
+
 
 def main():
     global relay_controller

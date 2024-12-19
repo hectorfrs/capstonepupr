@@ -41,6 +41,32 @@ def on_message_received(client, userdata, msg):
     except Exception as e:
         logger.error(f"[PI-3] Error procesando mensaje: {e}")
 
+def detect_material(mqtt_handler, material):
+    """
+    Simula la detección de un material y publica el evento con un ID único.
+    """
+    try:
+        # Generar un ID único para el evento
+        event_id = str(uuid.uuid4())
+        timestamp = datetime.now().isoformat()
+
+        # Log del evento detectado
+        logger.info(f"[RPI3] Material detectado: {material} | ID Evento: {event_id} | Timestamp: {timestamp}")
+
+        # Crear payload del evento
+        payload = {
+            "id": event_id,
+            "timestamp": timestamp,
+            "material": material
+        }
+
+        # Publicar el evento en MQTT
+        mqtt_handler.publish("material/entrada", payload)
+        logger.info(f"[RPI3] Evento publicado en MQTT: {payload}")
+
+    except Exception as e:
+        logger.error(f"[RPI3] Error detectando material: {e}")
+
 def main():
     global logger
     # Configuración

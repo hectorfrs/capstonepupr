@@ -16,43 +16,31 @@ from modules.mqtt_handler import MQTTHandler
 
 def on_message_received(client, userdata, msg):
     """
-    Callback para procesar mensajes recibidos.
+    Procesa mensajes MQTT en Raspberry 1.
     """
     try:
-        raw_payload = msg.payload.decode()
-        logger.info(f"[MQTT] Mensaje recibido en '{msg.topic}': {raw_payload}")
+        payload = json.loads(msg.payload.decode())
 
-        if not raw_payload.strip():
-            logger.warning("[PI-1] Mensaje recibido está vacío.")
-            return
+        # Extraer datos del mensaje
+        event_id = payload.get("id", "Sin ID")
+        timestamp = payload.get("timestamp", "Sin Timestamp")
+        material = payload.get("material", "Desconocido")
 
-        try:
-            payload = json.loads(raw_payload)
-            logger.info(f"[PI-1] Mensaje recibido | Tópico: {msg.topic} | Payload: {payload}")
-        except json.JSONDecodeError as e:
-            logger.error(f"[PI-1] Error decodificando JSON: {e}")
-            return
+        # Log del evento recibido
+        logger.info(f"[RPI1] Evento recibido | ID: {event_id} | Material: {material} | Timestamp: {timestamp}")
 
-        detection_id = payload.get("id", "N/A")
-        material = payload.get("material", "Unknown")
-
-        logger.info(f"[PI-1] Mensaje recibido | ID: {detection_id} | Material: {material}")
-
-        if material in ["PET", "HDPE"]:
-            action_time = round(random.uniform(1, 5), 2)
-            action_payload = {
-                "id": detection_id,
-                "tipo": material,
-                "tiempo": action_time
-            }
-
-            mqtt_handler.publish("valvula/accion", json.dumps(action_payload))
-            logger.info(f"[PI-1] Acción enviada | ID: {detection_id} | Tipo: {material} | Tiempo: {action_time}s")
+        # Realizar acciones adicionales si aplica
+        # Ejemplo: validar el material
+        if material not in ["PET", "HDPE"]:
+            logger.warning(f"[RPI1] Material desconocido: {material}. ID Evento: {event_id}")
         else:
-            logger.info(f"[PI-1] Material '{material}' ignorado | ID: {detection_id}")
+            logger.info(f"[RPI1] Material válido: {material}. ID Evento: {event_id}")
 
+    except json.JSONDecodeError as e:
+        logger.error(f"[RPI1] Error decodificando JSON: {e}")
     except Exception as e:
-        logger.error(f"[PI-1] Error procesando mensaje: {e}")
+        logger.error(f"[RPI1] Error procesando mensaje: {e}")
+
 
 def main():
     global logger
