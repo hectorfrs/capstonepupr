@@ -29,6 +29,7 @@ class MQTTHandler:
         self.enable_mqtt = self.config_manager.get("mqtt.enable_mqtt", True)
         self.enable_aws = self.config_manager.get("mqtt.enable_aws", False)
         self.broker_addresses = self.config.get("broker_addresses", [])
+        self.topics = []  # Inicializar el atributo topics como una lista vacía
 
         # Depuración adicional
         print(f"[DEBUG] Configuración MQTT: {self.config}")
