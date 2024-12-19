@@ -61,13 +61,16 @@ def main():
         config_path = "/home/raspberry-1/capstonepupr/src/tst/configs/pi1_config.yaml"
         try:
             config_manager = ConfigManager(config_path)
+            time.sleep(1)
             logging_manager = LoggingManager(config_manager)
+            time.sleep(1)
         except Exception as e:
             logger.error(f"Error inicializando ConfigManager: {e}")
             raise
         
         # Inicializar logger básico para respaldo en caso de fallos
         logger = logging_manager.setup_logger("[MAIN PI-1]")
+        
 
         logger.info("=" * 70)
         logger.info("Iniciando sistema de detección de materiales en Raspberry Pi 1")
@@ -78,11 +81,13 @@ def main():
         real_time_config = RealTimeConfigManager(config_manager)
         real_time_config.start_monitoring()
         config = real_time_config.get_config()
+        time.sleep(1)
 
         # Configuración de red
         logger.info("Iniciando monitoreo de red...")
         network_manager = NetworkManager(config)
         network_manager.start_monitoring()
+        time.sleep(1)
 
 
         # Configurar MQTT

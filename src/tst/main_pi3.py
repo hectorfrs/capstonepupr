@@ -48,7 +48,9 @@ def main():
         config_path = "/home/raspberry-3/capstonepupr/src/tst/configs/pi3_config.yaml"
         try:
             config_manager = ConfigManager(config_path)
+            time.sleep(1)
             logging_manager = LoggingManager(config_manager)
+            time.sleep(1)
         except Exception as e:
             logger.error(f"Error inicializando ConfigManager: {e}")
             raise
@@ -65,11 +67,13 @@ def main():
         real_time_config = RealTimeConfigManager(config_manager)
         real_time_config.start_monitoring()
         config = real_time_config.get_config()
+        time.sleep(1)
 
         # Configuración de red
         logger.info("Iniciando monitoreo de red...")
         network_manager = NetworkManager(config)
         network_manager.start_monitoring()
+        time.sleep(1)
 
         # Configurar MQTT
         logger.info("[PI-3] [MQTT] Configurando cliente MQTT...")
