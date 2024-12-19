@@ -174,7 +174,6 @@ class MQTTHandler:
         if not broker_list:
             self.logger.error("[MQTT] La lista de brokers no está configurada en config.yaml.")
             raise ValueError("[MQTT] La lista de brokers no está configurada en config.yaml.")
-
         self.logger.info(f"[MQTT] {len(broker_list)} broker(s) disponible(s) para conexión.")
 
         for broker in broker_list:
