@@ -78,11 +78,16 @@ class ConfigManager:
         """
         required_keys = {
             "mqtt.enable_mqtt": True,
-            "mqtt.broker_addresses": ["localhost"],
-            "logging.enable_debug": False,
-            "log_file": "~/logs/app.log",
-            "error_log_file": "~/logs/error.log",
+            "mqtt.broker_addresses": ["192.168.1.147"],
+            "mqtt.port": 1883,
+            "mqtt.keepalive": 60,
+            "mqtt.topics.entry": "material/entrada",
+            "mqtt.topics.detection": "material/deteccion",
+            "mqtt.topics.action": "valvula/accion",
+            "mqtt.topics.status": "valvula/estado",
+            "mqtt.topics.alertas": "raspberry-3/alertas"
         }
+
 
         for key, default in required_keys.items():
             if self.get(key, None) is None:
