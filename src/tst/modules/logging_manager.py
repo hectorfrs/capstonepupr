@@ -3,9 +3,10 @@
 # Copyright (c) 2024
 # Proyecto: Smart Recycling Bin
 
+import sys
+import os
 import logging
 from logging.handlers import RotatingFileHandler
-import os
 from datetime import datetime
 
 
@@ -27,7 +28,6 @@ class CustomFormatter(logging.Formatter):
             t = ct.strftime("%Y-%m-%d %H:%M:%S")
             s = f"{t}.{int(record.msecs):03d}"
             return s
-
 
 class LoggingManager:
     """
