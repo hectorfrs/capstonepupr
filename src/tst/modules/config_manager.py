@@ -6,6 +6,7 @@
 import yaml
 import logging
 import os
+from modules.logging_manager import LoggingManager
 
 class ConfigManager:
     """
@@ -19,18 +20,16 @@ class ConfigManager:
         :param config_path: Ruta al archivo de configuración YAML.
         """
         self.config_path = config_path
-        self.config_data = None
+        self.config_data = {}
 
         # Configurar logger
         try:
-            self.logger = self.setup_logger()
-        except Exception as e:
+            self.logger = LoggingManager(self).setup_logger("[CONFIG_MANAGER]")
+        except Exception:
+            # Fallback a un logger básico si hay un error en LoggingManager
+            logging.basicConfig(level=logging.WARNING, format="%(asctime)s - [%(levelname)s] - %(message)s")
             self.logger = logging.getLogger("[CONFIG_MANAGER]")
-            console_handler = logging.StreamHandler()
-            formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-            console_handler.setFormatter(formatter)
-            self.logger.addHandler(console_handler)
-            self.logger.warning(f"Usando logger de fallback debido a errores en LoggingManager: {e}")
+            self.logger.warning("Usando logger de fallback debido a errores en LoggingManager.")
 
         # Cargar configuración
         self.config_data = self.load_config()

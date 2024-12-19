@@ -51,13 +51,14 @@ class LoggingManager:
         """
         logger = logging.getLogger(module_name)
 
-        # Evitar configurar múltiples veces el mismo logger
-        if logger.hasHandlers():
-            return logger
-
+        # Configurar nivel de log
         enable_debug = self.config_manager.get('logging.enable_debug', False)
         logger.setLevel(logging.DEBUG if enable_debug else logging.INFO)
 
+        # Evitar configurar múltiples veces el mismo logger
+        if logger.hasHandlers():
+            return logger
+        
         # Formato del log
         log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         date_format = "%Y-%m-%d %H:%M:%S"
