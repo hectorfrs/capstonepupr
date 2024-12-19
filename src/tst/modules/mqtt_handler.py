@@ -196,6 +196,7 @@ class MQTTHandler:
             try:
                 self.logger.info(f"[MQTT] Intentando conectar al broker {broker}:{self.port}...")
                 self.client.connect(broker, self.port, self.keepalive)
+                self.subscribe_to_topics()
                 self.client.loop_start()  # Inicia el loop de la biblioteca MQTT
                 self.logger.info(f"[MQTT] Conexión exitosa al broker {broker}:{self.port}.")
                 return  # Sale del método si la conexión tiene éxito
@@ -219,6 +220,21 @@ class MQTTHandler:
         except Exception as e:
             if self.logger:
                 self.logger.error(f"Error en reconexión: {e}")
+
+    def subscribe_to_topics(self):
+        """
+        Suscribe al cliente MQTT a los tópicos configurados.
+        """
+        if not self.topics:
+            self.logger.warning("[MQTT] No se encontraron tópicos para suscripción.")
+            return
+
+        for topic_name, topic_path in self.topics.items():
+            try:
+                self.client.subscribe(topic_path)
+                self.logger.info(f"[MQTT] Suscrito al tópico: {topic_path}")
+            except Exception as e:
+                self.logger.error(f"[MQTT] Error al suscribirse al tópico {topic_path}: {e}")
 
     def subscribe(self, topics):
         """
