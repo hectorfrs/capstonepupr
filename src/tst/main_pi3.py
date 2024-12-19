@@ -54,7 +54,7 @@ def main():
             raise
         
         # Inicializar logger básico para respaldo en caso de fallos
-        logger = logging_manager.setup_logger("[MAIN PI-3]" )
+        logger = logging_manager.setup_logger("[MAIN PI-3]")
 
         logger.info("=" * 70)
         logger.info("Iniciando sistema de simulación en Raspberry Pi 3")
