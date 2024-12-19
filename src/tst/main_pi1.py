@@ -64,8 +64,7 @@ def main():
         logger.info("=" * 70)
 
         # Configuración del sistema
-        config_path = "/home/raspberry-1/capstonepupr/src/tst/configs/config_mqtt.yaml"
-        config_manager = ConfigManager(config_path=config_path)
+        config_manager = ConfigManager(config_path="/home/raspberry-1/capstonepupr/src/tst/configs/config_mqtt.yaml")
         
         # Limpiar caché antes de iniciar
         logger.info("Limpiando caché de configuraciones...")
