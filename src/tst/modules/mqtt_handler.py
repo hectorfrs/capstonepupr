@@ -40,15 +40,7 @@ class MQTTHandler:
             self.port = self.config.get("port", 1883)
             self.keepalive = self.config.get("keepalive", 60)
             self.client_id = self.config.get("client_id", "MQTTClient")
-
-        # Log de depuración para validar la configuración
-        if self.logger:
-            self.logger.debug(f"[MQTT] Configuración cargada: {self.config}")
-            self.logger.debug(f"[MQTT] enable_mqtt: {self.enable_mqtt}")
-            self.logger.debug(f"[MQTT] enable_aws: {self.enable_aws}")
-            self.logger.debug(f"[MQTT] auto_reconnect: {self.auto_reconnect}")
-            self.logger.debug(f"[MQTT] Brokers disponibles: {self.config.get('broker_addresses', [])}")
-
+            
             # Inicializar cliente MQTT
             self.client = mqtt.Client(client_id=self.client_id)
 
@@ -66,7 +58,13 @@ class MQTTHandler:
         # Atributo para reconexión automática
         self.auto_reconnect = self.config_manager.get("mqtt.auto_reconnect", True)
 
-        
+        # Log de depuración para validar la configuración
+        if self.logger:
+            self.logger.debug(f"[MQTT] Configuración cargada: {self.config}")
+            self.logger.debug(f"[MQTT] enable_mqtt: {self.enable_mqtt}")
+            self.logger.debug(f"[MQTT] enable_aws: {self.enable_aws}")
+            self.logger.debug(f"[MQTT] auto_reconnect: {self.auto_reconnect}")
+            self.logger.debug(f"[MQTT] Brokers disponibles: {self.config.get('broker_addresses', [])}")
 
     def setup_logger(self, logger):
         """
