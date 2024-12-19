@@ -22,6 +22,9 @@ def setup_logger():
     )
     return logging.getLogger("MAIN PI-1")
 
+def calculate_delay(distance, conveyor_speed):
+    return round(distance / conveyor_speed, 2)
+
 def on_message_received(client, userdata, msg):
     """
     Procesa mensajes MQTT en Raspberry 1.
@@ -87,9 +90,37 @@ def main():
         logger.info("Esperando mensajes MQTT de Raspberry 3...")
         mqtt_handler.client.loop_forever()
 
-        # Simulación de mensajes recibidos en loop
-        # while True:
-        #     time.sleep(1)  # Simular tiempo de operación
+        # Cálculo de delay y simulación de detección
+        distance_to_sensor = config["system"].get("distance_to_sensor", 24)  # en pulgadas
+        conveyor_speed = config["system"].get("conveyor_speed", 100)  # en pulgadas por segundo
+        evaluation_time_min = 0.1
+        evaluation_time_max = 1.0
+
+        while True:
+            # Simula el tiempo de llegada del material al sensor
+            delay_to_sensor = calculate_delay(distance_to_sensor, conveyor_speed)
+            logger.info(f"[PI-1] Tiempo estimado para llegada al sensor: {delay_to_sensor} segundos")
+            time.sleep(delay_to_sensor)
+
+            # Simula la evaluación del material
+            evaluation_time = round(random.uniform(evaluation_time_min, evaluation_time_max), 2)
+            logger.info(f"[PI-1] Evaluando material durante {evaluation_time} segundos")
+            time.sleep(evaluation_time)
+
+            # Publica el material evaluado a Raspberry Pi 2
+            event_id = str(uuid.uuid4())
+            timestamp = datetime.now().isoformat()
+            material = random.choice(["PET", "HDPE", "UNKNOWN"])
+
+            payload = {
+                "id": event_id,
+                "timestamp": timestamp,
+                "material": material,
+            }
+
+            logger.info(f"[PI-1] Material evaluado: {material} | ID Evento: {event_id}")
+            mqtt_handler.publish("material/entrada", payload)
+            logger.info(f"[PI-1] Evento publicado en MQTT: {payload}")
 
     except KeyboardInterrupt:
         logger.info("Interrupción detectada. Apagando sistema...")
