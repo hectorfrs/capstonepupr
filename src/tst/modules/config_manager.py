@@ -101,10 +101,9 @@ class ConfigManager:
         """
         logger.info("Validando configuración...")
         required_keys = {
-            "system.enable_sensors": True,
-            "system.enable_logging": True,
-            "logging.log_file": "logs/app.log",
-            "mqtt.enable_mqtt": True,
+            "system.enable_mqtt": True,
+            "mqtt.auto_reconnect": True,
+            "mqtt.broker_address": ["localhost"],
         }
 
         for key, default_value in required_keys.items():
