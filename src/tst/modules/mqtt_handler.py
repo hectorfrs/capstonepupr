@@ -6,6 +6,7 @@
 import paho.mqtt.client as mqtt
 import uuid
 import boto3
+import time
 from modules.logging_manager import LoggingManager
 from modules.config_manager import ConfigManager
 
@@ -32,10 +33,16 @@ class MQTTHandler:
         # Depuración adicional
         print(f"[DEBUG] Configuración MQTT: {self.config}")
         print(f"[DEBUG] broker_addresses: {self.broker_addresses}")
+
+        # Verificación de la clave broker_addresses
+        broker_addresses = config_manager.get("mqtt.broker_addresses", [])
+        print(f"[DEBUG] broker_addresses: {broker_addresses}")
         
         if isinstance(self.broker_addresses, str):
             print("[MQTT] broker_addresses era un string. Se convirtió a una lista.")
             self.broker_addresses = [self.broker_addresses]
+
+        
 
         if not isinstance(self.broker_addresses, list) or len(self.broker_addresses) == 0:
             print("[MQTT] La lista de brokers no está configurada correctamente en config.yaml.")
