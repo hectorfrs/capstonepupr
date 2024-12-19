@@ -114,14 +114,15 @@ def main():
         logger.info("Iniciando sistema de control de Relay en Raspberry Pi 2")
         logger.info("=" * 70)
 
-        # Limpieza de caché
-        clear_cache()
-        
         # Cargar configuración dinámica
         logger.info("Iniciando monitoreo de configuración en tiempo real...")
         real_time_config = RealTimeConfigManager(config_manager)
         real_time_config.start_monitoring()
         config = real_time_config.get_config()
+        time.sleep(0.5)
+
+        # Limpieza de caché
+        clear_cache()
 
         # Configuración de red
         logger.info("Iniciando monitoreo de red...")
