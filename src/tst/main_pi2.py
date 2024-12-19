@@ -98,8 +98,8 @@ def main():
         delay_sensor_to_valve_1 = calculate_delay(distances["sensor_to_valve_1"], conveyor_speed)
         delay_sensor_to_valve_2 = calculate_delay(distances["sensor_to_valve_2"], conveyor_speed)
 
-        logging.info(f"[PI2] Delay sensor a válvula 1: {delay_sensor_to_valve_1} segundos")
-        logging.info(f"[PI2] Delay sensor a válvula 2: {delay_sensor_to_valve_2} segundos")
+        logger.info(f"[PI2] Delay sensor a válvula 1: {delay_sensor_to_valve_1} segundos")
+        logger.info(f"[PI2] Delay sensor a válvula 2: {delay_sensor_to_valve_2} segundos")
 
         # Configurar MQTT
         logger.info("[PI2] [MQTT] Configurando cliente MQTT...")

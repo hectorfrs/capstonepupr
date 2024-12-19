@@ -28,7 +28,7 @@ class MQTTHandler:
         self.config = self.config_manager.get("mqtt", {})
         self.enable_mqtt = self.config_manager.get("mqtt.enable_mqtt", True)
         self.enable_aws = self.config_manager.get("mqtt.enable_aws", False)
-        
+
         # Log de depuración para validar la configuración
         if self.logger:
             self.logger.debug(f"[MQTT] Configuración cargada: {self.config}")
@@ -62,7 +62,8 @@ class MQTTHandler:
         self.auto_reconnect = self.config_manager.get("mqtt.auto_reconnect", True)
 
         # Configurar logger centralizado
-        self.logger = LoggingManager(self.config_manager).setup_logger("[MQTT_HANDLER]")
+        logging_manager = LoggingManager(self.config_manager)
+        self.logger = logging_manager.setup_logger("[MQTT_HANDLER]")
 
     def setup_logger(self, logger):
         """
