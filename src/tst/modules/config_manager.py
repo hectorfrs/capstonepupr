@@ -55,14 +55,21 @@ class ConfigManager:
             self.logger.error(f"Error al guardar la configuración: {e}")
 
     def get(self, key_path, default=None):
+        """
+        Obtiene un valor de configuración basado en una ruta clave jerárquica.
+        :param key_path: Ruta de la clave, separada por puntos (e.g., "mux.activation_time_min").
+        :param default: Valor predeterminado si la clave no existe.
+        :return: Valor asociado a la clave o el valor predeterminado.
+        """
         keys = key_path.split(".")
         value = self.config
-        for key in keys:
-            if isinstance(value, dict) and key in value:
+        try:
+            for key in keys:
                 value = value[key]
-            else:
-                return default
-        return value
+            return value
+        except KeyError:
+            logger.warning(f"Clave faltante: {key_path}. Usando valor predeterminado: {default}")
+            return default
 
     def set(self, key_path, value):
         keys = key_path.split(".")

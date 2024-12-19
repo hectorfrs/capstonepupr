@@ -27,7 +27,7 @@ def calculate_delay(distance, speed):
         raise ValueError("La velocidad debe ser mayor que cero.")
     return round(distance / speed, 2)
 
-def on_message_received(client, userdata, msg, relay_controller):
+def on_message_received(client, userdata, msg, relay_controller, config_manager):
     """
     Procesa mensajes MQTT en Raspberry 2.
     """
@@ -42,15 +42,15 @@ def on_message_received(client, userdata, msg, relay_controller):
         # Log del evento recibido
         logger.info(f"[RPI2] Evento recibido | ID: {event_id} | Material: {material} | Timestamp: {timestamp}")
 
-        # Obtener tiempo de activación dinámico
-        activation_time_min = config["relays"].get("activation_time_min", 0.5)
-        activation_time_max = config["relays"].get("activation_time_max", 3)
+        # Obtener tiempos de activación dinámicos desde ConfigManager
+        activation_time_min = config_manager.get("mux.activation_time_min", 0.5)
+        activation_time_max = config_manager.get("mux.activation_time_max", 3)
         activation_time = round(random.uniform(activation_time_min, activation_time_max), 2)
 
         # Activar el relé según el tipo de material
         if material in ["PET", "HDPE"]:
             relay_index = 0 if material == "PET" else 1
-            relay_controller.activate_relay(relay_index, activation_time)
+            relay_controller.activate_relay(relay_index, activation_time, event_id)
             logger.info(f"[RPI2] Relay {relay_index} activado para {material} por {activation_time} segundos. ID Evento: {event_id}")
         else:
             logger.warning(f"[RPI2] Material desconocido: {material}. ID Evento: {event_id}")
@@ -115,7 +115,9 @@ def main():
         mqtt_handler = MQTTHandler(config_manager)
 
         # Asigna el callback personalizado
-        mqtt_handler.client.on_message = on_message_received
+        mqtt_handler.client.on_message = lambda client, userdata, msg: on_message_received(
+    client, userdata, msg, relay_controller, config_manager
+)
 
         # Conecta al broker MQTT y suscribe a tópicos
         mqtt_handler.connect_and_subscribe()
