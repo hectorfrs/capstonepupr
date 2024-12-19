@@ -2,8 +2,6 @@ system:
   enable_camera: false
   enable_sensors: true
   enable_logging: true
-  enable_greengrass: true
-  enable_aws: true
   enable_mqtt: true
   enable_network_monitoring: true
   enable_relay_controller: true

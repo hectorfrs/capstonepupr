@@ -62,21 +62,20 @@ def on_message_received(client, userdata, msg):
 def main():
     global relay_controller
     global logger
+    # Configuración
+    config_path = "/home/raspberry-2/capstonepupr/src/tst/configs/pi2_config.yaml"
     try:
-       # Configuración
-        config_path = "/home/raspberry-2/capstonepupr/src/tst/configs/pi2_config.yaml"
-        try:
-            config_manager = ConfigManager(config_path)
-            time.sleep(1)
-            logging_manager = LoggingManager(config_manager)
-            time.sleep(1)
-        except Exception as e:
-            logger.error(f"Error inicializando ConfigManager: {e}")
-            raise
-        
-        # Inicializar logger básico para respaldo en caso de fallos
-        logger = logging_manager.setup_logger("[MAIN PI-2]")
-
+        config_manager = ConfigManager(config_path)
+        time.sleep(1)
+        logging_manager = LoggingManager(config_manager)
+        time.sleep(1)
+    except Exception as e:
+        logger.error(f"Error inicializando ConfigManager: {e}")
+        raise
+    
+    # Inicializar logger básico para respaldo en caso de fallos
+    logger = logging_manager.setup_logger("[MAIN PI-2]")
+    try:
         logger.info("=" * 70)
         logger.info("Iniciando sistema de control de Relay en Raspberry Pi 2")
         logger.info("=" * 70)
