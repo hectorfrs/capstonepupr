@@ -100,7 +100,17 @@ class MQTTHandler:
             self.logger.error(f"Fallo al conectar al broker. Código: {rc}")
 
     def on_disconnect(self, client, userdata, rc):
-        self.logger.warning("Desconectado del broker MQTT.")
+        """
+        Maneja desconexiones del broker MQTT.
+        """
+        self.logger.warning("[MQTT] Desconectado del broker MQTT.")
+        if self.auto_reconnect:
+            try:
+                self.logger.info("[MQTT] Intentando reconexión automática...")
+                self.connect_and_subscribe()
+            except Exception as e:
+                self.logger.error(f"[MQTT] Error en reconexión automática: {e}")
+
 
     def on_message(self, client, userdata, msg):
         """
