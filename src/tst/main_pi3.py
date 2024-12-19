@@ -81,6 +81,7 @@ def main():
         global mqtt_handler
         mqtt_handler = MQTTHandler(mqtt_config)
         mqtt_handler.client.on_message = on_message_received
+        time.sleep(1)
 
         mqtt_handler.connect()
         mqtt_handler.subscribe("raspberry-3/simulation")
