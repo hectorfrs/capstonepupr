@@ -45,7 +45,7 @@ def main():
     global logger
     try:
         # Configuración
-        config_path = "/home/raspberry-3/capstonepupr/src/tst/configs/pi1_config.yaml"
+        config_path = "/home/raspberry-3/capstonepupr/src/tst/configs/pi3_config.yaml"
         try:
             #enable_debug = self.config_manager.get('logging.enable_debug', False)
             config_manager = ConfigManager(config_path)
