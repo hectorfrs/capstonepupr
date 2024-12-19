@@ -66,9 +66,9 @@ def main():
     config_path = "/home/raspberry-2/capstonepupr/src/tst/configs/pi2_config.yaml"
     try:
         config_manager = ConfigManager(config_path)
-        time.sleep(1)
+        time.sleep(0.5)
         logging_manager = LoggingManager(config_manager)
-        time.sleep(1)
+        time.sleep(0.5)
     except Exception as e:
         logger.error(f"Error inicializando ConfigManager: {e}")
         raise
@@ -85,13 +85,11 @@ def main():
         real_time_config = RealTimeConfigManager(config_manager)
         real_time_config.start_monitoring()
         config = real_time_config.get_config()
-        time.sleep(1)
 
         # Configuración de red
         logger.info("Iniciando monitoreo de red...")
         network_manager = NetworkManager(config)
         network_manager.start_monitoring()
-        time.sleep(1)
 
         # Obtener velocidad del conveyor y distancias configuradas
         conveyor_speed = config["system"].get("conveyor_speed", 100)
@@ -111,7 +109,6 @@ def main():
         mqtt_config = config.get("mqtt", {})
         mqtt_handler = MQTTHandler(config_manager)
         mqtt_handler.client.on_message = on_message_received
-        time.sleep(1)
 
         mqtt_handler.connect()
         #mqtt_handler.subscribe("material/entrada")

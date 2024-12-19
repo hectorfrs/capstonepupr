@@ -80,13 +80,12 @@ def main():
         real_time_config = RealTimeConfigManager(config_manager)
         real_time_config.start_monitoring()
         config = real_time_config.get_config()
-        time.sleep(1)
+
 
         # Configuración de red
         logger.info("Iniciando monitoreo de red...")
         network_manager = NetworkManager(config)
         network_manager.start_monitoring()
-        time.sleep(1)
 
 
         # Configurar MQTT
@@ -98,6 +97,7 @@ def main():
         mqtt_handler.client.on_message = on_message_received
 
         mqtt_handler.connect()
+        
         mqtt_handler.subscribe("material/entrada")
 
         logger.info("[PI-1] Esperando señales MQTT de Raspberry-3...")

@@ -46,9 +46,9 @@ def main():
     config_path = "/home/raspberry-3/capstonepupr/src/tst/configs/pi3_config.yaml"
     try:
         config_manager = ConfigManager(config_path)
-        time.sleep(1)
+        time.sleep(0.5)
         logging_manager = LoggingManager(config_manager)
-        time.sleep(1)
+        time.sleep(0.5)
     except Exception as e:
         logger.error(f"Error inicializando ConfigManager: {e}")
         raise
