@@ -100,20 +100,19 @@ def main():
         network_manager.start_monitoring()
         time.sleep(1)
 
-        # Inicializa MQTTHandler
+         # Inicializar MQTTHandler
         mqtt_handler = MQTTHandler(config_manager)
 
-        # Asigna el callback personalizado
-        mqtt_handler.client.on_message = on_message_received
+        # Publicar un mensaje inicial
+        mqtt_handler.publish("material/entrada", {"message": "Sistema iniciado en Raspberry Pi 3"})
 
-        # Conecta al broker MQTT y suscribe a tópicos
-        mqtt_handler.connect_and_subscribe()
+        # Simular detección de materiales
+        materials = ["PET", "HDPE", "UNKNOWN"]
+        for material in materials:
+            detect_and_publish(mqtt_handler, material)
 
-        # Publicación de prueba
-        mqtt_handler.publish("valvula/estado", "Iniciando monitoreo")
-
-        # Loop continuo para mensajes
-        logger.info("Esperando mensajes MQTT...")
+        # Mantener el loop MQTT
+        logger.info("[PI-3] Esperando mensajes MQTT...")
         mqtt_handler.client.loop_forever()
 
         # Configuración de simulación
