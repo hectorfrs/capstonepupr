@@ -109,7 +109,7 @@ def main():
         # Simular detección de materiales
         materials = ["PET", "HDPE", "UNKNOWN"]
         for material in materials:
-            detect_and_publish(mqtt_handler, material)
+            detect_material(mqtt_handler, material)
 
         # Mantener el loop MQTT
         logger.info("[PI-3] Esperando mensajes MQTT...")
