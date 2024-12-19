@@ -94,7 +94,7 @@ def on_message_received(client, userdata, msg, relay_controller, config):
 
 
 def main():
-
+    
     # Configuración
     config_path = "/home/raspberry-2/capstonepupr/src/tst/configs/pi2_config.yaml"
     config_manager = ConfigManager(config_path)
@@ -120,9 +120,8 @@ def main():
         time.sleep(0.5)
 
         # Limpieza de caché
-        clear_cache()
-        #global relay_controller
-        #global logger
+        #clear_cache()
+        
 
         # Configuración de red
         logger.info("Iniciando monitoreo de red...")
@@ -182,3 +181,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+    global relay_controller
+    global logger
