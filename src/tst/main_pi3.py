@@ -17,8 +17,8 @@ from modules.mqtt_handler import MQTTHandler
 from raspberry_pi.pi3.utils.camera_simulation import simulate_camera_detection
 
 # Configuración inicial del logger
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-logger = logging.getLogger("MAIN PI-3")
+# logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+# logger = logging.getLogger("MAIN PI-3")
 
 def on_message_received(client, userdata, msg):
     """
