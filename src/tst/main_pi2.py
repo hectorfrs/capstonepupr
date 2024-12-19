@@ -57,6 +57,14 @@ def on_message_received(client, userdata, msg, relay_controller):
         logger.error(f"[PI2] Error procesando mensaje: {e}")
 
 def main():
+    network_manager = None  # Inicialización para evitar errores de referencia
+    mqtt_handler = None      # Inicialización para evitar errores de referencia
+    logging_manager = None   # Inicialización para evitar errores de referencia
+    real_time_config = None  # Inicialización para evitar errores de referencia
+    config = None            # Inicialización para evitar errores de referencia
+    mqtt_config = None       # Inicialización para evitar errores de referencia
+    logger = None            # Inicialización para evitar errores de referencia
+    relay_controller = None  # Inicialización para evitar errores de referencia
     try:
         logger.info("=" * 70)
         logger.info("Iniciando sistema de control de Relay en Raspberry Pi 2")
@@ -65,7 +73,7 @@ def main():
         # Cargar configuración dinámica
         logger.info("Iniciando monitoreo de configuración en tiempo real...")
         config_manager = ConfigManager("/home/raspberry-2/capstonepupr/src/tst/configs/pi2_config.yaml")
-
+        time.sleep(0.5)
         # Limpiar caché antes de iniciar
         logger.info("Limpiando caché de configuraciones...")
         config_manager.clear_cache()
@@ -105,14 +113,33 @@ def main():
         # Inicia el loop de MQTT
         mqtt_handler.forever_loop()
 
+    except KeyboardInterrupt:
+        
+        if network_manager:
+            logger.info("[PI2] Apagando Monitoreo del Network...")
+            network_manager.stop_monitoring()
+            logger.info("[PI2] Sistema apagado correctamente.")
+
     except Exception as e:
         logger.error(f"[PI2] Error crítico en la ejecución: {e}")
 
     finally:
-        logger.info("[PI2] Apagando Monitoreo del Network...")
-        network_manager.stop_monitoring()
-        logger.info("[PI2] Sistema apagado correctamente.")
+        if real_time_config:
+            real_time_config.stop_monitoring()
+        if network_manager:
+            logger.info("[PI2] Apagando Monitoreo del Network...")
+            network_manager.stop_monitoring()
+            logger.info("[PI2] Sistema apagado correctamente.")
         logger.info("[PI2] Finalizando ejecución del script.")
+        if 'mqtt_handler' in globals() and mqtt_handler.is_connected():
+            logger.info("[PI2] Desconectando cliente MQTT...")
+            mqtt_handler.disconnect()
+            logger.info("[PI2] Cliente MQTT desconectado.")
+        if 'relay_controller' in globals():
+            logger.info("[PI2] Apagando controlador de relay...")
+            relay_controller.cleanup()
+            logger.info("[PI2] Controlador de relay apagado.")
+        logger.info("[PI2] Sistema apagado correctamente.")
 
 if __name__ == "__main__":
     main()

@@ -72,6 +72,8 @@ def on_message_received(client, userdata, msg):
 
 
 def main():
+    # Inicialización de variables
+    network_manager = None  # Inicialización para evitar errores de referencia
     
     # Configuración
     config_path = "/home/raspberry-1/capstonepupr/src/tst/configs/pi1_config.yaml"
@@ -134,6 +136,23 @@ def main():
             logger.info("[PI-1] Desconectando cliente MQTT...")
             mqtt_handler.disconnect()
             logger.info("[PI-1] Cliente MQTT desconectado.")
+        if 'network_manager' in globals():
+            logger.info("[PI-1] Apagando Monitoreo del Network...")
+            network_manager.stop_monitoring()
+            logger.info("[PI-1] Monitoreo de red apagado.")
+        if 'real_time_config' in globals():
+            logger.info("[PI-1] Deteniendo monitoreo de configuración...")
+            real_time_config.stop_monitoring()
+            logger.info("[PI-1] Monitoreo de configuración detenido.")
+        if 'logging_manager' in globals():
+            logger.info("[PI-1] Finalizando logging...")
+            logging_manager.stop_logging()
+            logger.info("[PI-1] Logging finalizado.")
+        if 'logger' in globals():
+            logger.info("[PI-1] Cerrando logger principal...")
+            logger.info("[PI-1] Logger principal cerrado.")
+        logger.info("[PI-1] Proceso finalizado.")
+        sys.exit(0)
 
 if __name__ == "__main__":
     main()

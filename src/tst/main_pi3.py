@@ -98,7 +98,14 @@ def detect_material(mqtt_handler, material):
         logger.error(f"[RPI3] Error detectando material: {e}")
 
 def main():
-
+    # Inicialización de variables
+    network_manager = None  # Inicialización para evitar errores de referencia
+    mqtt_handler = None      # Inicialización para evitar errores de referencia
+    logging_manager = None   # Inicialización para evitar errores de referencia
+    real_time_config = None  # Inicialización para evitar errores de referencia
+    config = None            # Inicialización para evitar errores de referencia
+    mqtt_config = None       # Inicialización para evitar errores de referencia
+    logger = None            # Inicialización para evitar errores de referencia
     # Configuración
     config_path = "/home/raspberry-3/capstonepupr/src/tst/configs/pi3_config.yaml"
     try:
@@ -211,6 +218,16 @@ def main():
             logger.info("[PI-3] Desconectando cliente MQTT...")
             mqtt_handler.disconnect()
             logger.info("[PI-3] Cliente MQTT desconectado.")
+        if 'logging_manager' in globals():
+            logging_manager.close_handlers()
+            logger.info("[PI-3] Handlers de logging cerrados.")
+        if 'real_time_config' in globals():
+            real_time_config.stop_monitoring()
+            logger.info("[PI-3] Monitoreo de configuración detenido.")
+        if 'network_manager' in globals():
+            network_manager.stop_monitoring()
+            logger.info("[PI-3] Monitoreo de red detenido.")
+        logger.info("[PI-3] Proceso finalizado.")
 
 if __name__ == "__main__":
     main()

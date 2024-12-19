@@ -94,7 +94,9 @@ def on_message_received(client, userdata, msg, relay_controller, config):
 
 
 def main():
-    
+    # Inicialización de variables
+    network_manager = None  # Inicialización para evitar errores de referencia
+    relay_controller = None  # Inicialización para evitar errores de referencia
     # Configuración
     config_path = "/home/raspberry-2/capstonepupr/src/tst/configs/pi2_config.yaml"
     try:
