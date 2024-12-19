@@ -32,7 +32,7 @@ class MQTTHandler:
         self.client.on_message = self.on_message
 
         self.logger.info(f"Brokers configurados: {self.broker_addresses}")
-        #self.logger.info(f"Tópicos configurados: {self.topics}")
+        self.logger.info(f"Tópicos configurados: {self.topics}")
 
     
 
@@ -40,11 +40,7 @@ class MQTTHandler:
         """
         Convierte broker_addresses en una lista si es un string único.
         """
-        #self.broker_addresses = self.config_manager.get("mqtt.broker_addresses", [])
-        #brokers = self.config.get("broker_addresses", [])
-        brokers = self.config_manager.get("mqtt.broker_addresses", [])
-        if isinstance(brokers, str):
-            brokers = [brokers]
+        self.broker_addresses = self.config_manager.get("mqtt.broker_addresses", [])
         if not all(isinstance(broker, str) for broker in brokers):
             raise ValueError("[MQTT] broker_addresses debe contener solo strings.")
         return brokers
