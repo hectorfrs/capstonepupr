@@ -7,14 +7,20 @@ import time
 import json
 import random
 import uuid
+import logging
 from datetime import datetime
-from modules.logging_manager import LoggingManager
 from modules.network_manager import NetworkManager
 from modules.real_time_config import RealTimeConfigManager
 from modules.config_manager import ConfigManager
 from modules.mqtt_handler import MQTTHandler
 from raspberry_pi.pi3.utils.camera_simulation import simulate_camera_detection
-from raspberry_pi.pi3.utils.weight_sensor import WeightSensor
+
+def setup_logger():
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - [%(levelname)s] - %(message)s",
+    )
+    return logging.getLogger("MAIN PI-3")
 
 # Manejo de mensajes recibidos
 def on_message_received(client, userdata, msg):
@@ -75,27 +81,32 @@ def handle_processed_material(client, userdata, msg):
 
 # Configuración del sistema
 def main():
-    network_manager = None  # Inicialización para evitar errores de referencia
-    mqtt_handler = None     # Inicialización para evitar errores de referencia
-
+    logger = setup_logger()
+    network_manager = None
+    mqtt_handler = None
     try:
-        # Configuración inicial
-        config_manager = ConfigManager("/home/raspberry-3/capstonepupr/src/tst/configs/pi3_config.yaml")
-        logging_manager = LoggingManager(config_manager)
-        logger = logging_manager.setup_logger("[MAIN PI-3]")
+        logger.info("=" * 70)
+        logger.info("Iniciando script principal para Raspberry Pi 3...")
+        logger.info("=" * 70)
 
+        # Configuración del sistema
+        try:
+            config_manager = ConfigManager(config_path="/home/raspberry-3/capstonepupr/src/tst/configs/pi3_config.yaml")
+            config_manager.load_config()
+        except Exception as e:
+            logger.error(f"Error inicializando ConfigManager: {e}")
+            raise
+        
         # Limpiar caché antes de iniciar
         logger.info("Limpiando caché de configuraciones...")
         config_manager.clear_cache()
+        time.sleep(0.5)
 
-        logger.info("=" * 70)
-        logger.info("Iniciando sistema de simulación en Raspberry Pi 3")
-        logger.info("=" * 70)
-
-        # Cargar configuración dinámica
         real_time_config = RealTimeConfigManager(config_manager)
         real_time_config.start_monitoring()
-        config = real_time_config.get_config()
+        if not config_manager.validate_section("mqtt"):
+            raise ValueError("[PI-x] Error: La sección MQTT no está configurada en el archivo de configuración.")
+
 
         # Configuración de red
         logger.info("Iniciando monitoreo de red...")
@@ -160,15 +171,31 @@ def main():
         logger.info("[PI-3] Simulación completada. Finalizando script.")
 
     except KeyboardInterrupt:
-        logger.info("[PI-3] Interrupción detectada. Apagando sistema...")
+        logger.info("Interrupción detectada. Apagando sistema...")
+        if network_manager:
+            logger.info("Apagando Monitoreo del Network...")
+            network_manager.stop_monitoring()
+            logger.info("Sistema apagado correctamente.") 
+        if mqtt_handler.is_connected():
+            logger.info("Desconectando cliente MQTT...")
+            mqtt_handler.disconnect()
+            logger.info("Cliente MQTT desconectado.")       
+        
     except Exception as e:
-        logger.error(f"[PI-3] Error crítico en la ejecución: {e}")
+        logger.error(f"Error crítico en la ejecución: {e}")
     finally:
         if network_manager:
             network_manager.stop_monitoring()
-        if mqtt_handler:
+        if mqtt_handler.is_connected():
+            logger.info("Desconectando cliente MQTT...")
             mqtt_handler.disconnect()
-        logger.info("[PI-3] Sistema apagado correctamente.")
+            logger.info("Cliente MQTT desconectado.")
+        if real_time_config():
+            logger.info("Deteniendo monitoreo de configuración...")
+            real_time_config.stop_monitoring()
+            logger.info("Monitoreo de configuración detenido.")
+        logger.info("Proceso finalizado.")
+        sys.exit(0)
 
 if __name__ == "__main__":
     main()
