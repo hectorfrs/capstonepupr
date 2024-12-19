@@ -90,7 +90,7 @@ def main():
         logger.info("=" * 70)
 
         # Configuración del sistema
-        config_path = "/home/raspberry-3/capstonepupr/src/tst/configs/pi3_config.yaml"
+        config_path = "/home/raspberry-3/capstonepupr/src/tst/configs/config_mqtt.yaml"
         config_manager = ConfigManager(config_path)
         
         # Limpiar caché antes de iniciar

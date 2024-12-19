@@ -1,0 +1,13 @@
+mqtt:
+  broker_addresses:
+    - "192.168.1.147"
+    - "192.168.2.147"
+  port: 1883
+  keepalive: 60
+  client_id: "RaspberryPi-1"
+  topics:
+    entry: "material/entrada"
+    detection: "material/deteccion"
+    action: "valvula/accion"
+    status: "valvula/estado"
+    alertas: "raspberry-1/alertas"

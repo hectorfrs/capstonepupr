@@ -64,7 +64,7 @@ def main():
         logger.info("=" * 70)
 
         # Configuración del sistema
-        config_path = "/home/raspberry-1/capstonepupr/src/tst/configs/pi1_config.yaml"
+        config_path = "/home/raspberry-1/capstonepupr/src/tst/configs/config_mqtt.yaml"
         config_manager = ConfigManager(config_path)
         
         # Limpiar caché antes de iniciar
@@ -136,13 +136,13 @@ def main():
     except Exception as e:
         logger.error(f"Error crítico en la ejecución: {e}")
     finally:
-        if network_manager:
+        if network_manager.is_monitoring():
             network_manager.stop_monitoring()
         if mqtt_handler.is_connected():
             logger.info("Desconectando cliente MQTT...")
             mqtt_handler.disconnect()
             logger.info("Cliente MQTT desconectado.")
-        if real_time_config():
+        if real_time_config.is_monitoring():
             logger.info("Deteniendo monitoreo de configuración...")
             real_time_config.stop_monitoring()
             logger.info("Monitoreo de configuración detenido.")
