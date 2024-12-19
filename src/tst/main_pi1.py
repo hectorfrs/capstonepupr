@@ -75,8 +75,8 @@ def main():
     
     # Configuración
     config_path = "/home/raspberry-1/capstonepupr/src/tst/configs/pi1_config.yaml"
-    config_manager = ConfigManager(config_path)
     try:
+        config_manager = ConfigManager(config_path)
         logging_manager = LoggingManager(config_manager)
         time.sleep(0.5)
     except Exception as e:

@@ -136,3 +136,12 @@ class ConfigManager:
             self.logger.info("Configuración guardada exitosamente.")
         except Exception as e:
             self.logger.error(f"Error al guardar la configuración: {e}")
+
+    def clear_cache(self):
+        """
+        Limpia la caché interna y fuerza una recarga de las configuraciones.
+        """
+        self.config_data = {}
+        self.load_config(self.config_path)
+        self.logger.info("Caché de configuraciones limpiada y recargada desde el archivo.")
+
