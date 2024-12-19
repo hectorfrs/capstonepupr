@@ -21,18 +21,23 @@ class MQTTHandler:
 
         :param config_manager: Instancia de ConfigManager para manejar configuraciones centralizadas.
         """
-        
-        
 
         # Atributos de configuración
         self.config_manager = config_manager
         self.config = self.config_manager.get("mqtt", {})
         self.enable_mqtt = self.config_manager.get("mqtt.enable_mqtt", True)
         self.enable_aws = self.config_manager.get("mqtt.enable_aws", False)
+        self.broker_addresses = self.config.get("broker_addresses", [])
+        
+        # Validar que broker_addresses esté configurado
+        if not self.broker_addresses:
+            raise ValueError("[MQTT] La lista de brokers no está configurada en config.yaml.")
         
         # Configurar logger centralizado
         logging_manager = LoggingManager(self.config_manager)
+        time.sleep(1)
         self.logger = logging_manager.setup_logger("[MQTT_HANDLER]")
+        self.logger.info(f"[MQTT] Brokers configurados: {self.broker_addresses}")
 
         # Configuración local MQTT
         if self.enable_mqtt:
