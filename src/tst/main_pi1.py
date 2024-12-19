@@ -76,25 +76,26 @@ def main():
             config_manager = ConfigManager(config_path)
             logging_manager = LoggingManager(config_manager)
         except Exception as e:
-            logger.error(f"[PI-1] Error inicializando ConfigManager: {e}")
+            logger.error(f"Error inicializando ConfigManager: {e}")
             raise
         
         # Inicializar logger básico para respaldo en caso de fallos
-        #logger = LoggingManager.setup_logger("[MAIN PI1]", config_manager.get("logging", {}))
         logger = logging_manager.setup_logger("[MAIN PI-1]")
         logger.info("=" * 70)
-        logger.info("[PI-1] Iniciando sistema de detección de materiales en Raspberry Pi 1")
+        logger.info("Iniciando sistema de detección de materiales en Raspberry Pi 1")
         logger.info("=" * 70)
 
         # Cargar configuración dinámica
+        logging.info("Iniciando monitoreo de configuración en tiempo real...")
         real_time_config = RealTimeConfigManager(config_manager)
         real_time_config.start_monitoring()
         config = real_time_config.get_config()
 
         # Configuración de red
-        logger.info("[PI-1] [NET] Iniciando monitoreo de red...")
+        logger.info("Iniciando monitoreo de red...")
         network_manager = NetworkManager(config)
         network_manager.start_monitoring()
+
 
         # Configurar MQTT
         logger.info("[PI-1] [MQTT] Configurando cliente MQTT...")

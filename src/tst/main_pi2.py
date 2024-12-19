@@ -63,27 +63,32 @@ def main():
     global relay_controller
     global logger
     try:
-        # Configuración
-        config_path = "/home/raspberry-2/capstonepupr/src/tst/configs/pi2_config.yaml"
-        config_manager = ConfigManager(config_path)
-
-        # Configurar logger global
-        logging_manager = LoggingManager(config_manager)
-        logger = logging_manager.setup_logger("[MAIN PI2]")
-
+       # Configuración
+        config_path = "/home/raspberry-1/capstonepupr/src/tst/configs/pi1_config.yaml"
+        try:
+            #enable_debug = self.config_manager.get('logging.enable_debug', False)
+            config_manager = ConfigManager(config_path)
+            logging_manager = LoggingManager(config_manager)
+        except Exception as e:
+            logger.error(f"Error inicializando ConfigManager: {e}")
+            raise
+        
+        # Inicializar logger básico para respaldo en caso de fallos
+        logger = logging_manager.setup_logger("[MAIN PI-2]")
         logger.info("=" * 70)
-        logger.info("[PI2] Iniciando sistema de control de Relay en Raspberry Pi 2")
+        logger.info("Iniciando sistema de control de Relay en Raspberry Pi 2")
         logger.info("=" * 70)
-
-        # Configuración de red
-        logger.info("[PI2] [NET] Iniciando monitoreo de red...")
-        network_manager = NetworkManager(config)
-        network_manager.start_monitoring()
 
         # Cargar configuración dinámica
+        logging.info("Iniciando monitoreo de configuración en tiempo real...")
         real_time_config = RealTimeConfigManager(config_manager)
         real_time_config.start_monitoring()
         config = real_time_config.get_config()
+
+        # Configuración de red
+        logger.info("Iniciando monitoreo de red...")
+        network_manager = NetworkManager(config)
+        network_manager.start_monitoring()
 
         # Obtener velocidad del conveyor y distancias configuradas
         conveyor_speed = config["system"].get("conveyor_speed", 100)

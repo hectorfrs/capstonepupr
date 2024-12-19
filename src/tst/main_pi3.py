@@ -45,24 +45,30 @@ def main():
     global logger
     try:
         # Configuración
-        config_path = "/home/raspberry-3/capstonepupr/src/tst/configs/pi3_config.yaml"
-        config_manager = ConfigManager(config_path)
-        logging_manager = LoggingManager(config_manager)
-
-        # Configurar logger global
+        config_path = "/home/raspberry-1/capstonepupr/src/tst/configs/pi1_config.yaml"
+        try:
+            #enable_debug = self.config_manager.get('logging.enable_debug', False)
+            config_manager = ConfigManager(config_path)
+            logging_manager = LoggingManager(config_manager)
+        except Exception as e:
+            logger.error(f"Error inicializando ConfigManager: {e}")
+            raise
+        
+        # Inicializar logger básico para respaldo en caso de fallos
         logger = logging_manager.setup_logger("[MAIN PI-3]" )
 
         logger.info("=" * 70)
-        logger.info("[PI-3] Iniciando sistema de simulación en Raspberry Pi 3")
+        logger.info("Iniciando sistema de simulación en Raspberry Pi 3")
         logger.info("=" * 70)
 
         # Cargar configuración dinámica
+        logging.info("Iniciando monitoreo de configuración en tiempo real...")
         real_time_config = RealTimeConfigManager(config_manager)
         real_time_config.start_monitoring()
         config = real_time_config.get_config()
 
         # Configuración de red
-        logger.info("[PI-3] [NET] Iniciando monitoreo de red...")
+        logger.info("Iniciando monitoreo de red...")
         network_manager = NetworkManager(config)
         network_manager.start_monitoring()
 
