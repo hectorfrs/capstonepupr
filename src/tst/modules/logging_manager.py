@@ -6,24 +6,41 @@
 import logging
 from logging.handlers import RotatingFileHandler
 import os
+from datetime import datetime
+
+
+class CustomFormatter(logging.Formatter):
+    """
+    Formatea los logs incluyendo milisegundos con precisión utilizando datetime.
+    """
+
+    converter = datetime.fromtimestamp
+
+    def formatTime(self, record, datefmt=None):
+        """
+        Sobrescribe el método para formatear la hora utilizando datetime.
+        """
+        ct = self.converter(record.created)
+        if datefmt:
+            return ct.strftime(datefmt)
+        else:
+            t = ct.strftime("%Y-%m-%d %H:%M:%S")
+            s = f"{t}.{int(record.msecs):03d}"
+            return s
+
 
 class LoggingManager:
     """
     Clase para configurar loggers centralizados y rotativos para diferentes módulos del sistema.
     """
 
-    def __init__(self, config_manager, mqtt_handler=None):
-        
+    def __init__(self, config_manager):
         """
         Inicializa el manejador de logging con configuraciones centralizadas.
 
         :param config_manager: Instancia de ConfigManager para manejar configuraciones dinámicas.
-        :param mqtt_handler: Instancia opcional de MQTTHandler para transmitir logs.
         """
-        #enable_debug = config.get('logging.enable_debug', False) if isinstance(config, dict) else False
         self.config_manager = config_manager
-        self.mqtt_handler = mqtt_handler
-        self.logger = None
 
     def setup_logger(self, module_name):
         """
@@ -44,7 +61,7 @@ class LoggingManager:
         # Formato del log
         log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         date_format = "%Y-%m-%d %H:%M:%S.%f"
-        formatter = logging.Formatter(fmt=log_format, datefmt=date_format)
+        formatter = CustomFormatter(fmt=log_format, datefmt=date_format)
 
         # Configurar archivo de log rotativo
         log_file = os.path.expanduser(self.config_manager.get('logging.log_file', 'logs/app.log'))
@@ -70,19 +87,4 @@ class LoggingManager:
         error_handler.setFormatter(formatter)
         logger.addHandler(error_handler)
 
-        self.logger = logger
         return logger
-
-    def publish_log(self, log_data):
-        from modules.mqtt_handler import MQTTHandler
-        """
-        Publica logs importantes a través de MQTT si está habilitado.
-
-        :param log_data: Diccionario con información del log.
-        """
-        if self.mqtt_handler and self.mqtt_handler.is_connected():
-            try:
-                self.mqtt_handler.publish("logs/important", log_data)
-                self.logger.info("Log importante transmitido vía MQTT.")
-            except Exception as e:
-                self.logger.error(f"Error transmitiendo log vía MQTT: {e}")
