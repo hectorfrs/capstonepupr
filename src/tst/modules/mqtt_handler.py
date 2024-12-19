@@ -16,13 +16,13 @@ class MQTTHandler:
         self.config = self.config_manager.get("mqtt", {})
         self.enable_mqtt = self.config.get("enable_mqtt", True)
         self.auto_reconnect = self.config.get("auto_reconnect", True)
-        self.topics = self.config.get("topics", {})
         self.broker_addresses = self.config.get("broker_addresses", [])
+        self.topics = self.config.get("topics", {})
         self.client_id = self.config.get("client_id", "DefaultClient")
         self.port = self.config.get("port", 1883)
         self.keepalive = self.config.get("keepalive", 60)
 
-        # Validar y normalizar la lista de brokers
+        # Validar y normalizar broker_addresses
         if isinstance(self.broker_addresses, str):
             self.broker_addresses = [self.broker_addresses]
         if not all(isinstance(broker, str) for broker in self.broker_addresses):
@@ -34,7 +34,7 @@ class MQTTHandler:
         self.client.on_disconnect = self.on_disconnect
         self.client.on_message = self.on_message
 
-        # Configurar logger centralizado
+        # Configurar logger
         logging_manager = LoggingManager(self.config_manager)
         self.logger = logging_manager.setup_logger("[MQTT_HANDLER]")
 
@@ -50,8 +50,8 @@ class MQTTHandler:
                 self.logger.info(f"[MQTT] Intentando conectar al broker {broker}:{self.port}...")
                 self.client.connect(broker, self.port, self.keepalive)
                 self.client.loop_start()
-                self.logger.info(f"[MQTT] Conexión exitosa al broker {broker}:{self.port}.")
                 self.subscribe_to_topics()
+                self.logger.info(f"[MQTT] Conexión exitosa al broker {broker}:{self.port}.")
                 return
             except Exception as e:
                 self.logger.warning(f"[MQTT] No se pudo conectar al broker {broker}:{self.port}. Error: {e}")
@@ -74,6 +74,43 @@ class MQTTHandler:
             except Exception as e:
                 self.logger.error(f"[MQTT] Error al suscribirse al tópico {topic_path}: {e}")
 
+    def unsubscribe(self, topics):
+        """
+        Se desuscribe de uno o varios tópicos.
+        """
+        for topic in topics:
+            try:
+                self.client.unsubscribe(topic)
+                self.logger.info(f"[MQTT] Desuscrito del tópico: {topic}")
+            except Exception as e:
+                self.logger.error(f"[MQTT] Error al desuscribirse del tópico {topic}: {e}")
+
+    def publish(self, topic, message, qos=0):
+        """
+        Publica un mensaje en un tópico MQTT.
+        """
+        try:
+            self.client.publish(topic, message, qos=qos)
+            self.logger.info(f"[MQTT] Mensaje publicado en {topic}: {message}")
+        except Exception as e:
+            self.logger.error(f"[MQTT] Error al publicar mensaje en {topic}: {e}")
+
+    def is_connected(self):
+        """
+        Verifica si el cliente MQTT está conectado.
+        """
+        return self.client.is_connected()
+
+    def reconnect(self):
+        """
+        Intenta reconectar al broker MQTT.
+        """
+        try:
+            self.logger.info("[MQTT] Intentando reconexión...")
+            self.client.reconnect()
+        except Exception as e:
+            self.logger.error(f"[MQTT] Error al intentar reconexión: {e}")
+
     def on_connect(self, client, userdata, flags, rc):
         if rc == 0:
             self.logger.info("[MQTT] Conexión exitosa al broker MQTT.")
@@ -84,7 +121,17 @@ class MQTTHandler:
         self.logger.warning("[MQTT] Desconectado del broker MQTT.")
         if self.auto_reconnect:
             self.logger.info("[MQTT] Intentando reconexión automática...")
-            self.connect()
+            self.reconnect()
 
     def on_message(self, client, userdata, msg):
         self.logger.info(f"[MQTT] Mensaje recibido en {msg.topic}: {msg.payload.decode()}")
+
+    def loop_forever(self):
+        """
+        Mantiene activo el bucle de recepción de mensajes.
+        """
+        try:
+            self.logger.info("[MQTT] Iniciando loop continuo...")
+            self.client.loop_forever()
+        except Exception as e:
+            self.logger.error(f"[MQTT] Error en loop continuo: {e}")
