@@ -64,7 +64,12 @@ def main():
         logger.info("=" * 70)
 
         # Configuración del sistema
-        config_manager = ConfigManager(config_path="/home/raspberry-1/capstonepupr/src/tst/configs/config_mqtt.yaml")
+        try:
+            config_manager = ConfigManager(config_path="/home/raspberry-1/capstonepupr/src/tst/configs/pi1_config.yaml")
+            config_manager.load_config()
+        except Exception as e:
+            logger.error(f"Error inicializando ConfigManager: {e}")
+            raise
         
         # Limpiar caché antes de iniciar
         logger.info("Limpiando caché de configuraciones...")

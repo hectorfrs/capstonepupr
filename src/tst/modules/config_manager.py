@@ -50,21 +50,20 @@ class ConfigManager:
             raise
 
 
-    def setup_logger(self):
+    def load_config(self, config_path=None):
         """
-        Configura un logger centralizado para ConfigManager.
-
-        :return: Instancia del logger configurado.
+        Carga el archivo de configuración YAML.
         """
-        logger = logging.getLogger("[CONFIG_MANAGER]")
-        logger.setLevel(logging.DEBUG)
+        try:
+            if config_path is None:
+                config_path = self.config_path
+            with open(config_path, "r") as file:
+                self.config_data = yaml.safe_load(file)
+            logger.info("[CONFIG_MANAGER] Configuración cargada exitosamente.")
+        except Exception as e:
+            logger.error(f"[CONFIG_MANAGER] Error al cargar configuración: {e}")
+            raise
 
-        log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        formatter = logging.Formatter(fmt=log_format, datefmt="%Y-%m-%d %H:%M:%S.%f")
-
-        console_handler = logging.StreamHandler()
-        console_handler.setFormatter(formatter)
-        logger.addHandler(console_handler)
 
         return logger
 

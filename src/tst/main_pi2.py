@@ -85,7 +85,13 @@ def main():
         logger.info("Iniciando sistema de control de Relay en Raspberry Pi 2")
         logger.info("=" * 70)
 
-        config_manager = ConfigManager(config_path="/home/raspberry-2/capstonepupr/src/tst/configs/config_mqtt.yaml")
+        # Configuración del sistema
+        try:
+            config_manager = ConfigManager(config_path="/home/raspberry-2/capstonepupr/src/tst/configs/pi2_config.yaml")
+            config_manager.load_config()
+        except Exception as e:
+            logger.error(f"Error inicializando ConfigManager: {e}")
+            raise
 
         logger.info("Limpiando caché de configuraciones...")
         config_manager.clear_cache()
