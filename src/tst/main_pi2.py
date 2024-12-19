@@ -77,6 +77,7 @@ def main():
         # Limpiar caché antes de iniciar
         logger.info("Limpiando caché de configuraciones...")
         config_manager.clear_cache()
+        time.sleep(0.5)
 
         real_time_config = RealTimeConfigManager(config_manager)
         real_time_config.start_monitoring()

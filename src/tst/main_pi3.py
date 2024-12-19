@@ -86,9 +86,14 @@ def main():
     except Exception as e:
         logger.error(f"Error inicializando ConfigManager: {e}")
         raise
-    
+
     # Inicializar logger básico para respaldo en caso de fallos
     logger = logging_manager.setup_logger("[MAIN PI-3]")
+
+    # Limpiar caché antes de iniciar
+    logger.info("Limpiando caché de configuraciones...")
+    config_manager.clear_cache()
+    time.sleep(0.5)
     try:
         logger.info("=" * 70)
         logger.info("Iniciando sistema de simulación en Raspberry Pi 3")

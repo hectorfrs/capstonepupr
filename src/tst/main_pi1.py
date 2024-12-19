@@ -65,6 +65,11 @@ def main():
     # Inicializar logger básico para respaldo en caso de fallos
     logger = logging_manager.setup_logger("[MAIN PI-1]")
     time.sleep(0.5)
+
+    # Limpiar caché antes de iniciar
+    logger.info("Limpiando caché de configuraciones...")
+    config_manager.clear_cache()
+    time.sleep(0.5)
     try:
         logger.info("=" * 70)
         logger.info("Iniciando sistema de detección de materiales en Raspberry Pi 1")
