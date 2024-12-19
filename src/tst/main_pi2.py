@@ -124,14 +124,18 @@ def main():
         if network_manager:
             logger.info("Apagando Monitoreo del Network...")
             network_manager.stop_monitoring()
-            logger.info("Sistema apagado correctamente.")        
+            logger.info("Sistema apagado correctamente.") 
+        if mqtt_handler.is_connected():
+            logger.info("Desconectando cliente MQTT...")
+            mqtt_handler.disconnect()
+            logger.info("Cliente MQTT desconectado.")       
         
     except Exception as e:
         logger.error(f"Error crítico en la ejecución: {e}")
     finally:
         if network_manager:
             network_manager.stop_monitoring()
-        if mqtt_handler():
+        if mqtt_handler.is_connected():
             logger.info("Desconectando cliente MQTT...")
             mqtt_handler.disconnect()
             logger.info("Cliente MQTT desconectado.")

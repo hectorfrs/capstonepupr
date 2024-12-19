@@ -22,10 +22,8 @@ def setup_logger():
     )
     return logging.getLogger("MAIN PI-3")
 
+# Manejo de mensajes recibidos
 def on_message_received(client, userdata, msg):
-    """
-    Callback para procesar mensajes MQTT.
-    """
     try:
         raw_payload = msg.payload.decode()
         logger.info(f"[MQTT] Mensaje recibido en '{msg.topic}': {raw_payload}")
@@ -49,10 +47,8 @@ def on_message_received(client, userdata, msg):
     except Exception as e:
         logger.error(f"[PI-3] Error procesando mensaje: {e}")
 
+# Detección y publicación de materiales
 def detect_and_publish(mqtt_handler, material):
-    """
-    Detecta el material, genera un evento ID y publica el mensaje en el tópico correspondiente.
-    """
     event_id = str(uuid.uuid4())
     timestamp = datetime.now().isoformat()
 
@@ -66,10 +62,8 @@ def detect_and_publish(mqtt_handler, material):
     mqtt_handler.publish("material/deteccion", payload)
     logger.info(f"[RPI3] Evento publicado en MQTT: {payload}")
 
+# Manejo del material procesado
 def handle_processed_material(client, userdata, msg):
-    """
-    Maneja el material procesado por los otros Raspberry Pis y registra el pesaje del material.
-    """
     payload = json.loads(msg.payload.decode())
     event_id = payload.get("id", "Sin ID")
     material = payload.get("material", "Desconocido")
@@ -85,6 +79,7 @@ def handle_processed_material(client, userdata, msg):
     mqtt_handler.publish("material/pesaje", weighing_payload)
     logger.info(f"[RPI3] Pesaje registrado: {weighing_payload}")
 
+# Configuración del sistema
 def main():
     logger = setup_logger()
     network_manager = None
@@ -92,38 +87,31 @@ def main():
     network_manager = None  # Inicialización para evitar errores de referencia
     try:
         logger.info("=" * 70)
-        logger.info("Iniciando sistema de simulación en Raspberry Pi 3")
+        logger.info("Iniciando script principal para Raspberry Pi 3...")
         logger.info("=" * 70)
 
         # Configuración del sistema
         config_path = "/home/raspberry-3/capstonepupr/src/tst/configs/pi3_config.yaml"
         config_manager = ConfigManager(config_path)
+        
+        # Limpiar caché antes de iniciar
+        logger.info("Limpiando caché de configuraciones...")
         config_manager.clear_cache()
+        time.sleep(0.5)
 
         real_time_config = RealTimeConfigManager(config_manager)
         real_time_config.start_monitoring()
-        config = real_time_config.get_config()
 
         # Configuración de red
         logger.info("Iniciando monitoreo de red...")
         network_manager = NetworkManager(config)
         network_manager.start_monitoring()
-        time.sleep(1)
 
         # Inicializar MQTTHandler
         mqtt_handler = MQTTHandler(config_manager)
-
-        # Publicar un mensaje inicial
-        #mqtt_handler.publish("material/entrada", {"message": "Sistema iniciado en Raspberry Pi 3"})
-
-        # Simular detección de materiales
-        materials = ["PET", "HDPE", "UNKNOWN"]
-        for material in materials:
-            detect_material(mqtt_handler, material)
-
-        # Mantener el loop MQTT
-        logger.info("[PI-3] Esperando mensajes MQTT...")
-        mqtt_handler.client.loop_forever()
+        mqtt_handler.client.on_message = handle_processed_material
+        mqtt_handler.connect()
+        mqtt_handler.client.loop_start()
 
         # Configuración de simulación
         simulation_duration = config.get("simulation", {}).get("duration", 60)
@@ -135,7 +123,7 @@ def main():
         # Simulación de la cámara y detección de materiales
         simulate_camera_detection(
             mqtt_handler=mqtt_handler, 
-            topic=mqtt_config.get("topics", {}).get("entry", "raspberry-3/entry"),
+            topic=config.get("mqtt", {}).get("topics", {}).get("entry", "material/entrada"),
             delay_range=[1, 3]  # Delay entre 1 y 3 segundos
         )
 
@@ -161,14 +149,14 @@ def main():
             if weight_data["Bucket 1 (PET)"] >= bucket_full_limit or weight_data["Bucket 2 (HDPE)"] >= bucket_full_limit:
                 logger.info(f"[PI-3] Bucket lleno detectado. Estado actual: {weight_data}")
                 mqtt_handler.publish(
-                    topic=mqtt_config.get("topics", {}).get("status", "raspberry-3/status"),
+                    topic=config.get("mqtt", {}).get("topics", {}).get("status", "material/status"),
                     payload={"status": "simulation_ended", "buckets": weight_data, "id": str(uuid.uuid4())}
                 )
                 break
 
             # Publicar datos simulados de peso
             mqtt_handler.publish(
-                topic=mqtt_config.get("topics", {}).get("status", "raspberry-3/status"),
+                topic=config.get("mqtt", {}).get("topics", {}).get("status", "material/status"),
                 payload={"status": "material_detected", "weight": weight_data, "timestamp": time.time(), "id": str(uuid.uuid4())}
             )
 
@@ -177,27 +165,31 @@ def main():
         logger.info("[PI-3] Simulación completada. Finalizando script.")
 
     except KeyboardInterrupt:
-        logger.info("[PI-3] Apagando Monitoreo del Network...")
-        network_manager.stop_monitoring()
-        logger.info("[PI-3] Sistema apagado correctamente.")
-    except Exception as e:
-        logger.error(f"[PI-3] Error crítico en la ejecución: {e}")
-    finally:
-        logger.info("[PI-3] Finalizando ejecución del script.")
-        if 'mqtt_handler' in globals() and mqtt_handler.is_connected():
-            logger.info("[PI-3] Desconectando cliente MQTT...")
-            mqtt_handler.disconnect()
-            logger.info("[PI-3] Cliente MQTT desconectado.")
-        if 'logging_manager' in globals():
-            logging_manager.close_handlers()
-            logger.info("[PI-3] Handlers de logging cerrados.")
-        if 'real_time_config' in globals():
-            real_time_config.stop_monitoring()
-            logger.info("[PI-3] Monitoreo de configuración detenido.")
-        if 'network_manager' in globals():
+        logger.info("Interrupción detectada. Apagando sistema...")
+        if network_manager:
+            logger.info("Apagando Monitoreo del Network...")
             network_manager.stop_monitoring()
-            logger.info("[PI-3] Monitoreo de red detenido.")
-        logger.info("[PI-3] Proceso finalizado.")
+            logger.info("Sistema apagado correctamente.") 
+        if mqtt_handler.is_connected():
+            logger.info("Desconectando cliente MQTT...")
+            mqtt_handler.disconnect()
+            logger.info("Cliente MQTT desconectado.")       
+        
+    except Exception as e:
+        logger.error(f"Error crítico en la ejecución: {e}")
+    finally:
+        if network_manager:
+            network_manager.stop_monitoring()
+        if mqtt_handler.is_connected():
+            logger.info("Desconectando cliente MQTT...")
+            mqtt_handler.disconnect()
+            logger.info("Cliente MQTT desconectado.")
+        if real_time_config():
+            logger.info("Deteniendo monitoreo de configuración...")
+            real_time_config.stop_monitoring()
+            logger.info("Monitoreo de configuración detenido.")
+        logger.info("Proceso finalizado.")
+        sys.exit(0)
 
 if __name__ == "__main__":
     main()
