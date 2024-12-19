@@ -41,14 +41,26 @@ class MQTTHandler:
         
     def _normalize_brokers(self):
         """
-        Convierte broker_addresses en una lista si es un string único.
+        Valida y normaliza los brokers configurados.
         """
-        brokers = self.config.get("broker_addresses", [])
-        if isinstance(brokers, str):
-            brokers = [brokers]
-        if not brokers:
-            raise ValueError("[MQTT] broker_addresses no configurados en mqtt.")
-        return brokers
+        mqtt_config = self.config.get("mqtt", {})
+        if not mqtt_config:
+            raise ValueError("[MQTT] La configuración MQTT no está definida en config.yaml.")
+
+        broker_addresses = mqtt_config.get("broker_addresses")
+        if not broker_addresses:
+            raise ValueError(f"[MQTT] broker_addresses no configurados en mqtt. Archivo de configuración: {self.config_manager.config_path}")
+
+        if isinstance(broker_addresses, str):
+            logger.warning("[MQTT] broker_addresses era un string. Se convirtió a una lista.")
+            broker_addresses = [broker_addresses]
+
+        if not isinstance(broker_addresses, list):
+            raise ValueError(f"[MQTT] broker_addresses debe ser una lista. Tipo encontrado: {type(broker_addresses)} en {self.config_manager.config_path}")
+
+        self.brokers = broker_addresses
+        logger.info(f"[MQTT] Brokers configurados: {self.brokers}")
+
 
     def connect_and_subscribe(self):
         """

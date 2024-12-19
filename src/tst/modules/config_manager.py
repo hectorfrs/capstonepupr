@@ -36,23 +36,19 @@ class ConfigManager:
         self.config_data = self.load_config()
         self.validate_config()
 
-    def load_config(self, config_path=None):
-        config_path = config_path or self.config_path
+    def load_config(self, config_path):
         """
-        Carga el archivo YAML de configuración.
-
-        :return: Diccionario con la configuración cargada.
+        Carga el archivo de configuración YAML.
         """
-        if not os.path.exists(self.config_path):
-            self.logger.error(f"El archivo de configuración no existe: {self.config_path}")
-            return {}
-
         try:
-            with open(self.config_path, "r") as yaml_file:
-                return yaml.safe_load(yaml_file) or {}
-        except yaml.YAMLError as e:
-            self.logger.error(f"Error al leer el archivo YAML: {e}")
-            return {}
+            with open(config_path, "r") as file:
+                self.config_data = yaml.safe_load(file)
+            logger.info("[CONFIG_MANAGER] Configuración cargada exitosamente.")
+            logger.debug(f"[CONFIG_MANAGER] Contenido de la configuración: {self.config_data}")
+        except Exception as e:
+            logger.error(f"[CONFIG_MANAGER] Error al cargar configuración: {e}")
+            raise
+
 
     def setup_logger(self):
         """

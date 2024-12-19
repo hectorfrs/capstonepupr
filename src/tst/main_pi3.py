@@ -100,6 +100,9 @@ def main():
 
         real_time_config = RealTimeConfigManager(config_manager)
         real_time_config.start_monitoring()
+        if not config_manager.validate_section("mqtt"):
+            raise ValueError("[PI-x] Error: La sección MQTT no está configurada en el archivo de configuración.")
+
 
         # Configuración de red
         logger.info("Iniciando monitoreo de red...")

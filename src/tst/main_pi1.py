@@ -77,6 +77,9 @@ def main():
 
         # Obtener configuración
         config = real_time_config.get_config()
+        if not config_manager.validate_section("mqtt"):
+            raise ValueError("Error: La sección MQTT no está configurada en el archivo de configuración.")
+
 
         # Configuración de red
         logger.info("Iniciando monitoreo de red...")
