@@ -94,7 +94,7 @@ def main():
         brokers = config_manager.get("mqtt.broker_addresses", [])
         logger.info(f"Brokers configurados: {brokers}")
         mqtt_config = config.get("mqtt", {})
-        mqtt_handler = MQTTHandler(mqtt_config)
+        mqtt_handler = MQTTHandler(config_manager, mqtt_config)
         mqtt_handler.client.on_message = on_message_received
         time.sleep(1)
 
