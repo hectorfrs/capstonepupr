@@ -81,7 +81,6 @@ def main():
         real_time_config.start_monitoring()
         config = real_time_config.get_config()
 
-
         # Configuración de red
         logger.info("Iniciando monitoreo de red...")
         network_manager = NetworkManager(config)

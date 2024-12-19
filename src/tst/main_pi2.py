@@ -106,6 +106,9 @@ def main():
         # Configuración de relay
         logger.info("[PI2] Configurando controlador de relay...")
         relay_config = config.get("mux", {}).get("relays", [])
+        if not isinstance(relay_config, list):
+            raise ValueError("[PI2] La configuración de relays debe ser una lista.")
+
         relay_controller = RelayController(relay_config)
 
         # Inicializa MQTTHandler
