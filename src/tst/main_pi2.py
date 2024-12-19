@@ -77,6 +77,7 @@ def on_message_received(client, userdata, msg, relay_controller):
         logger.error(f"[PI2] Error procesando mensaje: {e}")
 
 def main():
+    logger = setup_logger()
     network_manager = None
     mqtt_handler = None
     try:
