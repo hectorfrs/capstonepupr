@@ -60,7 +60,7 @@ class LoggingManager:
 
         # Formato del log
         log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        date_format = "%Y-%m-%d %H:%M:%S.%f"
+        date_format = "%Y-%m-%d %H:%M:%S"
         formatter = CustomFormatter(fmt=log_format, datefmt=date_format)
 
         # Configurar archivo de log rotativo
